@@ -295,7 +295,7 @@ void tokenize(File *file, std::vector<Token *> &tokens)
 
     while (tk_char != EOF)
     {
-        Token *token = new Token(file->ln, file->col);
+        Token *token = new Token(file->cur_ln(), file->cur_col());
         if (is_number(tk_char))
         {
             offset = recognize_num(file, token);
@@ -303,7 +303,7 @@ void tokenize(File *file, std::vector<Token *> &tokens)
                 tokens.push_back(token);
             } else {
                 offset = file->getstr(error_buffer, offset);
-                printf("Error at line: %d, file->col %d, \"%s\"\n", file->ln, file->col, error_buffer);
+                printf("Error at line: %d, file->cur_col() %d, \"%s\"\n", file->cur_ln(), file->cur_col(), error_buffer);
             }
             goto nextchar;
         }
@@ -342,7 +342,7 @@ void tokenize(File *file, std::vector<Token *> &tokens)
                     tokens.push_back(token);
                 } else {
                     offset = file->getstr(error_buffer, offset);
-                    printf("Error at line: %d, file->col %d, \"%s\"\n", file->ln, file->col, error_buffer);
+                    printf("Error at line: %d, file->cur_col() %d, \"%s\"\n", file->cur_ln(), file->cur_col(), error_buffer);
                 }
             }
             goto nextchar;
@@ -355,7 +355,7 @@ void tokenize(File *file, std::vector<Token *> &tokens)
                 tokens.push_back(token);
             } else {
                 offset = file->getstr(error_buffer, offset);
-                printf("Error at line: %d, file->col %d, \"%s\"\n", file->ln, file->col, error_buffer);
+                printf("Error at line: %d, file->cur_col() %d, \"%s\"\n", file->cur_ln(), file->cur_col(), error_buffer);
             }
             goto nextchar;
         }
@@ -367,7 +367,7 @@ void tokenize(File *file, std::vector<Token *> &tokens)
                 tokens.push_back(token);
             } else {
                 offset = file->getstr(error_buffer, offset);
-                printf("Error at line: %d, file->col %d, \"%s\"\n", file->ln, file->col, error_buffer);
+                printf("Error at line: %d, file->cur_col() %d, \"%s\"\n", file->cur_ln(), file->cur_col(), error_buffer);
             }
             goto nextchar;
         }

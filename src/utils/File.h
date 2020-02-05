@@ -18,18 +18,19 @@ class File
 {
 private:
     FILE *file;
-    long long cursor;
+    long long ln, col;
     char buffer[READ_BUFFER_SIZE];
 
 public:
-    long long ln, col;
-
     File(FILE *file);
     ~File();
 
+    long long cur_ln();
+    long long cur_col();
     char getchar();
+    int ungetchar();
     char nextchar();
-    int seek(int step);
+    int seek(int steps);
     int getstr(char *str_buffer, int len);
     int getline(char *line_buffer, int len);
     int getword(char *word_buffer, int len);

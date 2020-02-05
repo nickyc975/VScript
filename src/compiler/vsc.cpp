@@ -61,7 +61,7 @@ void print_tk_lst(std::vector<Token *> token_list, char *filename)
     FILE *tokens_txt = fopen(filename, "w");
     for (Token *token : token_list)
     {
-        fprintf(tokens_txt, "%s\t", CLASS_STR[token->kind]);
+        fprintf(tokens_txt, "%s\t%d\t%d\t", CLASS_STR[token->kind], token->ln, token->col);
         switch (token->kind)
         {
             case IDENTIFIER:

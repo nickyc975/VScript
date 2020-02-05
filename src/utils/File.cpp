@@ -3,6 +3,7 @@
 File::File(FILE *file)
 {
     this->file = file;
+    this->ln = 1, this->col = 1;
 }
 
 File::~File()
@@ -10,21 +11,75 @@ File::~File()
     fclose(this->file);
 }
 
-int File::seek(int step)
+long long File::cur_ln()
 {
-    return fseek(this->file, step, SEEK_CUR);
+    return this->ln;
+}
+
+long long File::cur_col()
+{
+    return this->col;
 }
 
 char File::getchar()
 {
-    return fgetc(this->file);
+    char c = fgetc(this->file);
+    if (c == '\n')
+    {
+        this->ln++;
+        this->col = 1;
+    }
+    else if (c != EOF)
+    {
+        this->col++;
+    }
+    return c;
+}
+
+int File::ungetchar()
+{
+    if (fseek(this->file, -1, SEEK_CUR))
+    {
+        return -1;
+    }
+    if (this->nextchar() == '\n')
+    {
+        this->ln--;
+        this->col = 1;
+    }
+    else if (col > 1)
+    {
+        this->col--;
+    }
+    return 0;
 }
 
 char File::nextchar()
 {
-    char c = this->getchar();
-    this->seek(-1);
+    char c = fgetc(this->file);
+    fseek(this->file, -1, SEEK_CUR);
     return c;
+}
+
+int File::seek(int steps)
+{
+    int seeked = 0;
+    if (steps > 0)
+    {
+        while (seeked < steps && this->nextchar() != EOF)
+        {
+            this->getchar();
+            seeked++;
+        }
+    }
+    else if (steps < 0)
+    {
+        while (seeked > steps && !this->ungetchar())
+        {
+            seeked--;
+        }
+    }
+    return seeked;
 }
 
 int File::getstr(char *str_buffer, int len)
