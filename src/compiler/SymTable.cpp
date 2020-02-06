@@ -12,6 +12,16 @@ SymTable::~SymTable()
 
 }
 
+bool SymTable::has_parent()
+{
+    return this->parent != NULL;
+}
+
+SymTable *SymTable::get_parent()
+{
+    return this->parent;
+}
+
 void SymTable::put(ASTNode *id)
 {
     if (id->node_type == AST_IDENT)
@@ -30,9 +40,29 @@ ASTNode *SymTable::get(char *name)
     return NULL;
 }
 
+ASTNode *SymTable::get_recur(char *name)
+{
+    ASTNode *node = this->get(name);
+    if (node == NULL && this->has_parent())
+    {
+        return this->parent->get_recur(name);
+    }
+    return node;
+}
+
 bool SymTable::contains(char *name)
 {
     return this->table.find(std::string(name)) != this->table.end();
+}
+
+bool SymTable::contains_recur(char *name)
+{
+    bool result = this->contains(name);
+    if (result == false && this->has_parent())
+    {
+        return this->parent->contains_recur(name);
+    }
+    return result;
 }
 
 void SymTable::add_child(SymTable *child)
