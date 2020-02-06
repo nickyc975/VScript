@@ -179,7 +179,7 @@ public:
     ~ASTNode();
 };
 
-static void init_parser();
-static std::vector<ASTNode *> *parse(std::vector<Token *> *tokens);
+void init_parser();
+std::vector<ASTNode *> *parse(std::vector<Token *> *tokens);
 
 #endif

@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <vector>
 
-#ifndef VS_DEFINE
+#ifndef VSC_DEFINE
 
-#define VS_DEFINE
+#define VSC_DEFINE
 
 typedef enum
 {
@@ -96,6 +96,16 @@ typedef enum
     I_NOP
 } INST;
 
+static char CLASS_STR[][15] = {
+    "ADD", "ADD_ASSIGN", "AND", "AND_ASSIGN", "ASSIGN", "BREAK", "COMMA", "CONSTANT", "CONTINUE", 
+    "DIV", "DIV_ASSIGN", "ELIF", "ELSE", "EQ", "FOR", "FUNC", "GE", "GT", "IDENTIFIER", "IF", "INPUT", "LE", "LT", 
+    "L_BRACK", "L_CURLY", "L_PAREN", "MOD", "MOD_ASSIGN", "MUL", "MUL_ASSIGN", "NEQ", "NOT", "OR", 
+    "OR_ASSIGN", "PRINT", "RETURN", "R_BRACK", "R_CURLY", "R_PAREN", "SEMICOLON", "SUB", "SUB_ASSIGN", "VAL", 
+    "VAR", "WHILE", "#"
+};
+
+static char TYPE_STR[][10] = {"NONE", "BOOL", "CHAR", "INT", "FLOAT", "STRING", "LIST", "FUNC"};
+
 class Value
 {
 public:
@@ -126,9 +136,8 @@ public:
     };
     bool is_mutable;
 
-    Value(TYPE type): type(type)
+    Value(TYPE type) : type(type)
     {
-
     }
 
     ~Value()

@@ -1,18 +1,9 @@
 #include <stdio.h>
 
 #include "vslexer.h"
-// #include "vsparser.h"
+#include "vsparser.h"
+#include "printers.h"
 #include "../utils/File.h"
-
-char CLASS_STR[][15] = {
-    "ADD", "ADD_ASSIGN", "AND", "AND_ASSIGN", "ASSIGN", "BREAK", "COMMA", "CONSTANT", "CONTINUE", 
-    "DIV", "DIV_ASSIGN", "ELIF", "ELSE", "EQ", "FOR", "FUNC", "GE", "GT", "IDENTIFIER", "IF", "INPUT", "LE", "LT", 
-    "L_BRACK", "L_CURLY", "L_PAREN", "MOD", "MOD_ASSIGN", "MUL", "MUL_ASSIGN", "NEQ", "NOT", "OR", 
-    "OR_ASSIGN", "PRINT", "RETURN", "R_BRACK", "R_CURLY", "R_PAREN", "SEMICOLON", "SUB", "SUB_ASSIGN", "VAL", 
-    "VAR", "WHILE", "#"
-};
-
-char TYPE_STR[][10] = {"NONE", "BOOL", "CHAR", "INT", "FLOAT", "STRING", "LIST", "FUNC"};
 
 void print_tk_lst(std::vector<Token *>, char *filename);
 
@@ -49,10 +40,13 @@ int main(int argc, char **argv)
     {
         print_tk_lst(token_list, (char *)"test/tokens.txt");
     }
-    // init_parser();
-    // parse(tokenlist, parser);
-    // free_tokenlist(tokenlist);
-    // free_filereader(reader);
+    init_parser();
+    std::vector<ASTNode *> *toplevel = parse(&token_list);
+    for (ASTNode *node : *toplevel)
+    {
+        print_ast(node);
+        printf("\n");
+    }
     return 0;
 }
 

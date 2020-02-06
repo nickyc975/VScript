@@ -5,6 +5,29 @@ static int tk_idx;
 static std::vector<Token *> *tks;
 static SymTable *symtable;
 
+static ASTNode *read_primary_expr();
+static ASTNode *read_arg_expr_list();
+static ASTNode *read_postfix_expr();
+static ASTNode *read_unary_expr();
+static ASTNode *read_multi_expr();
+static ASTNode *read_additive_expr();
+static ASTNode *read_relational_expr();
+static ASTNode *read_equality_expr();
+static ASTNode *read_logic_and_expr();
+static ASTNode *read_logic_or_expr();
+static ASTNode *read_assign_expr();
+static ASTNode *read_expr();
+static ASTNode *read_expr_stmt();
+static ASTNode *read_for_stmt();
+static ASTNode *read_func_decl();
+static ASTNode *read_if_stmt();
+static ASTNode *read_input_stmt();
+static ASTNode *read_print_stmt();
+static ASTNode *read_var_stmt();
+static ASTNode *read_val_stmt();
+static ASTNode *read_while_stmt();
+static std::vector<ASTNode *> *read_toplevel();
+
 static bool has_token()
 {
     return tk_idx < tks->size();
@@ -22,7 +45,8 @@ static Token *get_token()
 
 static void unget_token()
 {
-    if (tk_idx > 0) tk_idx--;
+    if (tk_idx > 0)
+        tk_idx--;
 }
 
 static Token *peek_token()
@@ -196,11 +220,10 @@ static INST get_mul_opcode(KIND kind)
 
 static bool valid_lval(ASTNode *node)
 {
-
 }
 
-ASTNode::ASTNode(ASTNODE_TYPE node_type, ASTNODE_TYPE ext_node_type) 
-: node_type(node_type), ext_node_type(ext_node_type)
+ASTNode::ASTNode(ASTNODE_TYPE node_type, ASTNODE_TYPE ext_node_type)
+    : node_type(node_type), ext_node_type(ext_node_type)
 {
 }
 
@@ -470,6 +493,7 @@ static ASTNode *read_primary_expr()
         node = ident_node(get_token()->identifier);
         break;
     case L_PAREN:
+        expect(L_PAREN);
         node = read_expr();
         expect(R_PAREN);
         break;
@@ -484,7 +508,8 @@ static ASTNode *read_arg_expr_list()
 {
     Token *token;
     ASTNode *arg_list = lst_val_node(0, new std::vector<ASTNode *>());
-    if (peek_token()->kind == R_PAREN) return arg_list;
+    if (peek_token()->kind == R_PAREN)
+        return arg_list;
     ASTNode *arg = read_logic_or_expr();
     if (arg == NULL)
     {
@@ -509,10 +534,12 @@ static ASTNode *read_arg_expr_list()
 static ASTNode *read_postfix_expr()
 {
     ASTNode *node = read_primary_expr();
-    if (node == NULL || !has_token()) return node;
+    if (node == NULL || !has_token())
+        return node;
     switch (peek_token()->kind)
     {
     case L_BRACK:
+    {
         expect(L_BRACK);
         ASTNode *lst_idx = read_expr();
         if (lst_idx == NULL)
@@ -522,7 +549,9 @@ static ASTNode *read_postfix_expr()
         node = lst_idx_node(node, lst_idx);
         expect(R_BRACK);
         break;
+    }
     case L_PAREN:
+    {
         expect(L_PAREN);
         ASTNode *arg_list = read_arg_expr_list();
         if (arg_list == NULL)
@@ -532,6 +561,7 @@ static ASTNode *read_postfix_expr()
         node = func_call_node(node, arg_list);
         expect(R_PAREN);
         break;
+    }
     default:
         // error: does not expect token: peek_token()
         break;
@@ -547,7 +577,8 @@ static ASTNode *read_unary_expr()
         token = get_token();
     }
     ASTNode *node = read_postfix_expr();
-    if (node == NULL || !has_token()) return node;
+    if (node == NULL || !has_token())
+        return node;
     if (token != NULL)
     {
         node = u_expr_node(token->kind == SUB ? I_SUB : I_NOT, node);
@@ -559,7 +590,8 @@ static ASTNode *read_multi_expr()
 {
     Token *token;
     ASTNode *node = read_unary_expr();
-    if (node == NULL || !has_token()) return node;
+    if (node == NULL || !has_token())
+        return node;
     while (is_mul(peek_token()->kind))
     {
         token = get_token();
@@ -577,7 +609,8 @@ static ASTNode *read_additive_expr()
 {
     Token *token;
     ASTNode *node = read_multi_expr();
-    if (node == NULL || !has_token()) return node;
+    if (node == NULL || !has_token())
+        return node;
     while (peek_token()->kind == ADD || peek_token()->kind == SUB)
     {
         token = get_token();
@@ -595,7 +628,8 @@ static ASTNode *read_relational_expr()
 {
     Token *token;
     ASTNode *node = read_additive_expr();
-    if (node == NULL || !has_token()) return node;
+    if (node == NULL || !has_token())
+        return node;
     while (is_relation(peek_token()->kind))
     {
         token = get_token();
@@ -613,7 +647,8 @@ static ASTNode *read_equality_expr()
 {
     Token *token;
     ASTNode *node = read_relational_expr();
-    if (node == NULL || !has_token()) return node;
+    if (node == NULL || !has_token())
+        return node;
     while (peek_token()->kind == EQ || peek_token()->kind == NEQ)
     {
         token = get_token();
@@ -630,7 +665,8 @@ static ASTNode *read_equality_expr()
 static ASTNode *read_logic_and_expr()
 {
     ASTNode *node = read_equality_expr();
-    if (node == NULL || !has_token()) return node;
+    if (node == NULL || !has_token())
+        return node;
     while (peek_token()->kind == AND)
     {
         expect(AND);
@@ -647,7 +683,8 @@ static ASTNode *read_logic_and_expr()
 static ASTNode *read_logic_or_expr()
 {
     ASTNode *node = read_logic_and_expr();
-    if (node == NULL || !has_token()) return node;
+    if (node == NULL || !has_token())
+        return node;
     while (peek_token()->kind == OR)
     {
         expect(OR);
@@ -664,7 +701,8 @@ static ASTNode *read_logic_or_expr()
 static ASTNode *read_assign_expr()
 {
     ASTNode *node = read_logic_or_expr();
-    if (node == NULL || !has_token()) return node;
+    if (node == NULL || !has_token())
+        return node;
 
     if (is_assign(peek_token()->kind))
     {
@@ -715,42 +753,34 @@ static ASTNode *read_expr_stmt()
 
 static ASTNode *read_for_stmt()
 {
-    
 }
 
 static ASTNode *read_func_decl()
 {
-    
 }
 
 static ASTNode *read_if_stmt()
 {
-    
 }
 
 static ASTNode *read_input_stmt()
 {
-    
 }
 
 static ASTNode *read_print_stmt()
 {
-    
 }
 
 static ASTNode *read_var_stmt()
 {
-    
 }
 
 static ASTNode *read_val_stmt()
 {
-    
 }
 
 static ASTNode *read_while_stmt()
 {
-    
 }
 
 static std::vector<ASTNode *> *read_toplevel()
@@ -767,7 +797,7 @@ static std::vector<ASTNode *> *read_toplevel()
         case FUNC:
             node = read_func_decl();
             break;
-        case IF:    
+        case IF:
             node = read_if_stmt();
             break;
         case INPUT:
@@ -801,14 +831,14 @@ static std::vector<ASTNode *> *read_toplevel()
     return stmts;
 }
 
-static void init_parser()
+void init_parser()
 {
     tk_idx = 0;
     tks = NULL;
     symtable = new SymTable(NULL);
 }
 
-static std::vector<ASTNode *> *parse(std::vector<Token *> *tokens)
+std::vector<ASTNode *> *parse(std::vector<Token *> *tokens)
 {
     tks = tokens;
     return read_toplevel();
