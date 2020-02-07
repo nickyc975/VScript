@@ -427,11 +427,15 @@ static ASTNode *for_stmt_node(ASTNode *for_init, ASTNode *for_cond, ASTNode *for
     return node;
 }
 
-static ASTNode *jmp_node(ASTNode *curr_stmt, ASTNode *next_stmt)
+static ASTNode *continue_node()
 {
-    ASTNode *node = new ASTNode(AST_JMP, AST_UNKNOW);
-    node->curr_stmt = curr_stmt;
-    node->next_stmt = next_stmt;
+    ASTNode *node = new ASTNode(AST_CONTINUE, AST_UNKNOW);
+    return node;
+}
+
+static ASTNode *break_node()
+{
+    ASTNode *node = new ASTNode(AST_BREAK, AST_UNKNOW);
     return node;
 }
 
@@ -764,11 +768,11 @@ static ASTNode *read_stmt()
         case CONTINUE:
             expect(CONTINUE);
             expect(SEMICOLON);
-            return jmp_node(NULL, NULL); // TODO: implement continue
+            return continue_node();
         case BREAK:
             expect(BREAK);
             expect(SEMICOLON);
-            return jmp_node(NULL, NULL); // TODO: implement break
+            return break_node(); // TODO: implement break
         case RETURN:
             expect(RETURN);
             node = return_node(read_expr());

@@ -18,7 +18,8 @@ static void print_if_stmt_node(ASTNode *node);
 static void print_elif_lst_node(ASTNode *node);
 static void print_while_stmt_node(ASTNode *node);
 static void print_for_stmt_node(ASTNode *node);
-static void print_jmp_node(ASTNode *node);
+static void print_continue_node(ASTNode *node);
+static void print_break_node(ASTNode *node);
 static void print_cpd_stmt_node(ASTNode *node);
 static void print_return_node(ASTNode *node);
 
@@ -88,8 +89,11 @@ void print_ast(ASTNode *root)
     case AST_FOR_STMT:
         print_for_stmt_node(root);
         break;
-    case AST_JMP:
-        print_jmp_node(root);
+    case AST_CONTINUE:
+        print_continue_node(root);
+        break;
+    case AST_BREAK:
+        print_break_node(root);
         break;
     case AST_STMTS:
         print_cpd_stmt_node(root);
@@ -314,17 +318,16 @@ static void print_for_stmt_node(ASTNode *node)
 {
 }
 
-static void print_jmp_node(ASTNode *node)
+static void print_continue_node(ASTNode *node)
 {
     print_indent();
-    printf("jmp: \n");
-    indent++;
-    print_ast(node->curr_stmt);
-    if (node->next_stmt != NULL)
-    {
-        print_ast(node->next_stmt);
-    }
-    indent--;
+    printf("continue\n");
+}
+
+static void print_break_node(ASTNode *node)
+{
+    print_indent();
+    printf("break\n");
 }
 
 static void print_cpd_stmt_node(ASTNode *node)
