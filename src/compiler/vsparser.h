@@ -44,14 +44,11 @@ public:
     // AST properties
     TYPE type;
     union {
-        struct
-        {
-            // identifiers
-            char *name;
+        // identifiers
+        char *name;
 
-            // constants
-            Value *value;
-        };
+        // constants
+        Value *value;
 
         // binary operate
         struct
@@ -69,11 +66,7 @@ public:
         };
 
         // expressions
-        struct
-        {
-            int expr_num;
-            std::vector<ASTNode *> *expr_list;
-        };
+        std::vector<ASTNode *> *expr_list;
 
         // declarations
         struct
@@ -85,7 +78,7 @@ public:
         // declaration list
         struct
         {
-            int specifier, decl_num;
+            KIND specifier;
             std::vector<ASTNode *> *decl_list; // list of declarations
         };
 
@@ -97,12 +90,8 @@ public:
             ASTNode *assign_val;
         };
 
-        // list value
-        struct
-        {
-            int list_len;
-            std::vector<ASTNode *> *list_vals;
-        };
+        // list values
+        std::vector<ASTNode *> *list_vals;
 
         // list index
         struct
@@ -114,9 +103,8 @@ public:
         // function declaration or function call
         struct
         {
-            int arg_num;
             ASTNode *func_name;
-            ASTNode *arg_list;
+            ASTNode *arg_node;
             ASTNode *func_body;
         };
 
@@ -158,22 +146,14 @@ public:
             ASTNode *next_stmt;
         };
 
-        // statements
-        struct
-        {
-            int stmts_num;
-            std::vector<ASTNode *> *stmts;
-        };
+        // input/print statements
+        std::vector<ASTNode *> *arg_list;
+
+        // compound statements
+        std::vector<ASTNode *> *cpd_stmt;
 
         // return statements
         ASTNode *ret_val;
-
-        // print/input statements
-        struct
-        {
-            int var_num;
-            std::vector<ASTNode *> *var_list;
-        };
     };
 
     ASTNode(ASTNODE_TYPE node_type, ASTNODE_TYPE ext_node_type);

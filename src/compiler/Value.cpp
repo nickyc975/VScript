@@ -20,16 +20,8 @@ Value::Value(double value): type(FLOAT), float_val(value)
 {
 }
 
-Value::Value(char *value): type(STRING)
+Value::Value(char *value): type(STRING), str_val(value)
 {
-    this->str_val = new std::vector<char>();
-    if (value != NULL)
-    {
-        for (int i = 0; value[i] != 0; i++)
-        {
-            this->str_val->push_back(value[i]);
-        }
-    }
 }
 
 Value::Value(std::vector<Value *> *value): type(LIST)

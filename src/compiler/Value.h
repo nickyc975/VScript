@@ -13,7 +13,7 @@ public:
         long long int_val;
         double float_val;
         void *none_val = NULL;
-        std::vector<char> *str_val;
+        char *str_val;
         std::vector<Value *> *list_val;
     };
 

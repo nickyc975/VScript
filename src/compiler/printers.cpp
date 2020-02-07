@@ -19,7 +19,7 @@ static void print_elif_lst_node(ASTNode *node);
 static void print_while_stmt_node(ASTNode *node);
 static void print_for_stmt_node(ASTNode *node);
 static void print_jmp_node(ASTNode *node);
-static void print_stmts_node(ASTNode *node);
+static void print_cpd_stmt_node(ASTNode *node);
 static void print_return_node(ASTNode *node);
 
 static void print_indent()
@@ -92,7 +92,7 @@ void print_ast(ASTNode *root)
         print_jmp_node(root);
         break;
     case AST_STMTS:
-        print_stmts_node(root);
+        print_cpd_stmt_node(root);
         break;
     case AST_RETURN:
         print_return_node(root);
@@ -313,12 +313,12 @@ static void print_jmp_node(ASTNode *node)
     indent--;
 }
 
-static void print_stmts_node(ASTNode *node)
+static void print_cpd_stmt_node(ASTNode *node)
 {
     print_indent();
     printf("stmts: \n");
     indent++;
-    for (ASTNode *child : *node->stmts)
+    for (ASTNode *child : *node->cpd_stmt)
     {
         print_ast(child);
         // printf("%d\n", child->node_type);
