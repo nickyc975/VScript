@@ -91,7 +91,7 @@ public:
             ASTNode *assign_val;
         };
 
-        // list values
+        // list values, function/io args
         std::vector<ASTNode *> *list_vals;
 
         // list index
@@ -146,9 +146,6 @@ public:
             ASTNode *curr_stmt;
             ASTNode *next_stmt;
         };
-
-        // input/print statements
-        std::vector<ASTNode *> *arg_list;
 
         // compound statements
         std::vector<ASTNode *> *cpd_stmt;

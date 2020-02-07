@@ -18,6 +18,7 @@ static void print_if_stmt_node(ASTNode *node);
 static void print_elif_lst_node(ASTNode *node);
 static void print_while_stmt_node(ASTNode *node);
 static void print_for_stmt_node(ASTNode *node);
+static void print_io_stmt_node(ASTNode *node);
 static void print_continue_node(ASTNode *node);
 static void print_break_node(ASTNode *node);
 static void print_cpd_stmt_node(ASTNode *node);
@@ -100,6 +101,10 @@ void print_ast(ASTNode *root)
         break;
     case AST_RETURN:
         print_return_node(root);
+        break;
+    case AST_INPUT_STMT:
+    case AST_PRINT_STMT:
+        print_io_stmt_node(root);
         break;
     default:
         break;
@@ -323,6 +328,18 @@ static void print_while_stmt_node(ASTNode *node)
 
 static void print_for_stmt_node(ASTNode *node)
 {
+}
+
+static void print_io_stmt_node(ASTNode *node)
+{
+    print_indent();
+    printf("%s: \n", node->node_type == AST_INPUT_STMT ? "input" : "print");
+    indent++;
+    for (ASTNode *child : *node->list_vals)
+    {
+        print_ast(child);
+    }
+    indent--;
 }
 
 static void print_continue_node(ASTNode *node)

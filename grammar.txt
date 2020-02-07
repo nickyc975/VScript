@@ -77,6 +77,15 @@ initializer:L_BRACK initializer_list COMMA R_BRACK
 initializer_list:initializer
 initializer_list:initializer_list COMMA initializer
 
+logic_or_expression_list:logic_or_expression
+logic_or_expression_list:logic_or_expression_list COMMA logic_or_expression
+
+io_statement:INPUT L_PAREN R_PAREN SEMICOLON
+io_statement:INPUT L_PAREN logic_or_expression_list R_PAREN SEMICOLON
+io_statement:PRINT L_PAREN R_PAREN SEMICOLON
+io_statement:PRINT L_PAREN logic_or_expression_list R_PAREN SEMICOLON
+
+statement:io_statement
 statement:function_declaration
 statement:expression_statement
 statement:selection_statement
@@ -113,6 +122,7 @@ jump_statement:BREAK SEMICOLON
 jump_statement:RETURN SEMICOLON
 jump_statement:RETURN expression SEMICOLON
 
+external_declaration:io_statement
 external_declaration:function_declaration
 external_declaration:declaration
 external_declaration:expression_statement

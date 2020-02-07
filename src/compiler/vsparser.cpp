@@ -21,8 +21,7 @@ static ASTNode *read_cpd_stmt();
 static ASTNode *read_for_stmt();
 static ASTNode *read_func_decl();
 static ASTNode *read_if_stmt();
-static ASTNode *read_input_stmt();
-static ASTNode *read_print_stmt();
+static ASTNode *read_io_stmt();
 static ASTNode *read_initializer_list();
 static ASTNode *read_initializer();
 static ASTNode *read_init_decl();
@@ -456,14 +455,14 @@ static ASTNode *return_node(ASTNode *ret_val)
 static ASTNode *print_stmt_node(std::vector<ASTNode *> *arg_list)
 {
     ASTNode *node = new ASTNode(AST_PRINT_STMT, AST_UNKNOW);
-    node->arg_list = arg_list;
+    node->list_vals = arg_list;
     return node;
 }
 
 static ASTNode *input_stmt_node(std::vector<ASTNode *> *arg_list)
 {
     ASTNode *node = new ASTNode(AST_INPUT_STMT, AST_UNKNOW);
-    node->arg_list = arg_list;
+    node->list_vals = arg_list;
     return node;
 }
 
@@ -757,9 +756,8 @@ static ASTNode *read_stmt()
         case IF:
             return read_if_stmt();
         case INPUT:
-            return read_input_stmt();
         case PRINT:
-            return read_print_stmt();
+            return read_io_stmt();
         case VAL:
         case VAR:
             return read_decl_stmt();
@@ -812,7 +810,6 @@ static ASTNode *read_cpd_stmt()
 
 static ASTNode *read_for_stmt()
 {
-
 }
 
 static ASTNode *read_func_decl()
@@ -845,12 +842,25 @@ static ASTNode *read_if_stmt()
 {
 }
 
-static ASTNode *read_input_stmt()
+static ASTNode *read_io_stmt()
 {
-}
-
-static ASTNode *read_print_stmt()
-{
+    Token *token = get_token();
+    if (token->kind != INPUT && token->kind != PRINT)
+    {
+        unget_token();
+        // error: expect input or print
+    }
+    expect(L_PAREN);
+    ASTNode *arg_list = read_arg_expr_list();
+    expect(R_PAREN);
+    expect(SEMICOLON);
+    ASTNode *node;
+    if (token->kind == INPUT)
+        node = input_stmt_node(arg_list->list_vals);
+    else
+        node = print_stmt_node(arg_list->list_vals);
+    delete arg_list;
+    return node;
 }
 
 static ASTNode *read_initializer_list()
@@ -947,10 +957,8 @@ static std::vector<ASTNode *> *read_toplevel()
             node = read_if_stmt();
             break;
         case INPUT:
-            node = read_input_stmt();
-            break;
         case PRINT:
-            node = read_print_stmt();
+            node = read_io_stmt();
             break;
         case VAL:
         case VAR:
