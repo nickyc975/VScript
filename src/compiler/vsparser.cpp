@@ -817,6 +817,28 @@ static ASTNode *read_for_stmt()
 
 static ASTNode *read_func_decl()
 {
+    expect(FUNC);
+    Token *token = expect(IDENTIFIER);
+    expect(L_PAREN);
+    ASTNode *arg_node = lst_val_node(new std::vector<ASTNode *>());
+    if (peek_token()->kind != R_PAREN)
+    {
+        Token *arg = expect(IDENTIFIER);
+        arg_node->list_vals->push_back(ident_node(arg->identifier));
+        while (peek_token()->kind == COMMA)
+        {
+            expect(COMMA);
+            arg = expect(IDENTIFIER);
+            arg_node->list_vals->push_back(ident_node(arg->identifier));
+        }
+    }
+    expect(R_PAREN);
+    ASTNode *func_body = read_cpd_stmt();
+    if (func_body == NULL)
+    {
+        // error: missing function body
+    }
+    return func_decl_node(ident_node(token->identifier), arg_node, func_body);
 }
 
 static ASTNode *read_if_stmt()

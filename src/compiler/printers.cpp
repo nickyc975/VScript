@@ -267,6 +267,13 @@ static void print_func_call_node(ASTNode *node)
 
 static void print_func_decl_node(ASTNode *node)
 {
+    print_indent();
+    printf("func_decl: \n");
+    indent++;
+    print_ast(node->func_name);
+    print_ast(node->arg_node);
+    print_ast(node->func_body);
+    indent--;
 }
 
 static void print_if_stmt_node(ASTNode *node)
@@ -346,4 +353,9 @@ static void print_cpd_stmt_node(ASTNode *node)
 
 static void print_return_node(ASTNode *node)
 {
+    print_indent();
+    printf("return: \n");
+    indent++;
+    print_ast(node->ret_val);
+    indent--;
 }
