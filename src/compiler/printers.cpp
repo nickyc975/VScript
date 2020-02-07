@@ -245,6 +245,20 @@ static void print_lst_idx_node(ASTNode *node)
 
 static void print_func_call_node(ASTNode *node)
 {
+    print_indent();
+    printf("func_call: \n");
+    indent++;
+    print_indent();
+    printf("func name: \n");
+    indent++;
+    print_ast(node->func_name);
+    indent--;
+    print_indent();
+    printf("func args: \n");
+    indent++;
+    print_ast(node->arg_node);
+    indent--;
+    indent--;
 }
 
 static void print_func_decl_node(ASTNode *node)
