@@ -1,10 +1,11 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <vector>
-
 #ifndef VSC_DEFINE
 
 #define VSC_DEFINE
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <vector>
 
 typedef enum
 {
@@ -65,7 +66,8 @@ typedef enum
     FLOAT,
     STRING,
     LIST,
-    FUNC_T
+    FUNC_T,
+    UNKNOWN
 } TYPE;
 
 typedef enum
@@ -110,57 +112,6 @@ static char INST_STR[][10] = {
     "ADD", "SUB", "MUL", "DIV", "MOD", "LT", "GT", "LE", "GE", "EQ", 
     "NEQ", "AND", "OR", "NOT", "ASSIGN", "PUSH", "POP", "JMP", "JIF", "CALL", "RET", "INPUT", 
     "PRINT", "NOP"
-};
-
-class Value
-{
-public:
-    TYPE type;
-    union {
-        bool bool_val;
-        char char_val;
-        long long int_val;
-        double float_val;
-
-        struct
-        {
-            char *str_val;
-            unsigned int str_len;
-        };
-
-        struct
-        {
-            unsigned int list_len;
-            std::vector<Value *> *list_val;
-        };
-
-        struct
-        {
-            unsigned int arg_num;
-            unsigned int func_entry;
-        };
-    };
-    bool is_mutable;
-
-    Value(TYPE type) : type(type)
-    {
-    }
-
-    ~Value()
-    {
-        if (this->type == STRING && this->str_val != NULL)
-        {
-            free(this->str_val);
-        }
-        else if (this->type == LIST && this->list_val != NULL)
-        {
-            for (Value *value : *(this->list_val))
-            {
-                delete value;
-            }
-            delete this->list_val;
-        }
-    }
 };
 
 #endif

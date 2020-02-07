@@ -44,8 +44,7 @@ int recognize_none(File *file, Token *token)
     if (len == 4 && !strcmp("none", buffer))
     {
         token->kind = CONSTANT;
-        token->value = new Value(NONE);
-        token->value->is_mutable = false;
+        token->value = new Value();
         return 0;
     }
     file->seek(-len);
@@ -59,16 +58,12 @@ int recognize_bool(File *file, Token *token)
     if (!strcmp("true", buffer))
     {
         token->kind = CONSTANT;
-        token->value = new Value(BOOL);
-        token->value->is_mutable = false;
-        token->value->bool_val = true;
+        token->value = new Value(true);
     }
     else if (!strcmp("false", buffer))
     {
         token->kind = CONSTANT;
-        token->value = new Value(BOOL);
-        token->value->is_mutable = false;
-        token->value->bool_val = false;
+        token->value = new Value(false);
     }
     else
     {
@@ -85,15 +80,12 @@ int recognize_num(File *file, Token *token)
     int len = file->getnum(buffer, BUFFER_SIZE);
     if (strchr(buffer, '.') != NULL)
     {
-        token->value = new Value(FLOAT);
-        token->value->float_val = atof(buffer);
+        token->value = new Value(atof(buffer));
     }
     else
     {
-        token->value = new Value(INT);
-        token->value->int_val = atoll(buffer);
+        token->value = new Value(atoll(buffer));
     }
-    token->value->is_mutable = false;
     return 0;
 }
 
@@ -109,14 +101,12 @@ int recognize_char(File *file, Token *token)
     }
     
     token->kind = CONSTANT;
-    token->value = new Value(CHAR);
-    token->value->is_mutable = false;
     if (buffer[1] == '\\') {
-        token->value->char_val = escape(buffer[2]);
+        token->value = new Value(escape(buffer[2]));
     }
     else
     {
-        token->value->char_val = buffer[1];
+        token->value = new Value(buffer[1]);
         file->seek(-1);
     }
     return 0;
@@ -157,10 +147,7 @@ int recognize_str(File *file, Token *token)
     {
         str_buffer[len] = '\0';
         token->kind = CONSTANT;
-        token->value = new Value(STRING);
-        token->value->is_mutable = false;
-        token->value->str_len = len - 1;
-        token->value->str_val = str_buffer;
+        token->value = new Value(str_buffer);
         return 0;
     }
 

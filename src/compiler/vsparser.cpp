@@ -247,7 +247,6 @@ static ASTNode *const_node(Value *value)
 {
     ASTNode *node = new ASTNode(AST_CONST, AST_EXPR);
     node->type = value->type;
-    node->is_mutable = value->is_mutable;
     node->value = value;
     return node;
 }

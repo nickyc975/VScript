@@ -2,6 +2,8 @@
 
 #include "vsc.h"
 #include "vslexer.h"
+#include "Ident.h"
+#include "Value.h"
 
 #define VSPARSER_H
 
@@ -41,7 +43,6 @@ public:
 
     // AST properties
     TYPE type;
-    unsigned int is_mutable;
     union {
         struct
         {
