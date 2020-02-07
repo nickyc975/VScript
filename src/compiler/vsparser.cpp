@@ -812,6 +812,22 @@ static ASTNode *read_cpd_stmt()
 
 static ASTNode *read_for_stmt()
 {
+    expect(FOR);
+    expect(L_PAREN);
+    KIND kind = peek_token()->kind;
+    ASTNode *init = NULL, *cond = NULL, *incr = NULL, *body = NULL;
+    if (kind == VAL || kind == VAR)
+        init = read_decl_stmt();
+    else
+        init = read_expr_stmt();
+    cond = read_expr_stmt();
+    if (peek_token()->kind != R_PAREN)
+    {
+        incr = read_expr();
+    }
+    expect(R_PAREN);
+    body = read_cpd_stmt();
+    return for_stmt_node(init, cond, incr, body);
 }
 
 static ASTNode *read_func_decl()

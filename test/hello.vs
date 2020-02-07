@@ -1,6 +1,9 @@
 func main() {
     print("Hello World!\n");
     var x = 3, y = 5, z = "abc";
+    for (var i = 0; i < y; i += x) {
+        z += z;
+    }
     print(z);
     return 0;
 }

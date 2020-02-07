@@ -328,6 +328,14 @@ static void print_while_stmt_node(ASTNode *node)
 
 static void print_for_stmt_node(ASTNode *node)
 {
+    print_indent();
+    printf("for_stmt: \n");
+    indent++;
+    print_ast(node->for_init);
+    print_ast(node->for_cond);
+    print_ast(node->for_incr);
+    print_ast(node->for_body);
+    indent--;
 }
 
 static void print_io_stmt_node(ASTNode *node)
