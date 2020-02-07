@@ -106,6 +106,12 @@ static char CLASS_STR[][15] = {
 
 static char TYPE_STR[][10] = {"NONE", "BOOL", "CHAR", "INT", "FLOAT", "STRING", "LIST", "FUNC"};
 
+static char INST_STR[][10] = {
+    "ADD", "SUB", "MUL", "DIV", "MOD", "LT", "GT", "LE", "GE", "EQ", 
+    "NEQ", "AND", "OR", "NOT", "ASSIGN", "PUSH", "POP", "JMP", "JIF", "CALL", "RET", "INPUT", 
+    "PRINT", "NOP"
+};
+
 class Value
 {
 public:

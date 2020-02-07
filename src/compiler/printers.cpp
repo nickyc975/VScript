@@ -145,7 +145,7 @@ static void print_b_expr_node(ASTNode *node)
     indent++;
     print_ast(node->l_operand);
     print_indent();
-    printf("b_opcode: %d\n", node->b_opcode);
+    printf("b_opcode: %s\n", INST_STR[node->b_opcode]);
     print_ast(node->r_operand);
     indent--;
 }
@@ -156,7 +156,7 @@ static void print_u_expr_node(ASTNode *node)
     printf("u_expr: \n");
     indent++;
     print_indent();
-    printf("u_opcode: %d\n", node->u_opcode);
+    printf("u_opcode: %s\n", INST_STR[node->u_opcode]);
     print_ast(node->operand);
     indent--;
 }
@@ -207,7 +207,7 @@ static void print_assign_node(ASTNode *node)
     indent++;
     print_ast(node->assign_var);
     print_indent();
-    printf("assign_opcode: %d\n", node->assign_opcode);
+    printf("assign_opcode: %s\n", INST_STR[node->assign_opcode]);
     print_ast(node->assign_val);
     indent--;
 }
