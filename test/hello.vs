@@ -1,10 +1,7 @@
 func main() {
-    print "Hello World!\n";
+    print("Hello World!\n");
     var x = 3, y = 5, z = "abc";
-    for (var i = 0; i < y; i += 1) {
-        z += x;
-    }
-    print z;
+    print(z);
     return 0;
 }
 
@@ -30,6 +27,8 @@ while (int_val < 0)
     int_val += 1;
     if (int_val > 0) {
         a = 1;
+    } elif (int_val < -1) {
+        a = 2;
     } else {
         a = 3;
     }

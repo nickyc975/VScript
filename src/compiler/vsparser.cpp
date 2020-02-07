@@ -20,6 +20,8 @@ static ASTNode *read_stmt();
 static ASTNode *read_cpd_stmt();
 static ASTNode *read_for_stmt();
 static ASTNode *read_func_decl();
+static ASTNode *read_elif_stmt();
+static ASTNode *read_elif_list();
 static ASTNode *read_if_stmt();
 static ASTNode *read_io_stmt();
 static ASTNode *read_initializer_list();
@@ -388,11 +390,11 @@ static ASTNode *if_stmt_node(ASTNode *if_cond, ASTNode *true_stmt, ASTNode *fals
     return node;
 }
 
-static ASTNode *elif_lst_node(std::vector<ASTNode *> *elif_list)
+static ASTNode *elif_lst_node(std::vector<ASTNode *> *elif_list, ASTNode *else_node)
 {
     ASTNode *node = new ASTNode(AST_ELIF_LST, AST_UNKNOW);
     node->elif_list = elif_list;
-    node->else_node = NULL;
+    node->else_node = else_node;
     return node;
 }
 
@@ -838,8 +840,54 @@ static ASTNode *read_func_decl()
     return func_decl_node(ident_node(token->identifier), arg_node, func_body);
 }
 
+static ASTNode *read_elif_stmt()
+{
+    expect(ELIF);
+    expect(L_PAREN);
+    ASTNode *cond = read_logic_or_expr();
+    expect(R_PAREN);
+    ASTNode *body = read_cpd_stmt();
+    return if_stmt_node(cond, body, NULL);
+}
+
+static ASTNode *read_elif_list()
+{
+    ASTNode *node = NULL;
+    std::vector<ASTNode *> *elif_list = new std::vector<ASTNode *>();
+    while (peek_token()->kind == ELIF)
+    {
+        node = read_elif_stmt();
+        if (node != NULL)
+        {
+            elif_list->push_back(node);
+            node = NULL;
+        }
+    }
+
+    if (peek_token()->kind = ELSE)
+    {
+        expect(ELSE);
+        node = read_cpd_stmt();
+    }
+
+    return elif_lst_node(elif_list, node);
+}
+
 static ASTNode *read_if_stmt()
 {
+    expect(IF);
+    expect(L_PAREN);
+    ASTNode *cond = read_logic_or_expr();
+    expect(R_PAREN);
+    ASTNode *true_stmt = read_cpd_stmt(), *false_stmt = NULL;
+    if (peek_token()->kind == ELIF)
+        false_stmt = read_elif_list();
+    else if (peek_token()->kind == ELSE)
+    {
+        expect(ELSE);
+        false_stmt = read_cpd_stmt();
+    }
+    return if_stmt_node(cond, true_stmt, false_stmt);
 }
 
 static ASTNode *read_io_stmt()
