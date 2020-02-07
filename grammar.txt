@@ -57,8 +57,8 @@ expression:expression COMMA assignment_expression
 declaration:VAR init_declarator_list SEMICOLON
 declaration:VAL init_declarator_list SEMICOLON
 
-function_definition:FUNC IDENTIFIER L_PAREN R_PAREN compound_statement
-function_definition:FUNC IDENTIFIER L_PAREN identifier_list R_PAREN compound_statement
+function_declaration:FUNC IDENTIFIER L_PAREN R_PAREN compound_statement
+function_declaration:FUNC IDENTIFIER L_PAREN identifier_list R_PAREN compound_statement
 
 init_declarator_list:init_declarator
 init_declarator_list:init_declarator_list COMMA init_declarator
@@ -77,7 +77,7 @@ initializer:L_BRACK initializer_list COMMA R_BRACK
 initializer_list:initializer
 initializer_list:initializer_list COMMA initializer
 
-statement:compound_statement
+statement:function_declaration
 statement:expression_statement
 statement:selection_statement
 statement:iteration_statement
@@ -113,7 +113,7 @@ jump_statement:BREAK SEMICOLON
 jump_statement:RETURN SEMICOLON
 jump_statement:RETURN expression SEMICOLON
 
-external_declaration:function_definition
+external_declaration:function_declaration
 external_declaration:declaration
 external_declaration:expression_statement
 external_declaration:selection_statement

@@ -18,6 +18,9 @@ static ASTNode *read_logic_or_expr();
 static ASTNode *read_assign_expr();
 static ASTNode *read_expr();
 static ASTNode *read_expr_stmt();
+static ASTNode *read_stmt();
+static ASTNode *read_stmt_blk();
+static ASTNode *read_cpd_stmt();
 static ASTNode *read_for_stmt();
 static ASTNode *read_func_decl();
 static ASTNode *read_if_stmt();
@@ -751,8 +754,88 @@ static ASTNode *read_expr_stmt()
     return node;
 }
 
+static ASTNode *read_stmt()
+{
+    ASTNode *node = NULL;
+    if (has_token())
+    {
+        switch (peek_token()->kind)
+        {
+        case FOR:
+            return read_for_stmt();
+        case FUNC:
+            return read_func_decl();
+        case IF:
+            return read_if_stmt();
+        case INPUT:
+            return read_input_stmt();
+        case PRINT:
+            return read_print_stmt();
+        case VAL:
+            return read_val_stmt();
+        case VAR:
+            return read_var_stmt();
+        case WHILE:
+            return read_while_stmt();
+        case CONTINUE:
+            expect(CONTINUE);
+            expect(SEMICOLON);
+            return jmp_node(NULL, NULL); // TODO: implement continue
+        case BREAK:
+            expect(BREAK);
+            expect(SEMICOLON);
+            return jmp_node(NULL, NULL); // TODO: implement break
+        case RETURN:
+            expect(RETURN);
+            node = return_node(read_expr());
+            expect(SEMICOLON);
+            return node;
+        default:
+            return read_expr_stmt();
+        }
+    }
+    // error: missing token
+    return NULL;
+}
+
+static ASTNode *read_stmt_blk()
+{
+    ASTNode *stmt = NULL;
+    ASTNode *stmt_blk = stmts_node(0, new std::vector<ASTNode *>());
+    while (peek_token()->kind != R_CURLY)
+    {
+        if (peek_token()->kind == VAL)
+        {
+            stmt = read_val_stmt();
+        }
+        else if (peek_token()->kind == VAR)
+        {
+            stmt = read_var_stmt();
+        }
+        else
+        {
+            stmt = read_stmt();
+        }
+        if (stmt != NULL)
+        {
+            stmt_blk->stmts->push_back(stmt);
+            stmt_blk->stmts_num++;
+        }
+    }
+    return stmt_blk;
+}
+
+static ASTNode *read_cpd_stmt()
+{
+    expect(L_CURLY);
+    ASTNode *node = read_stmt_blk();
+    expect(R_CURLY);
+    return node;
+}
+
 static ASTNode *read_for_stmt()
 {
+
 }
 
 static ASTNode *read_func_decl()
@@ -777,10 +860,20 @@ static ASTNode *read_var_stmt()
 
 static ASTNode *read_val_stmt()
 {
+    expect(VAL);
+
 }
 
 static ASTNode *read_while_stmt()
 {
+    expect(WHILE);
+    expect(L_PAREN);
+    ASTNode *cond = read_logic_or_expr();
+    expect(R_PAREN);
+    ASTNode *body = read_cpd_stmt();
+    if (cond == NULL || body == NULL)
+        return NULL;
+    return while_stmt_node(cond, body);
 }
 
 static std::vector<ASTNode *> *read_toplevel()
