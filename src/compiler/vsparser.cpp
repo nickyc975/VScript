@@ -1,9 +1,20 @@
 #include "vsparser.hpp"
 
+// Create new table for compound statements.
 #define new_table() cur_table = new SymTable(cur_table)
+
+// Restore parent table.
 #define restore_table() cur_table = cur_table->get_parent()
 
-static int tk_idx;
+// Ensure that there are tokens.
+#define ensure_token(ret) \
+    if (!has_token()) \
+    { \
+        err("unexpected end of file\n");\
+        return ret;\
+    }
+
+static unsigned int tk_idx;
 static std::vector<Token *> *tks;
 static SymTable *cur_table;
 
@@ -33,7 +44,7 @@ static ASTNode *read_if_stmt();
 static ASTNode *read_io_stmt();
 static ASTNode *read_initializer_list();
 static ASTNode *read_initializer();
-static ASTNode *read_init_decl();
+static ASTNode *read_init_decl(bool is_mutable);
 static ASTNode *read_decl_stmt();
 static ASTNode *read_while_stmt();
 static ASTNode *read_program();
@@ -177,14 +188,16 @@ static bool ensure_lval(ASTNode *node)
     case AST_IDENT:
         if (!node->is_mutable)
         {
-            // error: "node->name" is immutable
+            ensure_token(false);
+            err("line: %ld, \"%s\" is immutable\n", peek_token()->ln, node->name);
             return false;
         }
         break;
     case AST_LST_IDX:
         break;
     default:
-        // error: illegal left value: node->node_type
+        ensure_token(false);
+        err("line: %ld, illegal left value\n", peek_token()->ln);
         return false;
     }
     return true;
@@ -201,7 +214,8 @@ static bool ensure_in_iter()
         }
         temp = temp->get_parent();
     }
-    // error: continue or break must be in while or for statement
+    ensure_token(false);
+    err("line %ld, continue or break must be in while or for statement\n", peek_token()->ln);
     return false;
 }
 
@@ -216,7 +230,8 @@ static bool ensure_in_func_decl()
         }
         temp = temp->get_parent();
     }
-    // error: return must be in function declaration
+    ensure_token(false);
+    err("line %ld, return must be in function declaration\n", peek_token()->ln);
     return false;
 }
 
@@ -290,12 +305,6 @@ static ASTNode *expr_lst_node(std::vector<ASTNode *> *expr_list)
 
 static ASTNode *decl_node(ASTNode *var_name, ASTNode *init_val)
 {
-    if (var_name->node_type != AST_IDENT)
-    {
-        // error = 1;
-        // report_error();
-        // printf("unable to assign value to %d.\n", var_name->node_type);
-    }
     ASTNode *node = new ASTNode(AST_DECL, AST_UNKNOW);
     node->var_name = var_name;
     node->init_val = init_val;
@@ -437,20 +446,22 @@ static ASTNode *input_stmt_node(std::vector<ASTNode *> *arg_list)
 
 static Token *expect(KIND kind)
 {
+    ensure_token(NULL);
     Token *token = get_token();
     if (token->kind != kind)
     {
-        // error: expected "kind" but got "token->kind"
+        err("line: %ld, expected \"%s\" but got \"%s\"\n", token->ln, KIND_STR[kind], KIND_STR[token->kind]);
     }
     return token;
 }
 
 static Token *expect2(KIND kind1, KIND kind2)
 {
+    ensure_token(NULL);
     Token *token = get_token();
     if (token->kind != kind1 && token->kind != kind2)
     {
-        // error: expected "kind1" or "kind2" but got "token->kind"
+        err("line: %ld, expected \"%s\" or \"%s\" but got \"%s\"\n", token->ln, KIND_STR[kind1], KIND_STR[kind1], KIND_STR[token->kind]);
     }
     return token;
 }
@@ -459,6 +470,8 @@ static ASTNode *read_primary_expr()
 {
     Token *token;
     ASTNode *node = NULL;
+
+    ensure_token(NULL);
     switch (peek_token()->kind)
     {
     case CONSTANT:
@@ -468,7 +481,8 @@ static ASTNode *read_primary_expr()
         token = get_token();
         if (!cur_table->contains_recur(token->identifier))
         {
-            // error: token->identifier" undefined
+            err("line %ld, \"%s\" not defined\n", token->ln, token->identifier);
+            break;
         }
         node = cur_table->get_recur(token->identifier);
         break;
@@ -478,7 +492,6 @@ static ASTNode *read_primary_expr()
         expect(R_PAREN);
         break;
     default:
-        // error: does not expect token: peek_token()
         break;
     }
     return node;
@@ -486,25 +499,29 @@ static ASTNode *read_primary_expr()
 
 static ASTNode *read_arg_expr_list()
 {
-    Token *token;
     ASTNode *arg_list = lst_val_node(new std::vector<ASTNode *>());
+    ensure_token(arg_list);
     if (peek_token()->kind == R_PAREN)
         return arg_list;
     ASTNode *arg = read_logic_or_expr();
     if (arg == NULL)
     {
-        // error: missing args
+        ensure_token(arg_list);
+        err("line: %ld, missing args\n", peek_token()->ln);
     }
     arg_list->list_vals->push_back(arg);
+    ensure_token(arg_list);
     while (peek_token()->kind == COMMA)
     {
         expect(COMMA);
         arg = read_logic_or_expr();
         if (arg == NULL)
         {
-            // error: missing args
+            ensure_token(arg_list);
+            err("line: %ld, missing args\n", peek_token()->ln);
         }
         arg_list->list_vals->push_back(arg);
+        ensure_token(arg_list);
     }
     return arg_list;
 }
@@ -514,6 +531,7 @@ static ASTNode *read_postfix_expr()
     ASTNode *node = read_primary_expr();
     if (node == NULL || !has_token())
         return node;
+    
     switch (peek_token()->kind)
     {
     case L_BRACK:
@@ -522,7 +540,8 @@ static ASTNode *read_postfix_expr()
         ASTNode *lst_idx = read_expr();
         if (lst_idx == NULL)
         {
-            // error: wrong list index
+            ensure_token(node);
+            err("line: %ld, invalid list index\n", peek_token()->ln);
         }
         node = lst_idx_node(node, lst_idx);
         expect(R_BRACK);
@@ -534,14 +553,14 @@ static ASTNode *read_postfix_expr()
         ASTNode *arg_list = read_arg_expr_list();
         if (arg_list == NULL)
         {
-            // error: missing arg list
+            ensure_token(node);
+            err("line: %ld, missing args\n", peek_token()->ln);
         }
         node = func_call_node(node, arg_list);
         expect(R_PAREN);
         break;
     }
     default:
-        // error: does not expect token: peek_token()
         break;
     }
     return node;
@@ -550,6 +569,7 @@ static ASTNode *read_postfix_expr()
 static ASTNode *read_unary_expr()
 {
     Token *token = NULL;
+    ensure_token(NULL);
     if (peek_token()->kind == SUB || peek_token()->kind == NOT)
     {
         token = get_token();
@@ -576,9 +596,11 @@ static ASTNode *read_multi_expr()
         ASTNode *right = read_unary_expr();
         if (right == NULL)
         {
-            // error: missing right value
+            ensure_token(node);
+            err("line: %ld, missing right value\n", peek_token()->ln);
         }
         node = b_expr_node(get_mul_opcode(token->kind), node, right);
+        ensure_token(node);
     }
     return node;
 }
@@ -595,9 +617,11 @@ static ASTNode *read_additive_expr()
         ASTNode *right = read_multi_expr();
         if (right == NULL)
         {
-            // error: missing right value
+            ensure_token(node);
+            err("line: %ld, missing right value\n", peek_token()->ln);
         }
         node = b_expr_node(token->kind == ADD ? I_ADD : I_SUB, node, right);
+        ensure_token(node);
     }
     return node;
 }
@@ -614,9 +638,11 @@ static ASTNode *read_relational_expr()
         ASTNode *right = read_additive_expr();
         if (right == NULL)
         {
-            // error: missing right value
+            ensure_token(node);
+            err("line: %ld, missing right value\n", peek_token()->ln);
         }
         node = b_expr_node(get_rel_opcode(token->kind), node, right);
+        ensure_token(node);
     }
     return node;
 }
@@ -633,9 +659,11 @@ static ASTNode *read_equality_expr()
         ASTNode *right = read_relational_expr();
         if (right == NULL)
         {
-            // error: missing right value
+            ensure_token(node);
+            err("line: %ld, missing right value\n", peek_token()->ln);
         }
         node = b_expr_node(token->kind == EQ ? I_EQ : I_NEQ, node, right);
+        ensure_token(node);
     }
     return node;
 }
@@ -651,9 +679,11 @@ static ASTNode *read_logic_and_expr()
         ASTNode *right = read_equality_expr();
         if (right == NULL)
         {
-            // error: missing right value
+            ensure_token(node);
+            err("line: %ld, missing right value\n", peek_token()->ln);
         }
         node = b_expr_node(I_AND, node, right);
+        ensure_token(node);
     }
     return node;
 }
@@ -669,9 +699,11 @@ static ASTNode *read_logic_or_expr()
         ASTNode *right = read_logic_and_expr();
         if (right == NULL)
         {
-            // error: missing right value
+            ensure_token(node);
+            err("line: %ld, missing right value\n", peek_token()->ln);
         }
         node = b_expr_node(I_OR, node, right);
+        ensure_token(node);
     }
     return node;
 }
@@ -681,7 +713,6 @@ static ASTNode *read_assign_expr()
     ASTNode *node = read_logic_or_expr();
     if (node == NULL || !has_token())
         return node;
-
     if (is_assign(peek_token()->kind))
     {
         ensure_lval(node);
@@ -689,7 +720,8 @@ static ASTNode *read_assign_expr()
         ASTNode *right = read_logic_or_expr();
         if (right == NULL)
         {
-            // error: missing right value
+            ensure_token(node);
+            err("line: %ld, missing right value\n", peek_token()->ln);
         }
         node = assign_node(assign_opcode, node, right);
     }
@@ -704,6 +736,8 @@ static ASTNode *read_expr()
     {
         expr->expr_list->push_back(node);
     }
+
+    ensure_token(expr);
     while (peek_token()->kind == COMMA)
     {
         expect(COMMA);
@@ -712,14 +746,17 @@ static ASTNode *read_expr()
         {
             expr->expr_list->push_back(node);
         }
+        ensure_token(expr);
     }
     return expr;
 }
 
 static ASTNode *read_expr_stmt()
 {
+    ensure_token(NULL);
     if (peek_token()->kind == SEMICOLON)
     {
+        expect(SEMICOLON);
         return NULL;
     }
     ASTNode *node = read_expr();
@@ -760,7 +797,7 @@ static ASTNode *read_stmt()
             expect(BREAK);
             expect(SEMICOLON);
             ensure_in_iter();
-            return break_node(); // TODO: implement break
+            return break_node();
         case RETURN:
             expect(RETURN);
             node = return_node(read_expr());
@@ -771,7 +808,7 @@ static ASTNode *read_stmt()
             return read_expr_stmt();
         }
     }
-    // error: missing token
+    err("unexpected end of file\n");
     return NULL;
 }
 
@@ -780,6 +817,8 @@ static ASTNode *read_cpd_stmt()
     expect(L_CURLY);
     ASTNode *stmt = NULL;
     ASTNode *cpd_stmt = cpd_stmt_node(new std::vector<ASTNode *>(), cur_table);
+    
+    ensure_token(cpd_stmt);
     while (peek_token()->kind != R_CURLY)
     {
         bool old_nd_fl_bk = need_fill_back;
@@ -806,6 +845,7 @@ static ASTNode *read_cpd_stmt()
                 prev_stmt = stmt;
             }
         }
+        ensure_token(cpd_stmt);
     }
     expect(R_CURLY);
     return cpd_stmt;
@@ -819,6 +859,7 @@ static ASTNode *read_for_stmt()
     // create new symbal table for "for" loop
     new_table();
 
+    ensure_token(NULL);
     KIND kind = peek_token()->kind;
     ASTNode *init = NULL, *cond = NULL, *incr = NULL, *body = NULL;
     if (kind == VAL || kind == VAR)
@@ -826,6 +867,8 @@ static ASTNode *read_for_stmt()
     else
         init = read_expr_stmt();
     cond = read_expr_stmt();
+
+    ensure_token(NULL);
     if (peek_token()->kind != R_PAREN)
     {
         incr = read_expr();
@@ -849,10 +892,10 @@ static ASTNode *read_func_decl()
 
     if (cur_table->contains(token->identifier))
     {
-        // error: duplicated definition of token->identifier
+        err("line: %ld, duplicated definition of \"%s\"\n", token->ln, token->identifier);
     }
 
-    // In case of recursive function, we must put the id in the table 
+    // In case of recursive function, we must put the id in the table
     // before entering the function body.
     ASTNode *ident = ident_node(token->identifier, false);
     cur_table->put(ident);
@@ -861,6 +904,8 @@ static ASTNode *read_func_decl()
     new_table();
 
     ASTNode *arg_node = lst_val_node(new std::vector<ASTNode *>());
+
+    ensure_token(NULL);
     if (peek_token()->kind != R_PAREN)
     {
         Token *spec = expect2(VAR, VAL);
@@ -868,6 +913,8 @@ static ASTNode *read_func_decl()
         ASTNode *arg_ident = ident_node(arg_name, spec->kind == VAR);
         arg_node->list_vals->push_back(arg_ident);
         cur_table->put(arg_ident);
+
+        ensure_token(NULL);
         while (peek_token()->kind == COMMA)
         {
             expect(COMMA);
@@ -876,20 +923,23 @@ static ASTNode *read_func_decl()
             arg_ident = ident_node(arg_name, spec->kind == VAR);
             arg_node->list_vals->push_back(arg_ident);
             cur_table->put(arg_ident);
+            ensure_token(NULL);
         }
     }
     expect(R_PAREN);
+
+    ASTNode *func = func_decl_node(ident, arg_node, NULL);
+    cur_table->top = func;
     ASTNode *func_body = read_cpd_stmt();
     if (func_body == NULL)
     {
-        // error: missing function body
+        ensure_token(NULL);
+        err("line: %ld, missing function body\n", peek_token()->ln);
     }
-    ASTNode *func = func_decl_node(ident, arg_node, func_body);
-    cur_table->top = func;
-
+    func->func_body = func_body;
     // restore parent table
     restore_table();
-    
+
     return func;
 }
 
@@ -917,6 +967,8 @@ static ASTNode *read_elif_list()
 {
     ASTNode *node = NULL;
     std::vector<ASTNode *> *elif_list = new std::vector<ASTNode *>();
+
+    ensure_token(elif_lst_node(elif_list, node));
     while (peek_token()->kind == ELIF)
     {
         node = read_elif_stmt();
@@ -925,9 +977,11 @@ static ASTNode *read_elif_list()
             elif_list->push_back(node);
             node = NULL;
         }
+        ensure_token(elif_lst_node(elif_list, node));
     }
 
-    if (peek_token()->kind = ELSE)
+    ensure_token(elif_lst_node(elif_list, node));
+    if (peek_token()->kind == ELSE)
     {
         expect(ELSE);
 
@@ -950,11 +1004,12 @@ static ASTNode *read_if_stmt()
     expect(L_PAREN);
     ASTNode *cond = read_logic_or_expr();
     expect(R_PAREN);
-    
+
     new_table();
     ASTNode *true_stmt = read_cpd_stmt(), *false_stmt = NULL;
     restore_table();
 
+    ensure_token(if_stmt_node(cond, true_stmt, false_stmt));
     if (peek_token()->kind == ELIF)
         false_stmt = read_elif_list();
     else if (peek_token()->kind == ELSE)
@@ -970,12 +1025,7 @@ static ASTNode *read_if_stmt()
 
 static ASTNode *read_io_stmt()
 {
-    Token *token = get_token();
-    if (token->kind != INPUT && token->kind != PRINT)
-    {
-        unget_token();
-        // error: expect input or print
-    }
+    Token *token = expect2(INPUT, PRINT);
     expect(L_PAREN);
     ASTNode *arg_list = read_arg_expr_list();
     expect(R_PAREN);
@@ -997,6 +1047,8 @@ static ASTNode *read_initializer_list()
     {
         init_list->list_vals->push_back(init);
     }
+
+    ensure_token(init_list);
     while (peek_token()->kind == COMMA)
     {
         expect(COMMA);
@@ -1005,16 +1057,19 @@ static ASTNode *read_initializer_list()
         {
             init_list->list_vals->push_back(init);
         }
+        ensure_token(init_list);
     }
     return init_list;
 }
 
 static ASTNode *read_initializer()
 {
+    ensure_token(NULL);
     if (peek_token()->kind == L_BRACK)
     {
         expect(L_BRACK);
         ASTNode *node = read_initializer_list();
+        ensure_token(NULL);
         if (peek_token()->kind == COMMA)
             expect(COMMA);
         expect(R_BRACK);
@@ -1029,9 +1084,13 @@ static ASTNode *read_init_decl(bool is_mutable)
     Token *token = expect(IDENTIFIER);
     if (cur_table->contains(token->identifier))
     {
-        // error: duplicated definition for token->identifier
+        err("line: %ld, duplicated definition of \"%s\"\n", token->ln, token->identifier);
     }
 
+    ASTNode *ident = ident_node(token->identifier, is_mutable);
+    cur_table->put(ident);
+
+    ensure_token(decl_node(ident, init));
     if (peek_token()->kind == ASSIGN)
     {
         expect(ASSIGN);
@@ -1040,11 +1099,10 @@ static ASTNode *read_init_decl(bool is_mutable)
 
     if (!is_mutable && init == NULL)
     {
-        // error: val declaration must have a initializer
+        ensure_token(decl_node(ident, init));
+        err("line: %ld, val declaration must have a initializer\n", peek_token()->ln);
     }
 
-    ASTNode *ident = ident_node(token->identifier, is_mutable);
-    cur_table->put(ident);
     return decl_node(ident, init);
 }
 
@@ -1057,12 +1115,15 @@ static ASTNode *read_decl_stmt()
     ASTNode *decl = read_init_decl(is_mutable);
     if (decl != NULL)
         decl_lst->decl_list->push_back(decl);
+
+    ensure_token(decl_lst);
     while (peek_token()->kind == COMMA)
     {
         expect(COMMA);
         decl = read_init_decl(is_mutable);
         if (decl != NULL)
             decl_lst->decl_list->push_back(decl);
+        ensure_token(decl_lst);
     }
     expect(SEMICOLON);
     return decl_lst;
@@ -1118,7 +1179,14 @@ static ASTNode *read_program()
             stmt = read_while_stmt();
             cur_nd_fl_bk = true;
             break;
-        case END:
+        case BREAK:
+        case CONTINUE:
+            get_token();
+            ensure_in_iter();
+            break;
+        case RETURN:
+            get_token();
+            ensure_in_func_decl();
             break;
         default:
             stmt = read_expr_stmt();

@@ -76,7 +76,7 @@ int recognize_bool(File *file, Token *token)
 int recognize_num(File *file, Token *token)
 {
     token->kind = CONSTANT;
-    int len = file->getnum(buffer, BUFFER_SIZE);
+    file->getnum(buffer, BUFFER_SIZE);
     if (strchr(buffer, '.') != NULL)
     {
         token->value = new Value(atof(buffer));
@@ -277,7 +277,7 @@ int recognize_keyword(File *file, Token *token)
 void tokenize(File *file, std::vector<Token *> &tokens)
 {
     int offset = 0;
-    char tk_char = file->nextchar(), next_char;
+    char tk_char = file->nextchar();
 
     while (tk_char != EOF)
     {
@@ -285,12 +285,7 @@ void tokenize(File *file, std::vector<Token *> &tokens)
         if (is_number(tk_char))
         {
             offset = recognize_num(file, token);
-            if (!offset) {
-                tokens.push_back(token);
-            } else {
-                offset = file->getstr(error_buffer, offset);
-                printf("Error at line: %d, file->cur_col() %d, \"%s\"\n", file->cur_ln(), file->cur_col(), error_buffer);
-            }
+            tokens.push_back(token);
             goto nextchar;
         }
 
@@ -324,12 +319,7 @@ void tokenize(File *file, std::vector<Token *> &tokens)
             else
             {
                 offset = recognize_id(file, token);
-                if (!offset) {
-                    tokens.push_back(token);
-                } else {
-                    offset = file->getstr(error_buffer, offset);
-                    printf("Error at line: %d, file->cur_col() %d, \"%s\"\n", file->cur_ln(), file->cur_col(), error_buffer);
-                }
+                tokens.push_back(token);
             }
             goto nextchar;
         }
@@ -341,7 +331,7 @@ void tokenize(File *file, std::vector<Token *> &tokens)
                 tokens.push_back(token);
             } else {
                 offset = file->getstr(error_buffer, offset);
-                printf("Error at line: %d, file->cur_col() %d, \"%s\"\n", file->cur_ln(), file->cur_col(), error_buffer);
+                err("line: %d, col: %d, \"%s\"\n", file->cur_ln(), file->cur_col(), error_buffer);
             }
             goto nextchar;
         }
@@ -353,7 +343,7 @@ void tokenize(File *file, std::vector<Token *> &tokens)
                 tokens.push_back(token);
             } else {
                 offset = file->getstr(error_buffer, offset);
-                printf("Error at line: %d, file->cur_col() %d, \"%s\"\n", file->cur_ln(), file->cur_col(), error_buffer);
+                err("line: %d, col: %d, \"%s\"\n", file->cur_ln(), file->cur_col(), error_buffer);
             }
             goto nextchar;
         }
@@ -495,7 +485,13 @@ void tokenize(File *file, std::vector<Token *> &tokens)
                 token->kind = R_CURLY;
                 tokens.push_back(token);
                 break;
+            case ' ':
+            case '\n':
+            case '\t':
+            case '\r':
+                break;
             default:
+                err("line: %d, col: %d, illegal token: \"%c\"\n", file->cur_ln(), file->cur_col(), tk_char);
                 break;
         }
 

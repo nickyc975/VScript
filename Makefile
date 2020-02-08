@@ -1,18 +1,19 @@
-CXX=g++ -g -Wall
+CXX=g++ -g -Wall -Wextra -Wno-write-strings -Wno-unused-variable -Wno-unused-parameter
 
 BIN_DIR=build/bin
 OBJ_DIR=build/obj
 
+SRC_DIR=src
 SRC_CP_DIR=src/compiler
 SRC_RT_DIR=src/runtime
 SRC_CP_TY_DIR=$(SRC_CP_DIR)/types
 
 VSC=vsc
 
-vsc: File.o vslexer.o vsparser.o Value.o Token.o SymTable.o ASTNode.o printers.o vsc.o
+vsc: File.o Value.o Token.o SymTable.o ASTNode.o error.o vslexer.o vsparser.o printers.o vsc.o
 	$(CXX) $(OBJ_DIR)/File.o $(OBJ_DIR)/Value.o $(OBJ_DIR)/Token.o $(OBJ_DIR)/SymTable.o \
 	 $(OBJ_DIR)/ASTNode.o $(OBJ_DIR)/vslexer.o $(OBJ_DIR)/vsparser.o $(OBJ_DIR)/printers.o \
-	 $(OBJ_DIR)/vsc.o -o $(BIN_DIR)/vsc
+	 $(OBJ_DIR)/error.o $(OBJ_DIR)/vsc.o -o $(BIN_DIR)/vsc
 
 File.o: $(SRC_CP_TY_DIR)/File.cpp
 	$(CXX) -c $(SRC_CP_TY_DIR)/File.cpp -o $(OBJ_DIR)/File.o
@@ -28,6 +29,9 @@ Value.o: $(SRC_CP_TY_DIR)/Value.cpp
 
 ASTNode.o: $(SRC_CP_TY_DIR)/ASTNode.cpp
 	$(CXX) -c $(SRC_CP_TY_DIR)/ASTNode.cpp -o $(OBJ_DIR)/ASTNode.o
+
+error.o: $(SRC_DIR)/error.cpp
+	$(CXX) -c $(SRC_DIR)/error.cpp -o $(OBJ_DIR)/error.o
 
 vslexer.o: $(SRC_CP_DIR)/vslexer.cpp
 	$(CXX) -c $(SRC_CP_DIR)/vslexer.cpp -o $(OBJ_DIR)/vslexer.o

@@ -7,6 +7,8 @@
 #include <vector>
 #include <unordered_map>
 
+#include "../error.hpp"
+
 typedef unsigned int addr_t;
 typedef unsigned char byte_t;
 
@@ -101,7 +103,7 @@ typedef enum
     I_NOP
 } INST;
 
-static char CLASS_STR[][15] = {
+static char KIND_STR[][15] = {
     "ADD", "ADD_ASSIGN", "AND", "AND_ASSIGN", "ASSIGN", "BREAK", "COMMA", "CONSTANT", "CONTINUE", 
     "DIV", "DIV_ASSIGN", "ELIF", "ELSE", "EQ", "FOR", "FUNC", "GE", "GT", "IDENTIFIER", "IF", "INPUT", "LE", "LT", 
     "L_BRACK", "L_CURLY", "L_PAREN", "MOD", "MOD_ASSIGN", "MUL", "MUL_ASSIGN", "NEQ", "NOT", "OR", 

@@ -128,7 +128,7 @@ static void print_const_node(ASTNode *node)
         printf("%c\n", node->value->char_val);
         break;
     case INT:
-        printf("%d\n", node->value->int_val);
+        printf("%lld\n", node->value->int_val);
         break;
     case FLOAT:
         printf("%f\n", node->value->float_val);

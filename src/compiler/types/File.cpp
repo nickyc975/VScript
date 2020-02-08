@@ -57,7 +57,8 @@ int File::ungetchar()
 char File::nextchar()
 {
     char c = fgetc(this->file);
-    fseek(this->file, -1, SEEK_CUR);
+    if (c != EOF)
+        fseek(this->file, -1, SEEK_CUR);
     return c;
 }
 

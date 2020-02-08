@@ -10,7 +10,6 @@ void print_tk_lst(std::vector<Token *>, char *filename);
 
 int main(int argc, char **argv)
 {
-    Token *token;
     File *file;
     std::vector<Token *> token_list;
     int lexer = 0, parser = 0;
@@ -37,13 +36,16 @@ int main(int argc, char **argv)
 
     file = new File(fopen(*argv, "r"));
     tokenize(file, token_list);
+    init_parser();
+    ASTNode *program = parse(&token_list);
     if (lexer)
     {
         print_tk_lst(token_list, (char *)"test/tokens.txt");
     }
-    init_parser();
-    ASTNode *program = parse(&token_list);
-    print_ast(program);
+    if (parser)
+    {
+        print_ast(program);
+    }
     return 0;
 }
 
@@ -52,11 +54,11 @@ void print_tk_lst(std::vector<Token *> token_list, char *filename)
     FILE *tokens_txt = fopen(filename, "w");
     for (Token *token : token_list)
     {
-        fprintf(tokens_txt, "%s\t%d\t%d\t", CLASS_STR[token->kind], token->ln, token->col);
+        fprintf(tokens_txt, "%s\t%lld\t%lld\t", KIND_STR[token->kind], token->ln, token->col);
         switch (token->kind)
         {
             case IDENTIFIER:
-                fprintf(tokens_txt, "%s\t0x%x\n", token->identifier, token->identifier);
+                fprintf(tokens_txt, "%s\t0x%lx\n", token->identifier, token->identifier);
                 break;
             case CONSTANT:
                 fprintf(tokens_txt, "%s\t", TYPE_STR[token->value->type]);
@@ -72,7 +74,7 @@ void print_tk_lst(std::vector<Token *> token_list, char *filename)
                         fprintf(tokens_txt, "%c\n", token->value->char_val);
                         break;
                     case INT:
-                        fprintf(tokens_txt, "%d\n", token->value->int_val);
+                        fprintf(tokens_txt, "%lld\n", token->value->int_val);
                         break;
                     case FLOAT:
                         fprintf(tokens_txt, "%f\n", token->value->float_val);
