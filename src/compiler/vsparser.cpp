@@ -167,6 +167,24 @@ static INST get_mul_opcode(KIND kind)
     }
 }
 
+static void ensure_lval(ASTNode *node)
+{
+    switch (node->node_type)
+    {
+    case AST_IDENT:
+        if (!node->is_mutable)
+        {
+            // error: "node->name" is immutable
+        }
+        break;
+    case AST_LST_IDX:
+        break;
+    default:
+        // error: illegal left value: node->node_type
+        break;
+    }
+}
+
 static ASTNode *ident_node(char *name, bool is_mutable)
 {
     ASTNode *node = new ASTNode(AST_IDENT, AST_EXPR);
@@ -606,6 +624,7 @@ static ASTNode *read_assign_expr()
 
     if (is_assign(peek_token()->kind))
     {
+        ensure_lval(node);
         INST assign_opcode = get_assign_opcode(get_token()->kind);
         ASTNode *right = read_logic_or_expr();
         if (right == NULL)
@@ -928,7 +947,7 @@ static ASTNode *read_initializer()
 
 static ASTNode *read_init_decl(bool is_mutable)
 {
-    ASTNode *node = NULL;
+    ASTNode *init = NULL;
     Token *token = expect(IDENTIFIER);
     if (cur_table->contains(token->identifier))
     {
@@ -938,11 +957,17 @@ static ASTNode *read_init_decl(bool is_mutable)
     if (peek_token()->kind == ASSIGN)
     {
         expect(ASSIGN);
-        node = read_initializer();
+        init = read_initializer();
     }
+
+    if (!is_mutable && init == NULL)
+    {
+        // error: val declaration must have a initializer
+    }
+
     ASTNode *ident = ident_node(token->identifier, is_mutable);
     cur_table->put(ident);
-    return decl_node(ident, node);
+    return decl_node(ident, init);
 }
 
 static ASTNode *read_decl_stmt()

@@ -98,7 +98,7 @@ A dynamic type programming language.
 
 * 符号表管理
 
-* 函数调用参数个数检查
+* val初始化检查
 
 * if, for, while的回填
 
