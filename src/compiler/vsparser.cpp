@@ -7,6 +7,9 @@ static int tk_idx;
 static std::vector<Token *> *tks;
 static SymTable *cur_table;
 
+static bool need_fill_back;
+static ASTNode *prev_stmt;
+
 static ASTNode *read_primary_expr();
 static ASTNode *read_arg_expr_list();
 static ASTNode *read_postfix_expr();
@@ -215,6 +218,31 @@ static bool ensure_in_func_decl()
     }
     // error: return must be in function declaration
     return false;
+}
+
+static void fill_back(ASTNode *prev, ASTNode *next)
+{
+    switch (prev->node_type)
+    {
+    case AST_FOR_STMT:
+        prev->for_next = next;
+        break;
+    case AST_WHILE_STMT:
+        prev->while_next = next;
+        break;
+    case AST_IF_STMT:
+        if (prev->false_smt == NULL)
+        {
+            prev->false_smt = next;
+        }
+        else if (prev->false_smt->node_type == AST_ELIF_LST && prev->false_smt->else_node == NULL)
+        {
+            prev->false_smt->else_node = next;
+        }
+        break;
+    default:
+        break;
+    }
 }
 
 static ASTNode *ident_node(char *name, bool is_mutable)
@@ -707,10 +735,12 @@ static ASTNode *read_stmt()
         switch (peek_token()->kind)
         {
         case FOR:
+            need_fill_back = true;
             return read_for_stmt();
         case FUNC:
             return read_func_decl();
         case IF:
+            need_fill_back = true;
             return read_if_stmt();
         case INPUT:
         case PRINT:
@@ -719,6 +749,7 @@ static ASTNode *read_stmt()
         case VAR:
             return read_decl_stmt();
         case WHILE:
+            need_fill_back = true;
             return read_while_stmt();
         case CONTINUE:
             expect(CONTINUE);
@@ -751,6 +782,8 @@ static ASTNode *read_cpd_stmt()
     ASTNode *cpd_stmt = cpd_stmt_node(new std::vector<ASTNode *>(), cur_table);
     while (peek_token()->kind != R_CURLY)
     {
+        bool old_nd_fl_bk = need_fill_back;
+        need_fill_back = false;
         if (peek_token()->kind == VAL || peek_token()->kind == VAR)
         {
             stmt = read_decl_stmt();
@@ -759,9 +792,19 @@ static ASTNode *read_cpd_stmt()
         {
             stmt = read_stmt();
         }
+
         if (stmt != NULL)
         {
             cpd_stmt->statements->push_back(stmt);
+            if (old_nd_fl_bk && prev_stmt != NULL)
+            {
+                fill_back(prev_stmt, stmt);
+            }
+
+            if (need_fill_back)
+            {
+                prev_stmt = stmt;
+            }
         }
     }
     expect(R_CURLY);
@@ -1043,22 +1086,25 @@ static ASTNode *read_while_stmt()
 
 static ASTNode *read_program()
 {
-    ASTNode *stmt = NULL;
     cur_table = new SymTable(NULL);
     ASTNode *program = program_node(new std::vector<ASTNode *>(), cur_table);
     cur_table->top = program;
     while (has_token())
     {
+        ASTNode *stmt = NULL;
+        bool cur_nd_fl_bk = false;
         switch (peek_token()->kind)
         {
         case FOR:
             stmt = read_for_stmt();
+            cur_nd_fl_bk = true;
             break;
         case FUNC:
             stmt = read_func_decl();
             break;
         case IF:
             stmt = read_if_stmt();
+            cur_nd_fl_bk = true;
             break;
         case INPUT:
         case PRINT:
@@ -1070,6 +1116,7 @@ static ASTNode *read_program()
             break;
         case WHILE:
             stmt = read_while_stmt();
+            cur_nd_fl_bk = true;
             break;
         case END:
             break;
@@ -1081,7 +1128,12 @@ static ASTNode *read_program()
         if (stmt != NULL)
         {
             program->statements->push_back(stmt);
-            stmt = NULL;
+            if (need_fill_back && prev_stmt != NULL)
+            {
+                fill_back(prev_stmt, stmt);
+            }
+            need_fill_back = cur_nd_fl_bk;
+            prev_stmt = stmt;
         }
     }
     return program;
@@ -1091,6 +1143,8 @@ void init_parser()
 {
     tk_idx = 0;
     tks = NULL;
+    need_fill_back = false;
+    prev_stmt = NULL;
 }
 
 ASTNode *parse(std::vector<Token *> *tokens)
