@@ -167,7 +167,7 @@ static INST get_mul_opcode(KIND kind)
     }
 }
 
-static void ensure_lval(ASTNode *node)
+static bool ensure_lval(ASTNode *node)
 {
     switch (node->node_type)
     {
@@ -175,14 +175,46 @@ static void ensure_lval(ASTNode *node)
         if (!node->is_mutable)
         {
             // error: "node->name" is immutable
+            return false;
         }
         break;
     case AST_LST_IDX:
         break;
     default:
         // error: illegal left value: node->node_type
-        break;
+        return false;
     }
+    return true;
+}
+
+static bool ensure_in_iter()
+{
+    SymTable *temp = cur_table;
+    while (temp != NULL)
+    {
+        if (temp->top->node_type == AST_WHILE_STMT || temp->top->node_type == AST_FOR_STMT)
+        {
+            return true;
+        }
+        temp = temp->get_parent();
+    }
+    // error: continue or break must be in while or for statement
+    return false;
+}
+
+static bool ensure_in_func_decl()
+{
+    SymTable *temp = cur_table;
+    while (temp != NULL)
+    {
+        if (temp->top->node_type == AST_FUNC_DECL)
+        {
+            return true;
+        }
+        temp = temp->get_parent();
+    }
+    // error: return must be in function declaration
+    return false;
 }
 
 static ASTNode *ident_node(char *name, bool is_mutable)
@@ -691,15 +723,18 @@ static ASTNode *read_stmt()
         case CONTINUE:
             expect(CONTINUE);
             expect(SEMICOLON);
+            ensure_in_iter();
             return continue_node();
         case BREAK:
             expect(BREAK);
             expect(SEMICOLON);
+            ensure_in_iter();
             return break_node(); // TODO: implement break
         case RETURN:
             expect(RETURN);
             node = return_node(read_expr());
             expect(SEMICOLON);
+            ensure_in_func_decl();
             return node;
         default:
             return read_expr_stmt();

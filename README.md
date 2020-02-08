@@ -103,3 +103,7 @@ A dynamic type programming language.
 * if, for, while的回填
 
 * 赋值操作左值检查
+
+* continue, break 检查
+
+* return　检查
