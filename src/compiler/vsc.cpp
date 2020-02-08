@@ -1,9 +1,10 @@
 #include <stdio.h>
 
-#include "vslexer.h"
-#include "vsparser.h"
-#include "printers.h"
-#include "../utils/File.h"
+#include "vsc.hpp"
+#include "vslexer.hpp"
+#include "vsparser.hpp"
+#include "printers.hpp"
+#include "types/File.hpp"
 
 void print_tk_lst(std::vector<Token *>, char *filename);
 
@@ -41,12 +42,8 @@ int main(int argc, char **argv)
         print_tk_lst(token_list, (char *)"test/tokens.txt");
     }
     init_parser();
-    std::vector<ASTNode *> *toplevel = parse(&token_list);
-    for (ASTNode *node : *toplevel)
-    {
-        print_ast(node);
-        printf("\n");
-    }
+    ASTNode *program = parse(&token_list);
+    print_ast(program);
     return 0;
 }
 

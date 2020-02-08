@@ -1,9 +1,8 @@
-#ifndef SYMTABLE_H
-#define SYMTABLE_H
+#ifndef VS_SYMTABLE_H
+#define VS_SYMTABLE_H
 
-#include "vsparser.h"
-#include <string>
-#include <unordered_map>
+#include "../vsc.hpp"
+#include "ASTNode.hpp"
 
 class SymTable
 {
@@ -13,12 +12,14 @@ private:
     std::unordered_map<std::string, ASTNode *> table;
 
 public:
+    ASTNode *top;
+
     SymTable(SymTable *parent);
     ~SymTable();
 
     bool has_parent();
     SymTable *get_parent();
-    void put(ASTNode *id);
+    void put(ASTNode *ident);
     ASTNode *get(char *name);
     ASTNode *get_recur(char *name);
     bool contains(char *name);
@@ -26,4 +27,5 @@ public:
     void add_child(SymTable *child);
     static void print(SymTable *table, int indent);
 };
+
 #endif

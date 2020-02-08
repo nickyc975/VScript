@@ -1,9 +1,9 @@
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef VSC_FILE_H
+#define VSC_FILE_H
 
-#ifndef File_H
+#include <cstdio>
+#include <cstdlib>
 
-#define File_H
 #define READ_BUFFER_SIZE 1024
 
 #define is_number(c) ((c) >= '0' && (c) <= '9')

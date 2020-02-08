@@ -1,7 +1,11 @@
-#include "vsparser.h"
+#include "vsparser.hpp"
+
+#define new_table() cur_table = new SymTable(cur_table)
+#define restore_table() cur_table = cur_table->get_parent()
 
 static int tk_idx;
 static std::vector<Token *> *tks;
+static SymTable *cur_table;
 
 static ASTNode *read_primary_expr();
 static ASTNode *read_arg_expr_list();
@@ -29,7 +33,7 @@ static ASTNode *read_initializer();
 static ASTNode *read_init_decl();
 static ASTNode *read_decl_stmt();
 static ASTNode *read_while_stmt();
-static std::vector<ASTNode *> *read_toplevel();
+static ASTNode *read_program();
 
 static bool has_token()
 {
@@ -60,64 +64,6 @@ static Token *peek_token()
 static Token *next_token()
 {
     return tks->at(tk_idx + 1);
-}
-
-static int isarithop(INST inst)
-{
-    return inst >= I_ADD && inst <= I_NEQ;
-}
-
-static int iscmp(INST inst)
-{
-    return inst >= I_LT && inst <= I_NEQ;
-}
-
-static int islogicop(INST inst)
-{
-    return inst >= I_EQ && inst <= I_NOT;
-}
-
-static int is_num(TYPE type)
-{
-    return type == CHAR || type == INT || type == FLOAT;
-}
-
-static TYPE valid_b_type(INST inst, TYPE l_type, TYPE r_type)
-{
-    static char *error_msg = "opcode: %s can not be applied to type %s and type %s\n";
-
-    if (isarithop(inst) && is_num(l_type) && is_num(r_type))
-    {
-        if (iscmp(inst))
-        {
-            return BOOL;
-        }
-        return l_type == FLOAT || r_type == FLOAT ? FLOAT : INT;
-    }
-
-    if (islogicop(inst) && l_type == BOOL && r_type == BOOL)
-    {
-        return BOOL;
-    }
-
-    // error = 1;
-    // report_error();
-    // printf(error_msg, INSTO_S[inst], TYPE_STR[l_type], TYPE_STR[r_type]);
-    return NONE;
-}
-
-static TYPE valid_u_type(INST inst, TYPE type)
-{
-    static char *error_msg = "opcode: %s can not be applied to type %s\n";
-    if ((is_num(type) && isarithop(inst)) || (type == BOOL && islogicop(inst)))
-    {
-        return type;
-    }
-
-    // error = 1;
-    // report_error();
-    // printf(error_msg, INSTO_S[inst], TYPE_STR[type]);
-    return NONE;
 }
 
 static bool is_assign(KIND kind)
@@ -221,25 +167,13 @@ static INST get_mul_opcode(KIND kind)
     }
 }
 
-static bool valid_lval(ASTNode *node)
-{
-}
-
-ASTNode::ASTNode(ASTNODE_TYPE node_type, ASTNODE_TYPE ext_node_type)
-    : node_type(node_type), ext_node_type(ext_node_type)
-{
-}
-
-ASTNode::~ASTNode()
-{
-}
-
-static ASTNode *ident_node(char *name)
+static ASTNode *ident_node(char *name, bool is_mutable)
 {
     ASTNode *node = new ASTNode(AST_IDENT, AST_EXPR);
     node->type = NONE;
     node->name = (char *)malloc(strlen(name));
     strcpy(node->name, name);
+    node->is_mutable = is_mutable;
     return node;
 }
 
@@ -254,7 +188,6 @@ static ASTNode *const_node(Value *value)
 static ASTNode *b_expr_node(INST b_opcode, ASTNode *l_operand, ASTNode *r_operand)
 {
     ASTNode *node = new ASTNode(AST_B_EXPR, AST_EXPR);
-    node->type = valid_b_type(b_opcode, l_operand->type, r_operand->type);
     node->b_opcode = b_opcode;
     node->l_operand = l_operand;
     node->r_operand = r_operand;
@@ -265,7 +198,6 @@ static ASTNode *u_expr_node(INST u_opcode, ASTNode *operand)
 {
 
     ASTNode *node = new ASTNode(AST_U_EXPR, AST_EXPR);
-    node->type = valid_u_type(u_opcode, operand->type);
     node->b_opcode = u_opcode;
     node->operand = operand;
     return node;
@@ -292,16 +224,9 @@ static ASTNode *decl_node(ASTNode *var_name, ASTNode *init_val)
     return node;
 }
 
-static ASTNode *decl_lst_node(KIND specifier, std::vector<ASTNode *> *decl_list)
+static ASTNode *decl_lst_node(std::vector<ASTNode *> *decl_list)
 {
-    if (specifier != VAR && specifier != VAL)
-    {
-        // error = 1;
-        // report_error();
-        // printf("declaration specifier must be either var or val.\n");
-    }
     ASTNode *node = new ASTNode(AST_DECL_LST, AST_UNKNOW);
-    node->specifier = specifier;
     node->decl_list = decl_list;
     return node;
 }
@@ -309,15 +234,6 @@ static ASTNode *decl_lst_node(KIND specifier, std::vector<ASTNode *> *decl_list)
 static ASTNode *assign_node(INST assign_opcode, ASTNode *assign_var, ASTNode *assign_val)
 {
     ASTNode *node = new ASTNode(AST_ASSIGN, AST_UNKNOW);
-    if (assign_opcode == I_NOP)
-    {
-        assign_var->type = assign_val->type;
-    }
-    else
-    {
-        assign_var->type = valid_b_type(assign_opcode, assign_var->type, assign_val->type);
-    }
-
     node->assign_opcode = assign_opcode;
     node->assign_var = assign_var;
     node->assign_val = assign_val;
@@ -334,18 +250,6 @@ static ASTNode *lst_val_node(std::vector<ASTNode *> *list_vals)
 
 static ASTNode *lst_idx_node(ASTNode *list_name, ASTNode *list_index)
 {
-    if (list_name->type != LIST)
-    {
-        // error = 1;
-        // report_error();
-        // printf("type %s is not indexable.\n", TYPE_STR[list_name->type]);
-    }
-    if (list_index->type != INT && list_index->type != CHAR)
-    {
-        // error = 1;
-        // report_error();
-        // printf("list index can not be type %d.\n", TYPE_STR[list_index->type]);
-    }
     ASTNode *node = new ASTNode(AST_LST_IDX, AST_EXPR);
     node->list_name = list_name;
     node->list_index = list_index;
@@ -354,12 +258,6 @@ static ASTNode *lst_idx_node(ASTNode *list_name, ASTNode *list_index)
 
 static ASTNode *func_call_node(ASTNode *func_name, ASTNode *arg_node)
 {
-    if (arg_node->node_type != AST_LST_VAL)
-    {
-        // error = 1;
-        // report_error();
-        // printf("internal error: arg_list must be of type AST_LST_VAL.\n");
-    }
     ASTNode *node = new ASTNode(AST_FUNC_CALL, AST_EXPR);
     node->func_name = func_name;
     node->arg_node = arg_node;
@@ -377,12 +275,6 @@ static ASTNode *func_decl_node(ASTNode *func_name, ASTNode *arg_node, ASTNode *f
 
 static ASTNode *if_stmt_node(ASTNode *if_cond, ASTNode *true_stmt, ASTNode *false_stmt)
 {
-    if (if_cond->type != BOOL)
-    {
-        // error = 1;
-        // report_error();
-        // printf("condition expression must be bool, not %s.\n", TYPE_STR[if_cond->type]);
-    }
     ASTNode *node = new ASTNode(AST_IF_STMT, AST_UNKNOW);
     node->if_cond = if_cond;
     node->true_smt = true_stmt;
@@ -398,28 +290,16 @@ static ASTNode *elif_lst_node(std::vector<ASTNode *> *elif_list, ASTNode *else_n
     return node;
 }
 
-static ASTNode *while_stmt_node(ASTNode *while_cond, ASTNode *while_stmt)
+static ASTNode *while_stmt_node(ASTNode *while_cond, ASTNode *while_stmt, ASTNode *while_next)
 {
-    if (while_cond->type != BOOL)
-    {
-        // error = 1;
-        // report_error();
-        // printf("condition expression must be bool, not %s.\n", TYPE_STR[while_cond->type]);
-    }
     ASTNode *node = new ASTNode(AST_WHILE_STMT, AST_UNKNOW);
     node->while_cond = while_cond;
     node->while_stmt = while_stmt;
     return node;
 }
 
-static ASTNode *for_stmt_node(ASTNode *for_init, ASTNode *for_cond, ASTNode *for_incr, ASTNode *for_body)
+static ASTNode *for_stmt_node(ASTNode *for_init, ASTNode *for_cond, ASTNode *for_incr, ASTNode *for_body, ASTNode *for_next)
 {
-    if (for_cond->type != BOOL)
-    {
-        // error = 1;
-        // report_error();
-        // printf("condition expression must be bool, not %s.\n", TYPE_STR[for_cond->type]);
-    }
     ASTNode *node = new ASTNode(AST_FOR_STMT, AST_UNKNOW);
     node->for_init = for_init;
     node->for_cond = for_cond;
@@ -440,10 +320,19 @@ static ASTNode *break_node()
     return node;
 }
 
-static ASTNode *cpd_stmt_node(std::vector<ASTNode *> *cpd_stmt)
+static ASTNode *cpd_stmt_node(std::vector<ASTNode *> *stmts, SymTable *symtable)
 {
-    ASTNode *node = new ASTNode(AST_STMTS, AST_UNKNOW);
-    node->cpd_stmt = cpd_stmt;
+    ASTNode *node = new ASTNode(AST_CPD_STMT, AST_UNKNOW);
+    node->statements = stmts;
+    node->symtable = symtable;
+    return node;
+}
+
+static ASTNode *program_node(std::vector<ASTNode *> *stmts, SymTable *symtable)
+{
+    ASTNode *node = new ASTNode(AST_PROGRAM, AST_UNKNOW);
+    node->statements = stmts;
+    node->symtable = symtable;
     return node;
 }
 
@@ -478,8 +367,19 @@ static Token *expect(KIND kind)
     return token;
 }
 
+static Token *expect2(KIND kind1, KIND kind2)
+{
+    Token *token = get_token();
+    if (token->kind != kind1 && token->kind != kind2)
+    {
+        // error: expected "kind1" or "kind2" but got "token->kind"
+    }
+    return token;
+}
+
 static ASTNode *read_primary_expr()
 {
+    Token *token;
     ASTNode *node = NULL;
     switch (peek_token()->kind)
     {
@@ -487,7 +387,12 @@ static ASTNode *read_primary_expr()
         node = const_node(get_token()->value);
         break;
     case IDENTIFIER:
-        node = ident_node(get_token()->identifier);
+        token = get_token();
+        if (!cur_table->contains_recur(token->identifier))
+        {
+            // error: token->identifier" undefined
+        }
+        node = cur_table->get_recur(token->identifier);
         break;
     case L_PAREN:
         expect(L_PAREN);
@@ -701,7 +606,6 @@ static ASTNode *read_assign_expr()
 
     if (is_assign(peek_token()->kind))
     {
-        valid_lval(node);
         INST assign_opcode = get_assign_opcode(get_token()->kind);
         ASTNode *right = read_logic_or_expr();
         if (right == NULL)
@@ -790,7 +694,7 @@ static ASTNode *read_cpd_stmt()
 {
     expect(L_CURLY);
     ASTNode *stmt = NULL;
-    ASTNode *cpd_stmt = cpd_stmt_node(new std::vector<ASTNode *>());
+    ASTNode *cpd_stmt = cpd_stmt_node(new std::vector<ASTNode *>(), cur_table);
     while (peek_token()->kind != R_CURLY)
     {
         if (peek_token()->kind == VAL || peek_token()->kind == VAR)
@@ -803,7 +707,7 @@ static ASTNode *read_cpd_stmt()
         }
         if (stmt != NULL)
         {
-            cpd_stmt->cpd_stmt->push_back(stmt);
+            cpd_stmt->statements->push_back(stmt);
         }
     }
     expect(R_CURLY);
@@ -814,6 +718,10 @@ static ASTNode *read_for_stmt()
 {
     expect(FOR);
     expect(L_PAREN);
+
+    // create new symbal table for "for" loop
+    new_table();
+
     KIND kind = peek_token()->kind;
     ASTNode *init = NULL, *cond = NULL, *incr = NULL, *body = NULL;
     if (kind == VAL || kind == VAR)
@@ -827,7 +735,13 @@ static ASTNode *read_for_stmt()
     }
     expect(R_PAREN);
     body = read_cpd_stmt();
-    return for_stmt_node(init, cond, incr, body);
+    ASTNode *for_stmt = for_stmt_node(init, cond, incr, body, NULL);
+    cur_table->top = for_stmt;
+
+    // restore parent table
+    restore_table();
+
+    return for_stmt;
 }
 
 static ASTNode *read_func_decl()
@@ -835,16 +749,36 @@ static ASTNode *read_func_decl()
     expect(FUNC);
     Token *token = expect(IDENTIFIER);
     expect(L_PAREN);
+
+    if (cur_table->contains(token->identifier))
+    {
+        // error: duplicated definition of token->identifier
+    }
+
+    // In case of recursive function, we must put the id in the table 
+    // before entering the function body.
+    ASTNode *ident = ident_node(token->identifier, false);
+    cur_table->put(ident);
+
+    // create symbol table for function
+    new_table();
+
     ASTNode *arg_node = lst_val_node(new std::vector<ASTNode *>());
     if (peek_token()->kind != R_PAREN)
     {
-        Token *arg = expect(IDENTIFIER);
-        arg_node->list_vals->push_back(ident_node(arg->identifier));
+        Token *spec = expect2(VAR, VAL);
+        char *arg_name = expect(IDENTIFIER)->identifier;
+        ASTNode *arg_ident = ident_node(arg_name, spec->kind == VAR);
+        arg_node->list_vals->push_back(arg_ident);
+        cur_table->put(arg_ident);
         while (peek_token()->kind == COMMA)
         {
             expect(COMMA);
-            arg = expect(IDENTIFIER);
-            arg_node->list_vals->push_back(ident_node(arg->identifier));
+            spec = expect2(VAR, VAL);
+            arg_name = expect(IDENTIFIER)->identifier;
+            arg_ident = ident_node(arg_name, spec->kind == VAR);
+            arg_node->list_vals->push_back(arg_ident);
+            cur_table->put(arg_ident);
         }
     }
     expect(R_PAREN);
@@ -853,17 +787,33 @@ static ASTNode *read_func_decl()
     {
         // error: missing function body
     }
-    return func_decl_node(ident_node(token->identifier), arg_node, func_body);
+    ASTNode *func = func_decl_node(ident, arg_node, func_body);
+    cur_table->top = func;
+
+    // restore parent table
+    restore_table();
+    
+    return func;
 }
 
 static ASTNode *read_elif_stmt()
 {
     expect(ELIF);
     expect(L_PAREN);
+
+    // create symbol table for elif statement
+    new_table();
+
     ASTNode *cond = read_logic_or_expr();
     expect(R_PAREN);
     ASTNode *body = read_cpd_stmt();
-    return if_stmt_node(cond, body, NULL);
+    ASTNode *if_stmt = if_stmt_node(cond, body, NULL);
+    cur_table->top = if_stmt;
+
+    // restore parent table
+    restore_table();
+
+    return if_stmt;
 }
 
 static ASTNode *read_elif_list()
@@ -883,7 +833,15 @@ static ASTNode *read_elif_list()
     if (peek_token()->kind = ELSE)
     {
         expect(ELSE);
+
+        // create new table for else statement
+        new_table();
+
         node = read_cpd_stmt();
+        cur_table->top = node;
+
+        // restore parent table
+        restore_table();
     }
 
     return elif_lst_node(elif_list, node);
@@ -895,13 +853,20 @@ static ASTNode *read_if_stmt()
     expect(L_PAREN);
     ASTNode *cond = read_logic_or_expr();
     expect(R_PAREN);
+    
+    new_table();
     ASTNode *true_stmt = read_cpd_stmt(), *false_stmt = NULL;
+    restore_table();
+
     if (peek_token()->kind == ELIF)
         false_stmt = read_elif_list();
     else if (peek_token()->kind == ELSE)
     {
         expect(ELSE);
+
+        new_table();
         false_stmt = read_cpd_stmt();
+        restore_table();
     }
     return if_stmt_node(cond, true_stmt, false_stmt);
 }
@@ -961,29 +926,38 @@ static ASTNode *read_initializer()
     return read_logic_or_expr();
 }
 
-static ASTNode *read_init_decl()
+static ASTNode *read_init_decl(bool is_mutable)
 {
     ASTNode *node = NULL;
     Token *token = expect(IDENTIFIER);
+    if (cur_table->contains(token->identifier))
+    {
+        // error: duplicated definition for token->identifier
+    }
+
     if (peek_token()->kind == ASSIGN)
     {
         expect(ASSIGN);
         node = read_initializer();
     }
-    return decl_node(ident_node(token->identifier), node);
+    ASTNode *ident = ident_node(token->identifier, is_mutable);
+    cur_table->put(ident);
+    return decl_node(ident, node);
 }
 
 static ASTNode *read_decl_stmt()
 {
-    Token *token = get_token();
-    ASTNode *decl_lst = decl_lst_node(token->kind, new std::vector<ASTNode *>());
-    ASTNode *decl = read_init_decl();
+    Token *token = expect2(VAR, VAL);
+    ASTNode *decl_lst = decl_lst_node(new std::vector<ASTNode *>());
+
+    bool is_mutable = token->kind == VAR;
+    ASTNode *decl = read_init_decl(is_mutable);
     if (decl != NULL)
         decl_lst->decl_list->push_back(decl);
     while (peek_token()->kind == COMMA)
     {
         expect(COMMA);
-        decl = read_init_decl();
+        decl = read_init_decl(is_mutable);
         if (decl != NULL)
             decl_lst->decl_list->push_back(decl);
     }
@@ -995,56 +969,62 @@ static ASTNode *read_while_stmt()
 {
     expect(WHILE);
     expect(L_PAREN);
+    new_table();
     ASTNode *cond = read_logic_or_expr();
     expect(R_PAREN);
     ASTNode *body = read_cpd_stmt();
     if (cond == NULL || body == NULL)
         return NULL;
-    return while_stmt_node(cond, body);
+    ASTNode *while_stmt = while_stmt_node(cond, body, NULL);
+    cur_table->top = while_stmt;
+    restore_table();
+    return while_stmt;
 }
 
-static std::vector<ASTNode *> *read_toplevel()
+static ASTNode *read_program()
 {
-    ASTNode *node = NULL;
-    std::vector<ASTNode *> *stmts = new std::vector<ASTNode *>();
+    ASTNode *stmt = NULL;
+    cur_table = new SymTable(NULL);
+    ASTNode *program = program_node(new std::vector<ASTNode *>(), cur_table);
+    cur_table->top = program;
     while (has_token())
     {
         switch (peek_token()->kind)
         {
         case FOR:
-            node = read_for_stmt();
+            stmt = read_for_stmt();
             break;
         case FUNC:
-            node = read_func_decl();
+            stmt = read_func_decl();
             break;
         case IF:
-            node = read_if_stmt();
+            stmt = read_if_stmt();
             break;
         case INPUT:
         case PRINT:
-            node = read_io_stmt();
+            stmt = read_io_stmt();
             break;
         case VAL:
         case VAR:
-            node = read_decl_stmt();
+            stmt = read_decl_stmt();
             break;
         case WHILE:
-            node = read_while_stmt();
+            stmt = read_while_stmt();
             break;
         case END:
             break;
         default:
-            node = read_expr_stmt();
+            stmt = read_expr_stmt();
             break;
         }
 
-        if (node != NULL)
+        if (stmt != NULL)
         {
-            stmts->push_back(node);
-            node = NULL;
+            program->statements->push_back(stmt);
+            stmt = NULL;
         }
     }
-    return stmts;
+    return program;
 }
 
 void init_parser()
@@ -1053,8 +1033,8 @@ void init_parser()
     tks = NULL;
 }
 
-std::vector<ASTNode *> *parse(std::vector<Token *> *tokens)
+ASTNode *parse(std::vector<Token *> *tokens)
 {
     tks = tokens;
-    return read_toplevel();
+    return read_program();
 }

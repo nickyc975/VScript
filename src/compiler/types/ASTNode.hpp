@@ -1,10 +1,10 @@
-#ifndef VSPARSER_H
+#ifndef VSC_ASTNODE_H
+#define VSC_ASTNODE_H
 
-#include "vsc.h"
-#include "vslexer.h"
-#include "Value.h"
+#include "../vsc.hpp"
+#include "Value.hpp"
 
-#define VSPARSER_H
+class SymTable;
 
 typedef enum
 {
@@ -26,7 +26,8 @@ typedef enum
     AST_FOR_STMT,
     AST_CONTINUE,
     AST_BREAK,
-    AST_STMTS,
+    AST_CPD_STMT,
+    AST_PROGRAM,
     AST_ELIF_LST,
     AST_RETURN,
     AST_PRINT_STMT,
@@ -45,7 +46,11 @@ public:
     TYPE type;
     union {
         // identifiers
-        char *name;
+        struct
+        {
+            char *name;
+            bool is_mutable;
+        };
 
         // constants
         Value *value;
@@ -76,11 +81,7 @@ public:
         };
 
         // declaration list
-        struct
-        {
-            KIND specifier;
-            std::vector<ASTNode *> *decl_list; // list of declarations
-        };
+        std::vector<ASTNode *> *decl_list; // list of declarations
 
         // assignments
         struct
@@ -128,6 +129,7 @@ public:
         {
             ASTNode *while_cond;
             ASTNode *while_stmt;
+            ASTNode *while_next;
         };
 
         // for statements
@@ -137,17 +139,15 @@ public:
             ASTNode *for_cond;
             ASTNode *for_incr;
             ASTNode *for_body;
+            ASTNode *for_next;
         };
 
-        // goto statements
+        // program or compound statements
         struct
         {
-            ASTNode *curr_stmt;
-            ASTNode *next_stmt;
+            SymTable *symtable;
+            std::vector<ASTNode *> *statements;
         };
-
-        // compound statements
-        std::vector<ASTNode *> *cpd_stmt;
 
         // return statements
         ASTNode *ret_val;
@@ -156,8 +156,5 @@ public:
     ASTNode(ASTNODE_TYPE node_type, ASTNODE_TYPE ext_node_type);
     ~ASTNode();
 };
-
-void init_parser();
-std::vector<ASTNode *> *parse(std::vector<Token *> *tokens);
 
 #endif

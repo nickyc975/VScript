@@ -1,10 +1,8 @@
-#include "vsc.h"
-#include "Value.h"
-#include "../utils/File.h"
+#ifndef VSC_TOKEN_H
+#define VSC_TOKEN_H
 
-#ifndef VSLEXER_H
-
-#define VSLEXER_H
+#include "../vsc.hpp"
+#include "Value.hpp"
 
 class Token
 {
@@ -31,7 +29,5 @@ public:
         }
     }
 };
-
-void tokenize(File *file, std::vector<Token *> &tokens);
 
 #endif

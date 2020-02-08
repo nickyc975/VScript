@@ -93,3 +93,13 @@ A dynamic type programming language.
 ```
     ^[A-Za-z_]\w*$
 ```
+
+## 语义分析任务
+
+* 符号表管理
+
+* 函数调用参数个数检查
+
+* if, for, while的回填
+
+* 赋值操作左值检查

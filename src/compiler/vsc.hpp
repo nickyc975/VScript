@@ -1,11 +1,14 @@
-#ifndef VSC_DEFINE
+#ifndef VSC_DEFINE_H
+#define VSC_DEFINE_H
 
-#define VSC_DEFINE
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
+#include <string>
 #include <vector>
+#include <unordered_map>
+
+typedef unsigned int addr_t;
+typedef unsigned char byte_t;
 
 typedef enum
 {

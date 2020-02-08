@@ -1,4 +1,4 @@
-#include "SymTable.h"
+#include "SymTable.hpp"
 
 #define print_indent(indent) for(int i = 0; i < indent; i++) printf("    ");
 
@@ -22,12 +22,9 @@ SymTable *SymTable::get_parent()
     return this->parent;
 }
 
-void SymTable::put(ASTNode *id)
+void SymTable::put(ASTNode *ident)
 {
-    if (id->node_type == AST_IDENT)
-    {
-        this->table[std::string(id->name)] = id;
-    }
+    this->table[std::string(ident->name)] = ident;
 }
 
 ASTNode *SymTable::get(char *name)

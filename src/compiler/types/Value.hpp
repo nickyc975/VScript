@@ -1,7 +1,7 @@
-#ifndef VALUE_H
-#define VALUE_H
+#ifndef VSC_VALUE_H
+#define VSC_VALUE_H
 
-#include "vsc.h"
+#include "../vsc.hpp"
 
 class Value
 {

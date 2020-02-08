@@ -1,4 +1,4 @@
-#include "Value.h"
+#include "Value.hpp"
 
 Value::Value(): type(NONE)
 {

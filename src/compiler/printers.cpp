@@ -1,4 +1,4 @@
-#include "printers.h"
+#include "printers.hpp"
 
 static int indent = 0;
 
@@ -96,7 +96,8 @@ void print_ast(ASTNode *root)
     case AST_BREAK:
         print_break_node(root);
         break;
-    case AST_STMTS:
+    case AST_PROGRAM:
+    case AST_CPD_STMT:
         print_cpd_stmt_node(root);
         break;
     case AST_RETURN:
@@ -367,7 +368,7 @@ static void print_cpd_stmt_node(ASTNode *node)
     print_indent();
     printf("stmts: \n");
     indent++;
-    for (ASTNode *child : *node->cpd_stmt)
+    for (ASTNode *child : *node->statements)
     {
         print_ast(child);
         // printf("%d\n", child->node_type);

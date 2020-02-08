@@ -1,5 +1,4 @@
-#include <string.h>
-#include "vslexer.h"
+#include "vslexer.hpp"
 
 #define BUFFER_SIZE 128
 
