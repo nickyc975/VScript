@@ -1,7 +1,9 @@
 #ifndef VS_SYMTABLE_H
 #define VS_SYMTABLE_H
 
-#include "../vsc.hpp"
+#include <string>
+#include <vector>
+#include <unordered_map>
 
 template<typename V>
 class SymTable

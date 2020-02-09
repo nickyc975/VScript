@@ -1,4 +1,4 @@
-#include "vsparser.hpp"
+#include "compiler.hpp"
 
 // Create new table for compound statements.
 #define new_table() cur_table = new SymTable<ASTNode *>(cur_table)
@@ -1370,7 +1370,13 @@ static ASTNode *read_io_stmt()
     expect(SEMICOLON);
     ASTNode *node;
     if (token->kind == INPUT)
+    {
+        for (auto arg : *arg_list->list_vals)
+        {
+            ensure_lval(arg);
+        }
         node = input_stmt_node(arg_list->list_vals);
+    }
     else
         node = print_stmt_node(arg_list->list_vals);
     delete arg_list;

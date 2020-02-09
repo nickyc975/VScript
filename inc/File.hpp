@@ -1,5 +1,5 @@
-#ifndef VSC_FILE_H
-#define VSC_FILE_H
+#ifndef VS_FILE_H
+#define VS_FILE_H
 
 #include <cstdio>
 #include <cstdlib>
