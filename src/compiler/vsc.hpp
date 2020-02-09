@@ -9,9 +9,6 @@
 
 #include "../error.hpp"
 
-typedef unsigned int addr_t;
-typedef unsigned char byte_t;
-
 typedef enum
 {
     ADD,

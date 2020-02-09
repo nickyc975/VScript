@@ -107,3 +107,7 @@ A dynamic type programming language.
 * continue, break 检查
 
 * return　检查
+
+## 优化任务
+
+* 常量计算与合并

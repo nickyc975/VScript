@@ -15,7 +15,7 @@ val char_val = 5 / (9 - (10 - 8) * (9 / 3));
 val int_val = 92834087;
 val float_val = 1.24;
 // int_val = int_val + float_val;
-val str_val = "hello";
+val str_val = "hello" + " " + "world" + "!\n";
 val empty_str = "";
 var a1 = 1, a2 = int_val, a3, a4 = 4 * 8;
 val array_val = [1, 2, 3, 4, a1 + a2 + a4];

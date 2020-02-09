@@ -7,11 +7,11 @@
 #define restore_table() cur_table = cur_table->get_parent()
 
 // Ensure that there are tokens.
-#define ensure_token(ret) \
+#define ensure_token(ret_val) \
     if (!has_token()) \
     { \
         err("unexpected end of file\n");\
-        return ret;\
+        return ret_val;\
     }
 
 static unsigned int tk_idx;
@@ -78,6 +78,21 @@ static Token *peek_token()
 static Token *next_token()
 {
     return tks->at(tk_idx + 1);
+}
+
+static bool is_arith(INST inst)
+{
+    return inst >= I_ADD && inst <= I_NEQ;
+}
+
+static bool is_cmp(INST inst)
+{
+    return inst >= I_LT && inst <= I_NEQ;
+}
+
+static bool is_logic(INST inst)
+{
+    return inst >= I_EQ && inst <= I_OR;
 }
 
 static bool is_assign(KIND kind)
@@ -260,6 +275,318 @@ static void fill_back(ASTNode *prev, ASTNode *next)
     }
 }
 
+static ASTNode *cal_u_expr(INST op, ASTNode *value)
+{
+    if (op == I_NOT && value->value->type == BOOL)
+    {
+        value->value->bool_val = !value->value->bool_val;
+    }
+    else if (op == I_SUB)
+    {
+        switch (value->value->type)
+        {
+        case CHAR:
+            value->value->char_val = -value->value->char_val;
+            break;
+        case INT:
+            value->value->int_val = -value->value->int_val;
+            break;
+        case FLOAT:
+            value->value->float_val = -value->value->float_val;
+            break;
+        default:
+            break;
+        }
+    }
+    else
+    {
+        unget_token();
+        err("line: %ld, can not apply operation \"%s\" on type \"%s\"\n", 
+            peek_token()->ln, INST_STR[op], TYPE_STR[value->value->type]);
+        get_token();
+    }
+    return value;
+}
+
+static ASTNode *cal_bool_b_expr(INST op, ASTNode *left, ASTNode *right)
+{
+    if ((left->value->type != right->value->type) || !is_logic(op))
+    {
+        unget_token();
+        err("line: %ld, can not apply operation \"%s\" on type \"%s\" and \"%s\"\n", 
+            peek_token()->ln, INST_STR[op], TYPE_STR[left->value->type], TYPE_STR[right->value->type]);
+        get_token();
+        return NULL;
+    }
+
+    switch (op)
+    {
+    case I_EQ:
+        left->value->bool_val = left->value->bool_val == right->value->bool_val;
+        break;
+    case I_NEQ:
+        left->value->bool_val = left->value->bool_val != right->value->bool_val;
+        break;
+    case I_AND:
+        left->value->bool_val = left->value->bool_val && right->value->bool_val;
+        break;
+    case I_OR:
+        left->value->bool_val = left->value->bool_val || right->value->bool_val;
+        break;
+    default:
+        err("internal error\n");
+        break;
+    }
+    return left;
+}
+
+static ASTNode *cal_char_b_expr(INST op, ASTNode *left, ASTNode *right)
+{
+    if ((left->value->type != right->value->type) || !is_arith(op))
+    {
+        unget_token();
+        err("line: %ld, can not apply operation \"%s\" on type \"%s\" and \"%s\"\n", 
+            peek_token()->ln, INST_STR[op], TYPE_STR[left->value->type], TYPE_STR[right->value->type]);
+        get_token();
+        return NULL;
+    }
+
+    switch (op)
+    {
+    case I_ADD:
+        left->value->char_val = left->value->char_val + right->value->char_val;
+        break;
+    case I_SUB:
+        left->value->char_val = left->value->char_val - right->value->char_val;
+        break;
+    case I_MUL:
+        left->value->char_val = left->value->char_val * right->value->char_val;
+        break;
+    case I_DIV:
+        left->value->char_val = left->value->char_val / right->value->char_val;
+        break;
+    case I_MOD:
+        left->value->char_val = left->value->char_val % right->value->char_val;
+        break;
+    case I_LT:
+        left->value->bool_val = left->value->char_val < right->value->char_val;
+        left->value->type = BOOL;
+        break;
+    case I_GT:
+        left->value->bool_val = left->value->char_val > right->value->char_val;
+        left->value->type = BOOL;
+        break;
+    case I_LE:
+        left->value->bool_val = left->value->char_val <= right->value->char_val;
+        left->value->type = BOOL;
+        break;
+    case I_GE:
+        left->value->bool_val = left->value->char_val >= right->value->char_val;
+        left->value->type = BOOL;
+        break;
+    case I_EQ:
+        left->value->bool_val = left->value->char_val == right->value->char_val;
+        left->value->type = BOOL;
+        break;
+    case I_NEQ:
+        left->value->bool_val = left->value->char_val != right->value->char_val;
+        left->value->type = BOOL;
+        break;
+    default:
+        err("internal error\n");
+        break;
+    }
+    return left;
+}
+
+static ASTNode *cal_int_b_expr(INST op, ASTNode *left, ASTNode *right)
+{
+    if ((left->value->type != right->value->type) || !is_arith(op))
+    {
+        unget_token();
+        err("line: %ld, can not apply operation \"%s\" on type \"%s\" and \"%s\"\n", 
+            peek_token()->ln, INST_STR[op], TYPE_STR[left->value->type], TYPE_STR[right->value->type]);
+        get_token();
+        return NULL;
+    }
+
+    switch (op)
+    {
+    case I_ADD:
+        left->value->int_val = left->value->int_val + right->value->int_val;
+        break;
+    case I_SUB:
+        left->value->int_val = left->value->int_val - right->value->int_val;
+        break;
+    case I_MUL:
+        left->value->int_val = left->value->int_val * right->value->int_val;
+        break;
+    case I_DIV:
+        left->value->int_val = left->value->int_val / right->value->int_val;
+        break;
+    case I_MOD:
+        left->value->int_val = left->value->int_val % right->value->int_val;
+        break;
+    case I_LT:
+        left->value->bool_val = left->value->int_val < right->value->int_val;
+        left->value->type = BOOL;
+        break;
+    case I_GT:
+        left->value->bool_val = left->value->int_val > right->value->int_val;
+        left->value->type = BOOL;
+        break;
+    case I_LE:
+        left->value->bool_val = left->value->int_val <= right->value->int_val;
+        left->value->type = BOOL;
+        break;
+    case I_GE:
+        left->value->bool_val = left->value->int_val >= right->value->int_val;
+        left->value->type = BOOL;
+        break;
+    case I_EQ:
+        left->value->bool_val = left->value->int_val == right->value->int_val;
+        left->value->type = BOOL;
+        break;
+    case I_NEQ:
+        left->value->bool_val = left->value->int_val != right->value->int_val;
+        left->value->type = BOOL;
+        break;
+    default:
+        err("internal error\n");
+        break;
+    }
+    return left;
+}
+
+static ASTNode *cal_float_b_expr(INST op, ASTNode *left, ASTNode *right)
+{
+    if ((left->value->type != right->value->type) || !is_arith(op) || op == I_MOD)
+    {
+        unget_token();
+        err("line: %ld, can not apply operation \"%s\" on type \"%s\" and \"%s\"\n", 
+            peek_token()->ln, INST_STR[op], TYPE_STR[left->value->type], TYPE_STR[right->value->type]);
+        get_token();
+        return NULL;
+    }
+
+    switch (op)
+    {
+    case I_ADD:
+        left->value->float_val = left->value->float_val + right->value->float_val;
+        break;
+    case I_SUB:
+        left->value->float_val = left->value->float_val - right->value->float_val;
+        break;
+    case I_MUL:
+        left->value->float_val = left->value->float_val * right->value->float_val;
+        break;
+    case I_DIV:
+        left->value->float_val = left->value->float_val / right->value->float_val;
+        break;
+    case I_LT:
+        left->value->bool_val = left->value->float_val < right->value->float_val;
+        left->value->type = BOOL;
+        break;
+    case I_GT:
+        left->value->bool_val = left->value->float_val > right->value->float_val;
+        left->value->type = BOOL;
+        break;
+    case I_LE:
+        left->value->bool_val = left->value->float_val <= right->value->float_val;
+        left->value->type = BOOL;
+        break;
+    case I_GE:
+        left->value->bool_val = left->value->float_val >= right->value->float_val;
+        left->value->type = BOOL;
+        break;
+    case I_EQ:
+        left->value->bool_val = left->value->float_val == right->value->float_val;
+        left->value->type = BOOL;
+        break;
+    case I_NEQ:
+        left->value->bool_val = left->value->float_val != right->value->float_val;
+        left->value->type = BOOL;
+        break;
+    default:
+        err("internal error\n");
+        break;
+    }
+    return left;
+}
+
+static ASTNode *cal_str_b_expr(INST op, ASTNode *left, ASTNode *right)
+{
+    if ((left->value->type != right->value->type) || !(op == I_ADD || is_cmp(op)))
+    {
+        unget_token();
+        err("line: %ld, can not apply operation \"%s\" on type \"%s\" and \"%s\"\n", 
+            peek_token()->ln, INST_STR[op], TYPE_STR[left->value->type], TYPE_STR[right->value->type]);
+        get_token();
+        return NULL;
+    }
+
+    unsigned int len;
+    switch (op)
+    {
+    case I_ADD:
+        len = strlen(left->value->str_val) + strlen(left->value->str_val);
+        left->value->str_val = (char *)realloc(left->value->str_val, len + 1);
+        strcat(left->value->str_val, right->value->str_val);
+        break;
+    case I_LT:
+        left->value->bool_val = strcmp(left->value->str_val, right->value->str_val) < 0;
+        left->value->type = BOOL;
+        break;
+    case I_GT:
+        left->value->bool_val = strcmp(left->value->str_val, right->value->str_val) > 0;
+        left->value->type = BOOL;
+        break;
+    case I_LE:
+        left->value->bool_val = strcmp(left->value->str_val, right->value->str_val) <= 0;
+        left->value->type = BOOL;
+        break;
+    case I_GE:
+        left->value->bool_val = strcmp(left->value->str_val, right->value->str_val) >= 0;
+        left->value->type = BOOL;
+        break;
+    case I_EQ:
+        left->value->bool_val = strcmp(left->value->str_val, right->value->str_val) == 0;
+        left->value->type = BOOL;
+        break;
+    case I_NEQ:
+        left->value->bool_val = strcmp(left->value->str_val, right->value->str_val) != 0;
+        left->value->type = BOOL;
+        break;
+    default:
+        err("internal error\n");
+        break;
+    }
+    return left;
+}
+
+static ASTNode *cal_b_expr(INST op, ASTNode *left, ASTNode *right)
+{
+    switch (left->value->type)
+    {
+    case BOOL:
+        return cal_bool_b_expr(op, left, right);
+    case CHAR:
+        return cal_char_b_expr(op, left, right);
+    case INT:
+        return cal_int_b_expr(op, left, right);
+    case FLOAT:
+        return cal_float_b_expr(op, left, right);
+    case STRING:
+        return cal_str_b_expr(op, left, right);
+    default:
+        unget_token();
+        err("line: %ld, can not apply operation \"%s\" on type \"%s\" and \"%s\"\n", 
+            peek_token()->ln, INST_STR[op], TYPE_STR[left->value->type], TYPE_STR[right->value->type]);
+        get_token();
+        return NULL;
+    }
+}
+
 static ASTNode *ident_node(char *name, bool is_mutable)
 {
     ASTNode *node = new ASTNode(AST_IDENT, AST_EXPR);
@@ -280,19 +607,32 @@ static ASTNode *const_node(Value *value)
 
 static ASTNode *b_expr_node(INST b_opcode, ASTNode *l_operand, ASTNode *r_operand)
 {
-    ASTNode *node = new ASTNode(AST_B_EXPR, AST_EXPR);
-    node->b_opcode = b_opcode;
-    node->l_operand = l_operand;
-    node->r_operand = r_operand;
+    ASTNode *node;
+    if (l_operand->node_type == AST_CONST && r_operand->node_type == AST_CONST)
+    {
+        node = cal_b_expr(b_opcode, l_operand, r_operand);
+    }
+    else
+    {
+        node = new ASTNode(AST_B_EXPR, AST_EXPR);
+        node->b_opcode = b_opcode;
+        node->l_operand = l_operand;
+        node->r_operand = r_operand;
+    }
     return node;
 }
 
 static ASTNode *u_expr_node(INST u_opcode, ASTNode *operand)
 {
-
-    ASTNode *node = new ASTNode(AST_U_EXPR, AST_EXPR);
-    node->b_opcode = u_opcode;
-    node->operand = operand;
+    ASTNode *node;
+    if (operand->node_type == AST_CONST)
+        node = cal_u_expr(u_opcode, operand);
+    else
+    {
+        node = new ASTNode(AST_U_EXPR, AST_EXPR);
+        node->b_opcode = u_opcode;
+        node->operand = operand;
+    }
     return node;
 }
 
@@ -730,22 +1070,20 @@ static ASTNode *read_assign_expr()
 
 static ASTNode *read_expr()
 {
-    ASTNode *node, *expr = expr_lst_node(new std::vector<ASTNode *>());
-    node = read_assign_expr();
-    if (node != NULL)
-    {
-        expr->expr_list->push_back(node);
-    }
+    ASTNode *node = read_assign_expr();
+    if (!has_token() || peek_token()->kind != COMMA)
+        return node;
 
-    ensure_token(expr);
+    ASTNode *expr = expr_lst_node(new std::vector<ASTNode *>());
+    if (node != NULL)
+        expr->expr_list->push_back(node);
+
     while (peek_token()->kind == COMMA)
     {
         expect(COMMA);
         node = read_assign_expr();
         if (node != NULL)
-        {
             expr->expr_list->push_back(node);
-        }
         ensure_token(expr);
     }
     return expr;

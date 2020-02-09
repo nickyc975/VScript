@@ -6,8 +6,8 @@
 class Value
 {
 public:
-    const TYPE type;
-    const union {
+    TYPE type;
+    union {
         bool bool_val;
         char char_val;
         long long int_val;
