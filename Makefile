@@ -10,19 +10,16 @@ SRC_CP_TY_DIR=$(SRC_CP_DIR)/types
 
 VSC=vsc
 
-vsc: File.o Value.o Token.o SymTable.o ASTNode.o error.o vslexer.o vsparser.o printers.o vsc.o
-	$(CXX) $(OBJ_DIR)/File.o $(OBJ_DIR)/Value.o $(OBJ_DIR)/Token.o $(OBJ_DIR)/SymTable.o \
-	 $(OBJ_DIR)/ASTNode.o $(OBJ_DIR)/vslexer.o $(OBJ_DIR)/vsparser.o $(OBJ_DIR)/printers.o \
-	 $(OBJ_DIR)/error.o $(OBJ_DIR)/vsc.o -o $(BIN_DIR)/vsc
+vsc: File.o Value.o Token.o ASTNode.o error.o vslexer.o vsparser.o printers.o vsc.o
+	$(CXX) $(OBJ_DIR)/File.o $(OBJ_DIR)/Value.o $(OBJ_DIR)/Token.o $(OBJ_DIR)/ASTNode.o \
+		$(OBJ_DIR)/vslexer.o $(OBJ_DIR)/vsparser.o $(OBJ_DIR)/printers.o $(OBJ_DIR)/error.o \
+		$(OBJ_DIR)/vsc.o -o $(BIN_DIR)/vsc
 
 File.o: $(SRC_CP_TY_DIR)/File.cpp
 	$(CXX) -c $(SRC_CP_TY_DIR)/File.cpp -o $(OBJ_DIR)/File.o
 
 Token.o: $(SRC_CP_TY_DIR)/Token.cpp
 	$(CXX) -c $(SRC_CP_TY_DIR)/Token.cpp -o $(OBJ_DIR)/Token.o
-
-SymTable.o: $(SRC_CP_TY_DIR)/SymTable.cpp
-	$(CXX) -c $(SRC_CP_TY_DIR)/SymTable.cpp -o $(OBJ_DIR)/SymTable.o
 
 Value.o: $(SRC_CP_TY_DIR)/Value.cpp
 	$(CXX) -c $(SRC_CP_TY_DIR)/Value.cpp -o $(OBJ_DIR)/Value.o

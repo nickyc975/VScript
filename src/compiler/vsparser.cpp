@@ -1,7 +1,7 @@
 #include "vsparser.hpp"
 
 // Create new table for compound statements.
-#define new_table() cur_table = new SymTable(cur_table)
+#define new_table() cur_table = new SymTable<ASTNode *>(cur_table)
 
 // Restore parent table.
 #define restore_table() cur_table = cur_table->get_parent()
@@ -16,7 +16,7 @@
 
 static unsigned int tk_idx;
 static std::vector<Token *> *tks;
-static SymTable *cur_table;
+static SymTable<ASTNode *> *cur_table;
 
 static bool need_fill_back;
 static ASTNode *prev_stmt;
@@ -220,7 +220,7 @@ static bool ensure_lval(ASTNode *node)
 
 static bool ensure_in_iter()
 {
-    SymTable *temp = cur_table;
+    SymTable<ASTNode *> *temp = cur_table;
     while (temp != NULL)
     {
         if (temp->top->node_type == AST_WHILE_STMT || temp->top->node_type == AST_FOR_STMT)
@@ -236,7 +236,7 @@ static bool ensure_in_iter()
 
 static bool ensure_in_func_decl()
 {
-    SymTable *temp = cur_table;
+    SymTable<ASTNode *> *temp = cur_table;
     while (temp != NULL)
     {
         if (temp->top->node_type == AST_FUNC_DECL)
@@ -747,7 +747,7 @@ static ASTNode *break_node()
     return node;
 }
 
-static ASTNode *cpd_stmt_node(std::vector<ASTNode *> *stmts, SymTable *symtable)
+static ASTNode *cpd_stmt_node(std::vector<ASTNode *> *stmts, SymTable<ASTNode *> *symtable)
 {
     ASTNode *node = new ASTNode(AST_CPD_STMT, AST_UNKNOW);
     node->statements = stmts;
@@ -755,7 +755,7 @@ static ASTNode *cpd_stmt_node(std::vector<ASTNode *> *stmts, SymTable *symtable)
     return node;
 }
 
-static ASTNode *program_node(std::vector<ASTNode *> *stmts, SymTable *symtable)
+static ASTNode *program_node(std::vector<ASTNode *> *stmts, SymTable<ASTNode *> *symtable)
 {
     ASTNode *node = new ASTNode(AST_PROGRAM, AST_UNKNOW);
     node->statements = stmts;
@@ -1236,7 +1236,7 @@ static ASTNode *read_func_decl()
     // In case of recursive function, we must put the id in the table
     // before entering the function body.
     ASTNode *ident = ident_node(token->identifier, false);
-    cur_table->put(ident);
+    cur_table->put(ident->name, ident);
 
     // create symbol table for function
     new_table();
@@ -1250,7 +1250,7 @@ static ASTNode *read_func_decl()
         char *arg_name = expect(IDENTIFIER)->identifier;
         ASTNode *arg_ident = ident_node(arg_name, spec->kind == VAR);
         arg_node->list_vals->push_back(arg_ident);
-        cur_table->put(arg_ident);
+        cur_table->put(arg_ident->name, arg_ident);
 
         ensure_token(NULL);
         while (peek_token()->kind == COMMA)
@@ -1260,7 +1260,7 @@ static ASTNode *read_func_decl()
             arg_name = expect(IDENTIFIER)->identifier;
             arg_ident = ident_node(arg_name, spec->kind == VAR);
             arg_node->list_vals->push_back(arg_ident);
-            cur_table->put(arg_ident);
+            cur_table->put(arg_ident->name, arg_ident);
             ensure_token(NULL);
         }
     }
@@ -1426,7 +1426,7 @@ static ASTNode *read_init_decl(bool is_mutable)
     }
 
     ASTNode *ident = ident_node(token->identifier, is_mutable);
-    cur_table->put(ident);
+    cur_table->put(ident->name, ident);
 
     ensure_token(decl_node(ident, init));
     if (peek_token()->kind == ASSIGN)
@@ -1485,7 +1485,7 @@ static ASTNode *read_while_stmt()
 
 static ASTNode *read_program()
 {
-    cur_table = new SymTable(NULL);
+    cur_table = new SymTable<ASTNode *>(NULL);
     ASTNode *program = program_node(new std::vector<ASTNode *>(), cur_table);
     cur_table->top = program;
     while (has_token())

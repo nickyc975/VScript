@@ -3,8 +3,7 @@
 
 #include "../vsc.hpp"
 #include "Value.hpp"
-
-class SymTable;
+#include "SymTable.hpp"
 
 typedef enum
 {
@@ -145,7 +144,7 @@ public:
         // program or compound statements
         struct
         {
-            SymTable *symtable;
+            SymTable<ASTNode *> *symtable;
             std::vector<ASTNode *> *statements;
         };
 
