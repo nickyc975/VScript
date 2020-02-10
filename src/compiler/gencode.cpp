@@ -31,14 +31,14 @@ static void gen_initializer(ASTNode *node);
 static void gen_init_decl(ASTNode *node);
 static void gen_decl_stmt(ASTNode *node);
 static void gen_while_stmt(ASTNode *node);
-static void gen_program(ASTNode *node);
+static VSFunction *gen_function(ASTNode *node);
 
 static void gen_decl_stmt(ASTNode *node)
 {
 
 }
 
-static void gen_program(ASTNode *node)
+static VSFunction *gen_function(ASTNode *node)
 {
     for (auto stmt : *node->statements)
     {
@@ -75,11 +75,11 @@ static void gen_program(ASTNode *node)
     }
 }
 
-void gencode(ASTNode *astree, std::vector<char *> *code)
+VSFunction *gencode(ASTNode *astree)
 {
     cur_addr = 0;
     code_vec = new std::vector<char *>();
     func_vec = new std::vector<std::vector<char *> *>();
     cur_table = new SymTable<vs_addr_t>(NULL);
-    gen_program(astree);
+    return gen_function(astree);
 }

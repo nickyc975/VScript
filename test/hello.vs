@@ -29,10 +29,10 @@ while (int_val < 0)
     var a = 0;
     // int_val += 1;
     if (int_val > 0) {
-        a = 1;
+        a += 1;
     } elif (int_val < -1) {
-        a = 2;
+        a -= 2;
     } else {
-        a = 3;
+        a *= 3;
     }
 }

@@ -858,6 +858,10 @@ static ASTNode *read_assign_expr()
     {
         ensure_lval(node);
         TOKEN_TYPE assign_opcode = get_token()->type;
+        if (assign_opcode == TK_ASSIGN)
+            assign_opcode = TK_NOP;
+        else
+            assign_opcode = (TOKEN_TYPE)((int)assign_opcode - 1);
         ASTNode *right = read_logic_or_expr();
         if (right == NULL)
         {
