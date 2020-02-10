@@ -37,7 +37,6 @@ typedef enum
     TK_OR_ASSIGN,
     TK_NOT,
     TK_ASSIGN,
-    TK_NOP,
 
     // declaration keywords
     TK_VAL,
@@ -91,6 +90,7 @@ typedef enum
     TK_R_CURLY,
 
     // end
+    TK_NOP,
     TK_END
 } TOKEN_TYPE;
 
@@ -147,6 +147,7 @@ static char *TOKEN_STR[] =
     "R_BRACK",
     "L_CURLY",
     "R_CURLY",
+    "NOP",
     "END"
 };
 
@@ -196,15 +197,6 @@ public:
 
     ~Token()
     {
-        if (this->value != NULL)
-        {
-            delete this->value;
-        }
-
-        if (this->identifier != NULL)
-        {
-            free(this->identifier);
-        }
     }
 };
 
@@ -327,17 +319,14 @@ public:
     ASTNode(AST_NODE_TYPE node_type, AST_NODE_TYPE ext_node_type):
         node_type(node_type), ext_node_type(ext_node_type)
     {
-
     }
     ~ASTNode()
     {
-        if (node_type == AST_CONST && value != NULL && value->type != NONE && value->type != BOOL)
-            delete value;
     }
 };
 
 void tokenize(File *file, std::vector<Token *> &tokens);
 ASTNode *parse(std::vector<Token *> *tokens);
-VSFunction *gencode(ASTNode *astree);
+// VSFunction *gencode(ASTNode *astree);
 
 #endif

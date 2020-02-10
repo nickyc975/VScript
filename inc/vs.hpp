@@ -1,6 +1,9 @@
 #ifndef VS_H
 #define VS_H
 
+#include <vector>
+#include <string>
+
 #define is_num_str(type) (type != NONE && type != BOOL)
 #define is_num(type) (is_num_str(type) && type != STRING)
 #define is_int(type) (is_num(type) && type != FLOAT)
@@ -123,17 +126,10 @@ public:
     vs_size_t size;
     vs_size_t refcnt;
 
-    VSMemItem()
-    {
-        refcnt = 0;
-    }
+    VSMemItem(){refcnt = 0;}
 
-    ~VSMemItem()
-    {
-    }
-
-    virtual char *to_bytes();
-    virtual std::string to_string();
+    virtual char *to_bytes(){return NULL;}
+    virtual std::string to_string(){return std::string();}
 };
 
 class VSValue: VSMemItem
@@ -141,7 +137,6 @@ class VSValue: VSMemItem
 private:
     VSValue();
     VSValue(vs_bool_t bool_val);
-    static VSValue *NONE_VAL, *TRUE_VAL, *FALSE_VAL;
 
 public:
     const VALUE_TYPE type;
@@ -157,7 +152,7 @@ public:
     VSValue(vs_char_t val);
     VSValue(vs_int_t val);
     VSValue(vs_float_t val);
-    VSValue(std::string *val);
+    VSValue(std::string val);
 
     static VSValue *None();
     static VSValue *True();
@@ -188,6 +183,9 @@ public:
 
     VSInst(INST_TYPE inst, vs_addr_t operand);
     ~VSInst();
+
+    char *to_bytes();
+    std::string to_string();
 };
 
 class VSFunction: VSMemItem
@@ -202,6 +200,9 @@ public:
 
     VSFunction();
     ~VSFunction();
+
+    char *to_bytes();
+    std::string to_string();
 };
 
 #endif

@@ -134,7 +134,7 @@ static void print_const_node(ASTNode *node)
         printf("%f\n", node->value->float_val);
         break;
     case STRING:
-        printf("%s\n", node->value->str_val);
+        printf("%s\n", node->value->str_val->c_str());
         break;
     default:
         printf("\n");
@@ -145,7 +145,7 @@ static void print_const_node(ASTNode *node)
 static void print_ident_node(ASTNode *node)
 {
     print_indent();
-    printf("ident: %s\n", node->name);
+    printf("ident: %s\n", node->name->c_str());
 }
 
 static void print_b_expr_node(ASTNode *node)

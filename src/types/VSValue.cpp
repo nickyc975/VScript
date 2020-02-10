@@ -29,35 +29,28 @@ VSValue::VSValue(vs_float_t val) : type(FLOAT), float_val(val)
     this->size = sizeof(*this);
 }
 
-VSValue::VSValue(std::string *val) : type(STRING)
+VSValue::VSValue(std::string val) : type(STRING)
 {
-    if (val == NULL)
-        this->str_val = new std::string("");
-    else
-        this->str_val = val;
+    this->str_val = new std::string(val);
     this->size = sizeof(*this) + sizeof(*this->str_val);
 }
 
 VSValue *VSValue::None()
 {
-    
-    if (NONE_VAL == NULL)
-        NONE_VAL = new VSValue();
-    return NONE_VAL;
+    static VSValue NONE_VAL = VSValue();
+    return &NONE_VAL;
 }
 
 VSValue *VSValue::True()
 {
-    if (TRUE_VAL == NULL)
-        TRUE_VAL = new VSValue(true);
-    return TRUE_VAL;
+    static VSValue TRUE_VAL = VSValue(true);
+    return &TRUE_VAL;
 }
 
 VSValue *VSValue::False()
 {
-    if (FALSE_VAL == NULL)
-        FALSE_VAL = new VSValue(false);
-    return FALSE_VAL;
+    static VSValue FALSE_VAL = VSValue(false);
+    return &FALSE_VAL;
 }
 
 VSValue *VSValue::copy(VSValue *old)
@@ -91,7 +84,9 @@ VSValue *VSValue::i_add(VSValue *left, VSValue *right)
     case FLOAT:
         return new VSValue((vs_float_t)(left->float_val + right->float_val));
     case STRING:
-        return new VSValue((std::string *)&(*left->str_val + *right->str_val));
+    {
+        return new VSValue(*left->str_val + *right->str_val);
+    }
     default:
         return VSValue::None();
     }

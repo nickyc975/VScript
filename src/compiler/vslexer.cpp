@@ -146,7 +146,8 @@ int recognize_str(File *file, Token *token)
     {
         str_buffer[len] = '\0';
         token->type = TK_CONSTANT;
-        token->value = new VSValue(new std::string(str_buffer));
+        token->value = new VSValue(std::string(str_buffer));
+        free(str_buffer);
         return 0;
     }
 

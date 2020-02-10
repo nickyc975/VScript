@@ -1,56 +1,32 @@
-CXX=g++ -g -Wall -Wextra -Wno-write-strings -Wno-unused-variable -Wno-unused-parameter
+vpath %.hpp inc
+vpath %.cpp src src/compiler src/runtime src/tools src/types
 
-BIN_DIR=build/bin
-OBJ_DIR=build/obj
+CXX=g++
+CXXFLAGS=-I inc -g -Wall -Wextra -Wno-write-strings
 
-SRC_DIR=src
-SRC_CP_DIR=src/compiler
-SRC_RT_DIR=src/runtime
-SRC_CP_TY_DIR=$(SRC_CP_DIR)/types
+SRCS=vslexer.cpp vsparser.cpp printers.cpp error.cpp File.cpp VSValue.cpp vs.cpp
+OBJECTS=$(SRCS:.cpp=.o)
 
-VSC=vsc
+OUTPUT_DIR=build
 
-vsc: File.o Value.o Token.o ASTNode.o error.o vslexer.o vsparser.o printers.o vsc.o
-	$(CXX) $(OBJ_DIR)/File.o $(OBJ_DIR)/Value.o $(OBJ_DIR)/Token.o $(OBJ_DIR)/ASTNode.o \
-		$(OBJ_DIR)/vslexer.o $(OBJ_DIR)/vsparser.o $(OBJ_DIR)/printers.o $(OBJ_DIR)/error.o \
-		$(OBJ_DIR)/vsc.o -o $(BIN_DIR)/vsc
+VS=vs
 
-File.o: $(SRC_CP_TY_DIR)/File.cpp
-	$(CXX) -c $(SRC_CP_TY_DIR)/File.cpp -o $(OBJ_DIR)/File.o
+%.o: %.cpp
+	$(if $(shell ls | grep -w $(OUTPUT_DIR)), , $(shell mkdir $(OUTPUT_DIR)))
+	$(CXX) $(CXXFLAGS) -c $< -o $(OUTPUT_DIR)/$@
 
-Token.o: $(SRC_CP_TY_DIR)/Token.cpp
-	$(CXX) -c $(SRC_CP_TY_DIR)/Token.cpp -o $(OBJ_DIR)/Token.o
+vs: $(OBJECTS)
+	$(CXX) $(CXXFLAGS) $(foreach obj, $(OBJECTS), $(OUTPUT_DIR)/$(obj)) -o $(OUTPUT_DIR)/vs
 
-Value.o: $(SRC_CP_TY_DIR)/Value.cpp
-	$(CXX) -c $(SRC_CP_TY_DIR)/Value.cpp -o $(OBJ_DIR)/Value.o
+test: vs
+	$(OUTPUT_DIR)/$(VS) -l -p test/hello.vs
 
-ASTNode.o: $(SRC_CP_TY_DIR)/ASTNode.cpp
-	$(CXX) -c $(SRC_CP_TY_DIR)/ASTNode.cpp -o $(OBJ_DIR)/ASTNode.o
+test-lex: vs
+	$(OUTPUT_DIR)/$(VS) -l test/hello.vs
 
-error.o: $(SRC_DIR)/error.cpp
-	$(CXX) -c $(SRC_DIR)/error.cpp -o $(OBJ_DIR)/error.o
-
-vslexer.o: $(SRC_CP_DIR)/vslexer.cpp
-	$(CXX) -c $(SRC_CP_DIR)/vslexer.cpp -o $(OBJ_DIR)/vslexer.o
-
-vsparser.o: $(SRC_CP_DIR)/vsparser.cpp
-	$(CXX) -c $(SRC_CP_DIR)/vsparser.cpp -o $(OBJ_DIR)/vsparser.o
-
-printers.o: $(SRC_CP_DIR)/printers.cpp
-	$(CXX) -c $(SRC_CP_DIR)/printers.cpp -o $(OBJ_DIR)/printers.o
-
-vsc.o: $(SRC_CP_DIR)/vsc.cpp
-	$(CXX) -c $(SRC_CP_DIR)/vsc.cpp -o $(OBJ_DIR)/vsc.o
-
-test: vsc
-	$(BIN_DIR)/$(VSC) -l -p test/hello.vs
-
-test-lex: vsc
-	$(BIN_DIR)/$(VSC) -l test/hello.vs
-
-test-parse: vsc
-	$(BIN_DIR)/$(VSC) -p test/hello.vs
+test-parse: vs
+	$(OUTPUT_DIR)/$(VS) -p test/hello.vs
 
 clean:
-	rm $(OBJ_DIR)/* $(BIN_DIR)/*
+	rm -rf $(OUTPUT_DIR)/* *.o
 

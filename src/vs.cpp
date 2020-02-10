@@ -36,11 +36,11 @@ int main(int argc, char **argv)
 
     file = new File(fopen(*argv, "r"));
     tokenize(file, token_list);
-    ASTNode *program = parse(&token_list);
     if (lexer)
     {
         print_tk_lst(token_list, (char *)"test/tokens.txt");
     }
+    ASTNode *program = parse(&token_list);
     if (parser)
     {
         print_ast(program);
@@ -57,7 +57,7 @@ void print_tk_lst(std::vector<Token *> token_list, char *filename)
         switch (token->type)
         {
             case TK_IDENTIFIER:
-                fprintf(tokens_txt, "%s\t0x%lx\n", token->identifier, token->identifier);
+                fprintf(tokens_txt, "%s\n", token->identifier->c_str());
                 break;
             case TK_CONSTANT:
                 fprintf(tokens_txt, "%s\t", TYPE_STR[token->value->type]);
@@ -79,7 +79,7 @@ void print_tk_lst(std::vector<Token *> token_list, char *filename)
                         fprintf(tokens_txt, "%f\n", token->value->float_val);
                         break;
                     case STRING:
-                        fprintf(tokens_txt, "%s\n", token->value->str_val);
+                        fprintf(tokens_txt, "%s\n", token->value->str_val->c_str());
                         break;
                     default:
                         break;
