@@ -21,11 +21,11 @@ public:
 
     bool has_parent();
     SymTable *get_parent();
-    void put(char *name, V value);
-    V get(char *name);
-    V get_recur(char *name);
-    bool contains(char *name);
-    bool contains_recur(char *name);
+    void put(std::string name, V value);
+    V get(std::string name);
+    V get_recur(std::string name);
+    bool contains(std::string name);
+    bool contains_recur(std::string name);
     void add_child(SymTable *child);
 };
 
@@ -54,24 +54,23 @@ SymTable<V> *SymTable<V>::get_parent()
 }
 
 template<typename V>
-void SymTable<V>::put(char *name, V value)
+void SymTable<V>::put(std::string name, V value)
 {
-    this->table[std::string(name)] = value;
+    this->table[name] = value;
 }
 
 template<typename V>
-V SymTable<V>::get(char *name)
+V SymTable<V>::get(std::string name)
 {
-    std::string sname = std::string(name);
-    if (this->table.find(sname) != this->table.end())
+    if (this->table.find(name) != this->table.end())
     {
-        return this->table[sname];
+        return this->table[name];
     }
     return NULL;
 }
 
 template<typename V>
-V SymTable<V>::get_recur(char *name)
+V SymTable<V>::get_recur(std::string name)
 {
     V node = this->get(name);
     if (node == NULL && this->has_parent())
@@ -82,13 +81,13 @@ V SymTable<V>::get_recur(char *name)
 }
 
 template<typename V>
-bool SymTable<V>::contains(char *name)
+bool SymTable<V>::contains(std::string name)
 {
-    return this->table.find(std::string(name)) != this->table.end();
+    return this->table.find(name) != this->table.end();
 }
 
 template<typename V>
-bool SymTable<V>::contains_recur(char *name)
+bool SymTable<V>::contains_recur(std::string name)
 {
     bool result = this->contains(name);
     if (result == false && this->has_parent())

@@ -1,10 +1,10 @@
 #include <stdio.h>
 
-#include "vsc.hpp"
-#include "vslexer.hpp"
-#include "vsparser.hpp"
+#include "vs.hpp"
+#include "compiler.hpp"
+#include "runtime.hpp"
 #include "printers.hpp"
-#include "types/File.hpp"
+#include "File.hpp"
 
 void print_tk_lst(std::vector<Token *>, char *filename);
 
@@ -36,7 +36,6 @@ int main(int argc, char **argv)
 
     file = new File(fopen(*argv, "r"));
     tokenize(file, token_list);
-    init_parser();
     ASTNode *program = parse(&token_list);
     if (lexer)
     {
@@ -54,13 +53,13 @@ void print_tk_lst(std::vector<Token *> token_list, char *filename)
     FILE *tokens_txt = fopen(filename, "w");
     for (Token *token : token_list)
     {
-        fprintf(tokens_txt, "%s\t%lld\t%lld\t", KIND_STR[token->kind], token->ln, token->col);
-        switch (token->kind)
+        fprintf(tokens_txt, "%s\t%lld\t%lld\t", TOKEN_STR[token->type], token->ln, token->col);
+        switch (token->type)
         {
-            case IDENTIFIER:
+            case TK_IDENTIFIER:
                 fprintf(tokens_txt, "%s\t0x%lx\n", token->identifier, token->identifier);
                 break;
-            case CONSTANT:
+            case TK_CONSTANT:
                 fprintf(tokens_txt, "%s\t", TYPE_STR[token->value->type]);
                 switch (token->value->type)
                 {
@@ -86,14 +85,14 @@ void print_tk_lst(std::vector<Token *> token_list, char *filename)
                         break;
                 }
                 break;
-            case SEMICOLON:
-            case COMMA:
-            case L_PAREN:
-            case R_PAREN:
-            case L_BRACK:
-            case R_BRACK:
-            case L_CURLY:
-            case R_CURLY:
+            case TK_SEMICOLON:
+            case TK_COMMA:
+            case TK_L_PAREN:
+            case TK_R_PAREN:
+            case TK_L_BRACK:
+            case TK_R_BRACK:
+            case TK_L_CURLY:
+            case TK_R_CURLY:
             default:
                 fprintf(tokens_txt, "\n");
                 break;

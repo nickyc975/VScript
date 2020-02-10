@@ -25,7 +25,7 @@ static ASTNode *read_primary_expr();
 static ASTNode *read_arg_expr_list();
 static ASTNode *read_postfix_expr();
 static ASTNode *read_unary_expr();
-static ASTNode *read_multi_expr();
+static ASTNode *read_multTK_expr();
 static ASTNode *read_additive_expr();
 static ASTNode *read_relational_expr();
 static ASTNode *read_equality_expr();
@@ -80,119 +80,119 @@ static Token *next_token()
     return tks->at(tk_idx + 1);
 }
 
-static bool is_arith(INST inst)
+static bool is_arith(TOKEN_TYPE opcode)
 {
-    return inst >= I_ADD && inst <= I_NEQ;
+    return opcode >= TK_ADD && opcode <= TK_NEQ;
 }
 
-static bool is_cmp(INST inst)
+static bool is_cmp(TOKEN_TYPE opcode)
 {
-    return inst >= I_LT && inst <= I_NEQ;
+    return opcode >= TK_LT && opcode <= TK_NEQ;
 }
 
-static bool is_logic(INST inst)
+static bool is_logic(TOKEN_TYPE opcode)
 {
-    return inst >= I_EQ && inst <= I_OR;
+    return opcode >= TK_EQ && opcode <= TK_OR;
 }
 
-static bool is_assign(KIND kind)
+static bool is_assign(TOKEN_TYPE opcode)
 {
-    switch (kind)
+    switch (opcode)
     {
-    case ASSIGN:
-    case ADD_ASSIGN:
-    case SUB_ASSIGN:
-    case MUL_ASSIGN:
-    case DIV_ASSIGN:
-    case MOD_ASSIGN:
-    case AND_ASSIGN:
-    case OR_ASSIGN:
+    case TK_ASSIGN:
+    case TK_ADD_ASSIGN:
+    case TK_SUB_ASSIGN:
+    case TK_MUL_ASSIGN:
+    case TK_DIV_ASSIGN:
+    case TK_MOD_ASSIGN:
+    case TK_AND_ASSIGN:
+    case TK_OR_ASSIGN:
         return true;
     default:
         return false;
     }
 }
 
-static bool is_relation(KIND kind)
+static bool is_relation(TOKEN_TYPE opcode)
 {
-    switch (kind)
+    switch (opcode)
     {
-    case LT:
-    case LE:
-    case GT:
-    case GE:
+    case TK_LT:
+    case TK_LE:
+    case TK_GT:
+    case TK_GE:
         return true;
     default:
         return false;
     }
 }
 
-static bool is_mul(KIND kind)
+static bool is_mul(TOKEN_TYPE opcode)
 {
-    switch (kind)
+    switch (opcode)
     {
-    case MUL:
-    case DIV:
-    case MOD:
+    case TK_MUL:
+    case TK_DIV:
+    case TK_MOD:
         return true;
     default:
         return false;
     }
 }
 
-static INST get_assign_opcode(KIND kind)
+static TOKEN_TYPE get_assign_opcode(TOKEN_TYPE opcode)
 {
-    switch (kind)
+    switch (opcode)
     {
-    case ADD_ASSIGN:
-        return I_ADD;
-    case SUB_ASSIGN:
-        return I_SUB;
-    case MUL_ASSIGN:
-        return I_MUL;
-    case DIV_ASSIGN:
-        return I_DIV;
-    case MOD_ASSIGN:
-        return I_MOD;
-    case AND_ASSIGN:
-        return I_AND;
-    case OR_ASSIGN:
-        return I_OR;
-    case ASSIGN:
+    case TK_ADD_ASSIGN:
+        return TK_ADD;
+    case TK_SUB_ASSIGN:
+        return TK_SUB;
+    case TK_MUL_ASSIGN:
+        return TK_MUL;
+    case TK_DIV_ASSIGN:
+        return TK_DIV;
+    case TK_MOD_ASSIGN:
+        return TK_MOD;
+    case TK_AND_ASSIGN:
+        return TK_AND;
+    case TK_OR_ASSIGN:
+        return TK_OR;
+    case TK_ASSIGN:
     default:
-        return I_NOP;
+        return TK_NOP;
     }
 }
 
-static INST get_rel_opcode(KIND kind)
+static TOKEN_TYPE get_rel_opcode(TOKEN_TYPE opcode)
 {
-    switch (kind)
+    switch (opcode)
     {
-    case LT:
-        return I_LT;
-    case LE:
-        return I_LE;
-    case GT:
-        return I_GT;
-    case GE:
-        return I_GE;
+    case TK_LT:
+        return TK_LT;
+    case TK_LE:
+        return TK_LE;
+    case TK_GT:
+        return TK_GT;
+    case TK_GE:
+        return TK_GE;
     default:
-        return I_NOP;
+        return TK_NOP;
     }
 }
 
-static INST get_mul_opcode(KIND kind)
+static TOKEN_TYPE get_mul_opcode(TOKEN_TYPE opcode)
 {
-    switch (kind)
+    switch (opcode)
     {
-    case MUL:
-        return I_MUL;
-    case DIV:
-        return I_DIV;
-    case MOD:
-        return I_MOD;
+    case TK_MUL:
+        return TK_MUL;
+    case TK_DIV:
+        return TK_DIV;
+    case TK_MOD:
+        return TK_MOD;
     default:
-        return I_NOP;
+        return TK_NOP;
     }
 }
 
@@ -275,181 +275,179 @@ static void fill_back(ASTNode *prev, ASTNode *next)
     }
 }
 
-static ASTNode *cal_u_expr(INST op, ASTNode *value)
+static ASTNode *cal_u_expr(TOKEN_TYPE op, ASTNode *value)
 {
-    if (op == I_NOT && value->value->type == BOOL)
+    VSValue *old = value->value;
+    if (op == TK_SUB && is_num(old->type))
     {
-        value->value->bool_val = !value->value->bool_val;
+        value->value = VSValue::i_neg(old);
+        delete old;
     }
-    else if (op == I_SUB)
+    else if (op == TK_NOT && old->type == BOOL)
     {
-        switch (value->value->type)
-        {
-        case CHAR:
-            value->value->char_val = -value->value->char_val;
-            break;
-        case INT:
-            value->value->int_val = -value->value->int_val;
-            break;
-        case FLOAT:
-            value->value->float_val = -value->value->float_val;
-            break;
-        default:
-            break;
-        }
+        value->value = VSValue::i_not(old);
     }
     else
     {
         unget_token();
-        err("line: %ld, can not apply operation \"%s\" on type \"%s\"\n", 
-            peek_token()->ln, INST_STR[op], TYPE_STR[value->value->type]);
+        u_op_err_lno(peek_token()->ln, TOKEN_STR[op], TYPE_STR[old->type]);
         get_token();
     }
     return value;
 }
 
-static ASTNode *cal_bool_b_expr(INST op, ASTNode *left, ASTNode *right)
+static ASTNode *cal_bool_b_expr(TOKEN_TYPE op, ASTNode *left, ASTNode *right)
 {
     if ((left->value->type != right->value->type) || !is_logic(op))
     {
         unget_token();
-        err("line: %ld, can not apply operation \"%s\" on type \"%s\" and \"%s\"\n", 
-            peek_token()->ln, INST_STR[op], TYPE_STR[left->value->type], TYPE_STR[right->value->type]);
+        b_op_err_lno(peek_token()->ln, TOKEN_STR[op], TYPE_STR[left->value->type], TYPE_STR[right->value->type]);
         get_token();
+        delete left;
+        delete right;
         return NULL;
     }
 
     switch (op)
     {
-    case I_EQ:
-        left->value->bool_val = left->value->bool_val == right->value->bool_val;
+    case TK_EQ:
+        left->value = VSValue::i_eq(left->value, right->value);
         break;
-    case I_NEQ:
-        left->value->bool_val = left->value->bool_val != right->value->bool_val;
+    case TK_NEQ:
+        left->value = VSValue::i_neq(left->value, right->value);
         break;
-    case I_AND:
-        left->value->bool_val = left->value->bool_val && right->value->bool_val;
+    case TK_AND:
+        left->value = VSValue::i_and(left->value, right->value);
         break;
-    case I_OR:
-        left->value->bool_val = left->value->bool_val || right->value->bool_val;
+    case TK_OR:
+        left->value = VSValue::i_or(left->value, right->value);
         break;
     default:
         err("internal error\n");
         break;
     }
+    delete right;
     return left;
 }
 
-static ASTNode *cal_char_b_expr(INST op, ASTNode *left, ASTNode *right)
+static ASTNode *cal_num_b_expr(TOKEN_TYPE op, ASTNode *left, ASTNode *right)
 {
     if ((left->value->type != right->value->type) || !is_arith(op))
     {
         unget_token();
-        err("line: %ld, can not apply operation \"%s\" on type \"%s\" and \"%s\"\n", 
-            peek_token()->ln, INST_STR[op], TYPE_STR[left->value->type], TYPE_STR[right->value->type]);
+        b_op_err_lno(peek_token()->ln, TOKEN_STR[op], TYPE_STR[left->value->type], TYPE_STR[right->value->type]);
         get_token();
+        delete left;
+        delete right;
         return NULL;
     }
 
+    VSValue *old = left->value;
     switch (op)
     {
-    case I_ADD:
-        left->value->char_val = left->value->char_val + right->value->char_val;
+    case TK_ADD:
+        left->value = VSValue::i_add(left->value, right->value);
+        delete old;
         break;
-    case I_SUB:
-        left->value->char_val = left->value->char_val - right->value->char_val;
+    case TK_SUB:
+        left->value = VSValue::i_sub(left->value, right->value);
+        delete old;
         break;
-    case I_MUL:
-        left->value->char_val = left->value->char_val * right->value->char_val;
+    case TK_MUL:
+        left->value = VSValue::i_mul(left->value, right->value);
+        delete old;
         break;
-    case I_DIV:
-        left->value->char_val = left->value->char_val / right->value->char_val;
+    case TK_DIV:
+        left->value = VSValue::i_div(left->value, right->value);
+        delete old;
         break;
-    case I_MOD:
-        left->value->char_val = left->value->char_val % right->value->char_val;
+    case TK_MOD:
+        if (left->value->type == FLOAT)
+        {
+            unget_token();
+            b_op_err_lno(peek_token()->ln, TOKEN_STR[op], TYPE_STR[left->value->type], TYPE_STR[right->value->type]);
+            get_token();
+            delete left;
+            delete right;
+            return NULL;
+        }
+        left->value = VSValue::i_mod(left->value, right->value);
+        delete old;
         break;
-    case I_LT:
-        left->value->bool_val = left->value->char_val < right->value->char_val;
-        left->value->type = BOOL;
+    case TK_LT:
+        left->value = VSValue::i_lt(left->value, right->value);
+        delete old;
         break;
-    case I_GT:
-        left->value->bool_val = left->value->char_val > right->value->char_val;
-        left->value->type = BOOL;
+    case TK_GT:
+        left->value = VSValue::i_gt(left->value, right->value);
+        delete old;
         break;
-    case I_LE:
-        left->value->bool_val = left->value->char_val <= right->value->char_val;
-        left->value->type = BOOL;
+    case TK_LE:
+        left->value = VSValue::i_le(left->value, right->value);
+        delete old;
         break;
-    case I_GE:
-        left->value->bool_val = left->value->char_val >= right->value->char_val;
-        left->value->type = BOOL;
+    case TK_GE:
+        left->value = VSValue::i_ge(left->value, right->value);
+        delete old;
         break;
-    case I_EQ:
-        left->value->bool_val = left->value->char_val == right->value->char_val;
-        left->value->type = BOOL;
+    case TK_EQ:
+        left->value = VSValue::i_eq(left->value, right->value);
+        delete old;
         break;
-    case I_NEQ:
-        left->value->bool_val = left->value->char_val != right->value->char_val;
-        left->value->type = BOOL;
+    case TK_NEQ:
+        left->value = VSValue::i_neq(left->value, right->value);
+        delete old;
         break;
     default:
         err("internal error\n");
         break;
     }
+    delete right;
     return left;
 }
 
-static ASTNode *cal_int_b_expr(INST op, ASTNode *left, ASTNode *right)
+static ASTNode *cal_str_b_expr(TOKEN_TYPE op, ASTNode *left, ASTNode *right)
 {
-    if ((left->value->type != right->value->type) || !is_arith(op))
+    if ((left->value->type != right->value->type) || !(op == TK_ADD || is_cmp(op)))
     {
         unget_token();
-        err("line: %ld, can not apply operation \"%s\" on type \"%s\" and \"%s\"\n", 
-            peek_token()->ln, INST_STR[op], TYPE_STR[left->value->type], TYPE_STR[right->value->type]);
+        b_op_err_lno(peek_token()->ln, TOKEN_STR[op], TYPE_STR[left->value->type], TYPE_STR[right->value->type]);
         get_token();
+        delete left;
+        delete right;
         return NULL;
     }
 
+    VSValue *old = left->value;
     switch (op)
     {
-    case I_ADD:
-        left->value->int_val = left->value->int_val + right->value->int_val;
+    case TK_ADD:
+        left->value = VSValue::i_add(left->value, right->value);
+        delete old;
         break;
-    case I_SUB:
-        left->value->int_val = left->value->int_val - right->value->int_val;
+    case TK_LT:
+        left->value = VSValue::i_lt(left->value, right->value);
+        delete old;
         break;
-    case I_MUL:
-        left->value->int_val = left->value->int_val * right->value->int_val;
+    case TK_GT:
+        left->value = VSValue::i_gt(left->value, right->value);
+        delete old;
         break;
-    case I_DIV:
-        left->value->int_val = left->value->int_val / right->value->int_val;
+    case TK_LE:
+        left->value = VSValue::i_le(left->value, right->value);
+        delete old;
         break;
-    case I_MOD:
-        left->value->int_val = left->value->int_val % right->value->int_val;
+    case TK_GE:
+        left->value = VSValue::i_ge(left->value, right->value);
+        delete old;
         break;
-    case I_LT:
-        left->value->bool_val = left->value->int_val < right->value->int_val;
-        left->value->type = BOOL;
+    case TK_EQ:
+        left->value = VSValue::i_eq(left->value, right->value);
+        delete old;
         break;
-    case I_GT:
-        left->value->bool_val = left->value->int_val > right->value->int_val;
-        left->value->type = BOOL;
-        break;
-    case I_LE:
-        left->value->bool_val = left->value->int_val <= right->value->int_val;
-        left->value->type = BOOL;
-        break;
-    case I_GE:
-        left->value->bool_val = left->value->int_val >= right->value->int_val;
-        left->value->type = BOOL;
-        break;
-    case I_EQ:
-        left->value->bool_val = left->value->int_val == right->value->int_val;
-        left->value->type = BOOL;
-        break;
-    case I_NEQ:
-        left->value->bool_val = left->value->int_val != right->value->int_val;
-        left->value->type = BOOL;
+    case TK_NEQ:
+        left->value = VSValue::i_neq(left->value, right->value);
+        delete old;
         break;
     default:
         err("internal error\n");
@@ -458,154 +456,42 @@ static ASTNode *cal_int_b_expr(INST op, ASTNode *left, ASTNode *right)
     return left;
 }
 
-static ASTNode *cal_float_b_expr(INST op, ASTNode *left, ASTNode *right)
-{
-    if ((left->value->type != right->value->type) || !is_arith(op) || op == I_MOD)
-    {
-        unget_token();
-        err("line: %ld, can not apply operation \"%s\" on type \"%s\" and \"%s\"\n", 
-            peek_token()->ln, INST_STR[op], TYPE_STR[left->value->type], TYPE_STR[right->value->type]);
-        get_token();
-        return NULL;
-    }
-
-    switch (op)
-    {
-    case I_ADD:
-        left->value->float_val = left->value->float_val + right->value->float_val;
-        break;
-    case I_SUB:
-        left->value->float_val = left->value->float_val - right->value->float_val;
-        break;
-    case I_MUL:
-        left->value->float_val = left->value->float_val * right->value->float_val;
-        break;
-    case I_DIV:
-        left->value->float_val = left->value->float_val / right->value->float_val;
-        break;
-    case I_LT:
-        left->value->bool_val = left->value->float_val < right->value->float_val;
-        left->value->type = BOOL;
-        break;
-    case I_GT:
-        left->value->bool_val = left->value->float_val > right->value->float_val;
-        left->value->type = BOOL;
-        break;
-    case I_LE:
-        left->value->bool_val = left->value->float_val <= right->value->float_val;
-        left->value->type = BOOL;
-        break;
-    case I_GE:
-        left->value->bool_val = left->value->float_val >= right->value->float_val;
-        left->value->type = BOOL;
-        break;
-    case I_EQ:
-        left->value->bool_val = left->value->float_val == right->value->float_val;
-        left->value->type = BOOL;
-        break;
-    case I_NEQ:
-        left->value->bool_val = left->value->float_val != right->value->float_val;
-        left->value->type = BOOL;
-        break;
-    default:
-        err("internal error\n");
-        break;
-    }
-    return left;
-}
-
-static ASTNode *cal_str_b_expr(INST op, ASTNode *left, ASTNode *right)
-{
-    if ((left->value->type != right->value->type) || !(op == I_ADD || is_cmp(op)))
-    {
-        unget_token();
-        err("line: %ld, can not apply operation \"%s\" on type \"%s\" and \"%s\"\n", 
-            peek_token()->ln, INST_STR[op], TYPE_STR[left->value->type], TYPE_STR[right->value->type]);
-        get_token();
-        return NULL;
-    }
-
-    unsigned int len;
-    switch (op)
-    {
-    case I_ADD:
-        len = strlen(left->value->str_val) + strlen(left->value->str_val);
-        left->value->str_val = (char *)realloc(left->value->str_val, len + 1);
-        strcat(left->value->str_val, right->value->str_val);
-        break;
-    case I_LT:
-        left->value->bool_val = strcmp(left->value->str_val, right->value->str_val) < 0;
-        left->value->type = BOOL;
-        break;
-    case I_GT:
-        left->value->bool_val = strcmp(left->value->str_val, right->value->str_val) > 0;
-        left->value->type = BOOL;
-        break;
-    case I_LE:
-        left->value->bool_val = strcmp(left->value->str_val, right->value->str_val) <= 0;
-        left->value->type = BOOL;
-        break;
-    case I_GE:
-        left->value->bool_val = strcmp(left->value->str_val, right->value->str_val) >= 0;
-        left->value->type = BOOL;
-        break;
-    case I_EQ:
-        left->value->bool_val = strcmp(left->value->str_val, right->value->str_val) == 0;
-        left->value->type = BOOL;
-        break;
-    case I_NEQ:
-        left->value->bool_val = strcmp(left->value->str_val, right->value->str_val) != 0;
-        left->value->type = BOOL;
-        break;
-    default:
-        err("internal error\n");
-        break;
-    }
-    return left;
-}
-
-static ASTNode *cal_b_expr(INST op, ASTNode *left, ASTNode *right)
+static ASTNode *cal_b_expr(TOKEN_TYPE op, ASTNode *left, ASTNode *right)
 {
     switch (left->value->type)
     {
     case BOOL:
         return cal_bool_b_expr(op, left, right);
     case CHAR:
-        return cal_char_b_expr(op, left, right);
     case INT:
-        return cal_int_b_expr(op, left, right);
     case FLOAT:
-        return cal_float_b_expr(op, left, right);
+        return cal_num_b_expr(op, left, right);
     case STRING:
         return cal_str_b_expr(op, left, right);
     default:
         unget_token();
-        err("line: %ld, can not apply operation \"%s\" on type \"%s\" and \"%s\"\n", 
-            peek_token()->ln, INST_STR[op], TYPE_STR[left->value->type], TYPE_STR[right->value->type]);
+        b_op_err_lno(peek_token()->ln, TOKEN_STR[op], TYPE_STR[left->value->type], TYPE_STR[right->value->type]);
         get_token();
         return NULL;
     }
 }
 
-static ASTNode *ident_node(char *name, bool is_mutable)
+static ASTNode *ident_node(std::string *name, bool is_mutable)
 {
     ASTNode *node = new ASTNode(AST_IDENT, AST_EXPR);
-    node->type = NONE;
-    node->name = (char *)malloc(strlen(name));
-    strcpy(node->name, name);
+    node->name = new std::string(*name);
     node->is_mutable = is_mutable;
     return node;
 }
 
-static ASTNode *const_node(Value *value)
+static ASTNode *const_node(VSValue *value)
 {
     ASTNode *node = new ASTNode(AST_CONST, AST_EXPR);
-    node->type = value->type;
     node->value = value;
     return node;
 }
 
-static ASTNode *b_expr_node(INST b_opcode, ASTNode *l_operand, ASTNode *r_operand)
+static ASTNode *b_expr_node(TOKEN_TYPE b_opcode, ASTNode *l_operand, ASTNode *r_operand)
 {
     ASTNode *node;
     if (l_operand->node_type == AST_CONST && r_operand->node_type == AST_CONST)
@@ -622,7 +508,7 @@ static ASTNode *b_expr_node(INST b_opcode, ASTNode *l_operand, ASTNode *r_operan
     return node;
 }
 
-static ASTNode *u_expr_node(INST u_opcode, ASTNode *operand)
+static ASTNode *u_expr_node(TOKEN_TYPE u_opcode, ASTNode *operand)
 {
     ASTNode *node;
     if (operand->node_type == AST_CONST)
@@ -658,7 +544,7 @@ static ASTNode *decl_lst_node(std::vector<ASTNode *> *decl_list)
     return node;
 }
 
-static ASTNode *assign_node(INST assign_opcode, ASTNode *assign_var, ASTNode *assign_val)
+static ASTNode *assign_node(TOKEN_TYPE assign_opcode, ASTNode *assign_var, ASTNode *assign_val)
 {
     ASTNode *node = new ASTNode(AST_ASSIGN, AST_UNKNOW);
     node->assign_opcode = assign_opcode;
@@ -670,7 +556,6 @@ static ASTNode *assign_node(INST assign_opcode, ASTNode *assign_var, ASTNode *as
 static ASTNode *lst_val_node(std::vector<ASTNode *> *list_vals)
 {
     ASTNode *node = new ASTNode(AST_LST_VAL, AST_EXPR);
-    node->type = LIST;
     node->list_vals = list_vals;
     return node;
 }
@@ -784,24 +669,24 @@ static ASTNode *input_stmt_node(std::vector<ASTNode *> *arg_list)
     return node;
 }
 
-static Token *expect(KIND kind)
+static Token *expect(TOKEN_TYPE type)
 {
     ensure_token(NULL);
     Token *token = get_token();
-    if (token->kind != kind)
+    if (token->type != type)
     {
-        err("line: %ld, expected \"%s\" but got \"%s\"\n", token->ln, KIND_STR[kind], KIND_STR[token->kind]);
+        err("line: %ld, expected \"%s\" but got \"%s\"\n", token->ln, TOKEN_STR[type], TOKEN_STR[token->type]);
     }
     return token;
 }
 
-static Token *expect2(KIND kind1, KIND kind2)
+static Token *expect2(TOKEN_TYPE type1, TOKEN_TYPE type2)
 {
     ensure_token(NULL);
     Token *token = get_token();
-    if (token->kind != kind1 && token->kind != kind2)
+    if (token->type != type1 && token->type != type2)
     {
-        err("line: %ld, expected \"%s\" or \"%s\" but got \"%s\"\n", token->ln, KIND_STR[kind1], KIND_STR[kind1], KIND_STR[token->kind]);
+        err("line: %ld, expected \"%s\" or \"%s\" but got \"%s\"\n", token->ln, TOKEN_STR[type1], TOKEN_STR[type2], TOKEN_STR[token->type]);
     }
     return token;
 }
@@ -812,24 +697,24 @@ static ASTNode *read_primary_expr()
     ASTNode *node = NULL;
 
     ensure_token(NULL);
-    switch (peek_token()->kind)
+    switch (peek_token()->type)
     {
-    case CONSTANT:
+    case TK_CONSTANT:
         node = const_node(get_token()->value);
         break;
-    case IDENTIFIER:
+    case TK_IDENTIFIER:
         token = get_token();
-        if (!cur_table->contains_recur(token->identifier))
+        if (!cur_table->contains_recur(*token->identifier))
         {
             err("line %ld, \"%s\" not defined\n", token->ln, token->identifier);
             break;
         }
-        node = cur_table->get_recur(token->identifier);
+        node = cur_table->get_recur(*token->identifier);
         break;
-    case L_PAREN:
-        expect(L_PAREN);
+    case TK_L_PAREN:
+        expect(TK_L_PAREN);
         node = read_expr();
-        expect(R_PAREN);
+        expect(TK_R_PAREN);
         break;
     default:
         break;
@@ -841,7 +726,7 @@ static ASTNode *read_arg_expr_list()
 {
     ASTNode *arg_list = lst_val_node(new std::vector<ASTNode *>());
     ensure_token(arg_list);
-    if (peek_token()->kind == R_PAREN)
+    if (peek_token()->type == TK_R_PAREN)
         return arg_list;
     ASTNode *arg = read_logic_or_expr();
     if (arg == NULL)
@@ -851,9 +736,9 @@ static ASTNode *read_arg_expr_list()
     }
     arg_list->list_vals->push_back(arg);
     ensure_token(arg_list);
-    while (peek_token()->kind == COMMA)
+    while (peek_token()->type == TK_COMMA)
     {
-        expect(COMMA);
+        expect(TK_COMMA);
         arg = read_logic_or_expr();
         if (arg == NULL)
         {
@@ -872,11 +757,11 @@ static ASTNode *read_postfix_expr()
     if (node == NULL || !has_token())
         return node;
     
-    switch (peek_token()->kind)
+    switch (peek_token()->type)
     {
-    case L_BRACK:
+    case TK_L_BRACK:
     {
-        expect(L_BRACK);
+        expect(TK_L_BRACK);
         ASTNode *lst_idx = read_expr();
         if (lst_idx == NULL)
         {
@@ -884,12 +769,12 @@ static ASTNode *read_postfix_expr()
             err("line: %ld, invalid list index\n", peek_token()->ln);
         }
         node = lst_idx_node(node, lst_idx);
-        expect(R_BRACK);
+        expect(TK_R_BRACK);
         break;
     }
-    case L_PAREN:
+    case TK_L_PAREN:
     {
-        expect(L_PAREN);
+        expect(TK_L_PAREN);
         ASTNode *arg_list = read_arg_expr_list();
         if (arg_list == NULL)
         {
@@ -897,7 +782,7 @@ static ASTNode *read_postfix_expr()
             err("line: %ld, missing args\n", peek_token()->ln);
         }
         node = func_call_node(node, arg_list);
-        expect(R_PAREN);
+        expect(TK_R_PAREN);
         break;
     }
     default:
@@ -910,7 +795,7 @@ static ASTNode *read_unary_expr()
 {
     Token *token = NULL;
     ensure_token(NULL);
-    if (peek_token()->kind == SUB || peek_token()->kind == NOT)
+    if (peek_token()->type == TK_SUB || peek_token()->type == TK_NOT)
     {
         token = get_token();
     }
@@ -919,18 +804,18 @@ static ASTNode *read_unary_expr()
         return node;
     if (token != NULL)
     {
-        node = u_expr_node(token->kind == SUB ? I_SUB : I_NOT, node);
+        node = u_expr_node(token->type == TK_SUB ? TK_SUB : TK_NOT, node);
     }
     return node;
 }
 
-static ASTNode *read_multi_expr()
+static ASTNode *read_multTK_expr()
 {
     Token *token;
     ASTNode *node = read_unary_expr();
     if (node == NULL || !has_token())
         return node;
-    while (is_mul(peek_token()->kind))
+    while (is_mul(peek_token()->type))
     {
         token = get_token();
         ASTNode *right = read_unary_expr();
@@ -939,7 +824,7 @@ static ASTNode *read_multi_expr()
             ensure_token(node);
             err("line: %ld, missing right value\n", peek_token()->ln);
         }
-        node = b_expr_node(get_mul_opcode(token->kind), node, right);
+        node = b_expr_node(get_mul_opcode(token->type), node, right);
         ensure_token(node);
     }
     return node;
@@ -948,19 +833,19 @@ static ASTNode *read_multi_expr()
 static ASTNode *read_additive_expr()
 {
     Token *token;
-    ASTNode *node = read_multi_expr();
+    ASTNode *node = read_multTK_expr();
     if (node == NULL || !has_token())
         return node;
-    while (peek_token()->kind == ADD || peek_token()->kind == SUB)
+    while (peek_token()->type == TK_ADD || peek_token()->type == TK_SUB)
     {
         token = get_token();
-        ASTNode *right = read_multi_expr();
+        ASTNode *right = read_multTK_expr();
         if (right == NULL)
         {
             ensure_token(node);
             err("line: %ld, missing right value\n", peek_token()->ln);
         }
-        node = b_expr_node(token->kind == ADD ? I_ADD : I_SUB, node, right);
+        node = b_expr_node(token->type == TK_ADD ? TK_ADD : TK_SUB, node, right);
         ensure_token(node);
     }
     return node;
@@ -972,7 +857,7 @@ static ASTNode *read_relational_expr()
     ASTNode *node = read_additive_expr();
     if (node == NULL || !has_token())
         return node;
-    while (is_relation(peek_token()->kind))
+    while (is_relation(peek_token()->type))
     {
         token = get_token();
         ASTNode *right = read_additive_expr();
@@ -981,7 +866,7 @@ static ASTNode *read_relational_expr()
             ensure_token(node);
             err("line: %ld, missing right value\n", peek_token()->ln);
         }
-        node = b_expr_node(get_rel_opcode(token->kind), node, right);
+        node = b_expr_node(get_rel_opcode(token->type), node, right);
         ensure_token(node);
     }
     return node;
@@ -993,7 +878,7 @@ static ASTNode *read_equality_expr()
     ASTNode *node = read_relational_expr();
     if (node == NULL || !has_token())
         return node;
-    while (peek_token()->kind == EQ || peek_token()->kind == NEQ)
+    while (peek_token()->type == TK_EQ || peek_token()->type == TK_NEQ)
     {
         token = get_token();
         ASTNode *right = read_relational_expr();
@@ -1002,7 +887,7 @@ static ASTNode *read_equality_expr()
             ensure_token(node);
             err("line: %ld, missing right value\n", peek_token()->ln);
         }
-        node = b_expr_node(token->kind == EQ ? I_EQ : I_NEQ, node, right);
+        node = b_expr_node(token->type == TK_EQ ? TK_EQ : TK_NEQ, node, right);
         ensure_token(node);
     }
     return node;
@@ -1013,16 +898,16 @@ static ASTNode *read_logic_and_expr()
     ASTNode *node = read_equality_expr();
     if (node == NULL || !has_token())
         return node;
-    while (peek_token()->kind == AND)
+    while (peek_token()->type == TK_AND)
     {
-        expect(AND);
+        expect(TK_AND);
         ASTNode *right = read_equality_expr();
         if (right == NULL)
         {
             ensure_token(node);
             err("line: %ld, missing right value\n", peek_token()->ln);
         }
-        node = b_expr_node(I_AND, node, right);
+        node = b_expr_node(TK_AND, node, right);
         ensure_token(node);
     }
     return node;
@@ -1033,16 +918,16 @@ static ASTNode *read_logic_or_expr()
     ASTNode *node = read_logic_and_expr();
     if (node == NULL || !has_token())
         return node;
-    while (peek_token()->kind == OR)
+    while (peek_token()->type == TK_OR)
     {
-        expect(OR);
+        expect(TK_OR);
         ASTNode *right = read_logic_and_expr();
         if (right == NULL)
         {
             ensure_token(node);
             err("line: %ld, missing right value\n", peek_token()->ln);
         }
-        node = b_expr_node(I_OR, node, right);
+        node = b_expr_node(TK_OR, node, right);
         ensure_token(node);
     }
     return node;
@@ -1053,10 +938,10 @@ static ASTNode *read_assign_expr()
     ASTNode *node = read_logic_or_expr();
     if (node == NULL || !has_token())
         return node;
-    if (is_assign(peek_token()->kind))
+    if (is_assign(peek_token()->type))
     {
         ensure_lval(node);
-        INST assign_opcode = get_assign_opcode(get_token()->kind);
+        TOKEN_TYPE assign_opcode = get_assign_opcode(get_token()->type);
         ASTNode *right = read_logic_or_expr();
         if (right == NULL)
         {
@@ -1071,16 +956,16 @@ static ASTNode *read_assign_expr()
 static ASTNode *read_expr()
 {
     ASTNode *node = read_assign_expr();
-    if (!has_token() || peek_token()->kind != COMMA)
+    if (!has_token() || peek_token()->type != TK_COMMA)
         return node;
 
     ASTNode *expr = expr_lst_node(new std::vector<ASTNode *>());
     if (node != NULL)
         expr->expr_list->push_back(node);
 
-    while (peek_token()->kind == COMMA)
+    while (peek_token()->type == TK_COMMA)
     {
-        expect(COMMA);
+        expect(TK_COMMA);
         node = read_assign_expr();
         if (node != NULL)
             expr->expr_list->push_back(node);
@@ -1092,13 +977,13 @@ static ASTNode *read_expr()
 static ASTNode *read_expr_stmt()
 {
     ensure_token(NULL);
-    if (peek_token()->kind == SEMICOLON)
+    if (peek_token()->type == TK_SEMICOLON)
     {
-        expect(SEMICOLON);
+        expect(TK_SEMICOLON);
         return NULL;
     }
     ASTNode *node = read_expr();
-    expect(SEMICOLON);
+    expect(TK_SEMICOLON);
     return node;
 }
 
@@ -1107,39 +992,39 @@ static ASTNode *read_stmt()
     ASTNode *node = NULL;
     if (has_token())
     {
-        switch (peek_token()->kind)
+        switch (peek_token()->type)
         {
-        case FOR:
+        case TK_FOR:
             need_fill_back = true;
             return read_for_stmt();
-        case FUNC:
+        case TK_FUNC:
             return read_func_decl();
-        case IF:
+        case TK_IF:
             need_fill_back = true;
             return read_if_stmt();
-        case INPUT:
-        case PRINT:
+        case TK_INPUT:
+        case TK_PRINT:
             return read_io_stmt();
-        case VAL:
-        case VAR:
+        case TK_VAL:
+        case TK_VAR:
             return read_decl_stmt();
-        case WHILE:
+        case TK_WHILE:
             need_fill_back = true;
             return read_while_stmt();
-        case CONTINUE:
-            expect(CONTINUE);
-            expect(SEMICOLON);
+        case TK_CONTINUE:
+            expect(TK_CONTINUE);
+            expect(TK_SEMICOLON);
             ensure_in_iter();
             return continue_node();
-        case BREAK:
-            expect(BREAK);
-            expect(SEMICOLON);
+        case TK_BREAK:
+            expect(TK_BREAK);
+            expect(TK_SEMICOLON);
             ensure_in_iter();
             return break_node();
-        case RETURN:
-            expect(RETURN);
+        case TK_RETURN:
+            expect(TK_RETURN);
             node = return_node(read_expr());
-            expect(SEMICOLON);
+            expect(TK_SEMICOLON);
             ensure_in_func_decl();
             return node;
         default:
@@ -1152,16 +1037,16 @@ static ASTNode *read_stmt()
 
 static ASTNode *read_cpd_stmt()
 {
-    expect(L_CURLY);
+    expect(TK_L_CURLY);
     ASTNode *stmt = NULL;
     ASTNode *cpd_stmt = cpd_stmt_node(new std::vector<ASTNode *>(), cur_table);
     
     ensure_token(cpd_stmt);
-    while (peek_token()->kind != R_CURLY)
+    while (peek_token()->type != TK_R_CURLY)
     {
         bool old_nd_fl_bk = need_fill_back;
         need_fill_back = false;
-        if (peek_token()->kind == VAL || peek_token()->kind == VAR)
+        if (peek_token()->type == TK_VAL || peek_token()->type == TK_VAR)
         {
             stmt = read_decl_stmt();
         }
@@ -1185,33 +1070,33 @@ static ASTNode *read_cpd_stmt()
         }
         ensure_token(cpd_stmt);
     }
-    expect(R_CURLY);
+    expect(TK_R_CURLY);
     return cpd_stmt;
 }
 
 static ASTNode *read_for_stmt()
 {
-    expect(FOR);
-    expect(L_PAREN);
+    expect(TK_FOR);
+    expect(TK_L_PAREN);
 
     // create new symbal table for "for" loop
     new_table();
 
     ensure_token(NULL);
-    KIND kind = peek_token()->kind;
+    TOKEN_TYPE type = peek_token()->type;
     ASTNode *init = NULL, *cond = NULL, *incr = NULL, *body = NULL;
-    if (kind == VAL || kind == VAR)
+    if (type == TK_VAL || type == TK_VAR)
         init = read_decl_stmt();
     else
         init = read_expr_stmt();
     cond = read_expr_stmt();
 
     ensure_token(NULL);
-    if (peek_token()->kind != R_PAREN)
+    if (peek_token()->type != TK_R_PAREN)
     {
         incr = read_expr();
     }
-    expect(R_PAREN);
+    expect(TK_R_PAREN);
     body = read_cpd_stmt();
     ASTNode *for_stmt = for_stmt_node(init, cond, incr, body, NULL);
     cur_table->top = for_stmt;
@@ -1224,11 +1109,11 @@ static ASTNode *read_for_stmt()
 
 static ASTNode *read_func_decl()
 {
-    expect(FUNC);
-    Token *token = expect(IDENTIFIER);
-    expect(L_PAREN);
+    expect(TK_FUNC);
+    Token *token = expect(TK_IDENTIFIER);
+    expect(TK_L_PAREN);
 
-    if (cur_table->contains(token->identifier))
+    if (cur_table->contains(*token->identifier))
     {
         err("line: %ld, duplicated definition of \"%s\"\n", token->ln, token->identifier);
     }
@@ -1236,7 +1121,7 @@ static ASTNode *read_func_decl()
     // In case of recursive function, we must put the id in the table
     // before entering the function body.
     ASTNode *ident = ident_node(token->identifier, false);
-    cur_table->put(ident->name, ident);
+    cur_table->put(*ident->name, ident);
 
     // create symbol table for function
     new_table();
@@ -1244,27 +1129,25 @@ static ASTNode *read_func_decl()
     ASTNode *arg_node = lst_val_node(new std::vector<ASTNode *>());
 
     ensure_token(NULL);
-    if (peek_token()->kind != R_PAREN)
+    if (peek_token()->type != TK_R_PAREN)
     {
-        Token *spec = expect2(VAR, VAL);
-        char *arg_name = expect(IDENTIFIER)->identifier;
-        ASTNode *arg_ident = ident_node(arg_name, spec->kind == VAR);
+        std::string *arg_name = expect(TK_IDENTIFIER)->identifier;
+        ASTNode *arg_ident = ident_node(arg_name, true);
         arg_node->list_vals->push_back(arg_ident);
-        cur_table->put(arg_ident->name, arg_ident);
+        cur_table->put(*arg_name, arg_ident);
 
         ensure_token(NULL);
-        while (peek_token()->kind == COMMA)
+        while (peek_token()->type == TK_COMMA)
         {
-            expect(COMMA);
-            spec = expect2(VAR, VAL);
-            arg_name = expect(IDENTIFIER)->identifier;
-            arg_ident = ident_node(arg_name, spec->kind == VAR);
+            expect(TK_COMMA);
+            arg_name = expect(TK_IDENTIFIER)->identifier;
+            arg_ident = ident_node(arg_name, true);
             arg_node->list_vals->push_back(arg_ident);
-            cur_table->put(arg_ident->name, arg_ident);
+            cur_table->put(*arg_name, arg_ident);
             ensure_token(NULL);
         }
     }
-    expect(R_PAREN);
+    expect(TK_R_PAREN);
 
     ASTNode *func = func_decl_node(ident, arg_node, NULL);
     cur_table->top = func;
@@ -1283,14 +1166,14 @@ static ASTNode *read_func_decl()
 
 static ASTNode *read_elif_stmt()
 {
-    expect(ELIF);
-    expect(L_PAREN);
+    expect(TK_ELIF);
+    expect(TK_L_PAREN);
 
     // create symbol table for elif statement
     new_table();
 
     ASTNode *cond = read_logic_or_expr();
-    expect(R_PAREN);
+    expect(TK_R_PAREN);
     ASTNode *body = read_cpd_stmt();
     ASTNode *if_stmt = if_stmt_node(cond, body, NULL);
     cur_table->top = if_stmt;
@@ -1307,7 +1190,7 @@ static ASTNode *read_elif_list()
     std::vector<ASTNode *> *elif_list = new std::vector<ASTNode *>();
 
     ensure_token(elif_lst_node(elif_list, node));
-    while (peek_token()->kind == ELIF)
+    while (peek_token()->type == TK_ELIF)
     {
         node = read_elif_stmt();
         if (node != NULL)
@@ -1319,9 +1202,9 @@ static ASTNode *read_elif_list()
     }
 
     ensure_token(elif_lst_node(elif_list, node));
-    if (peek_token()->kind == ELSE)
+    if (peek_token()->type == TK_ELSE)
     {
-        expect(ELSE);
+        expect(TK_ELSE);
 
         // create new table for else statement
         new_table();
@@ -1338,21 +1221,21 @@ static ASTNode *read_elif_list()
 
 static ASTNode *read_if_stmt()
 {
-    expect(IF);
-    expect(L_PAREN);
+    expect(TK_IF);
+    expect(TK_L_PAREN);
     ASTNode *cond = read_logic_or_expr();
-    expect(R_PAREN);
+    expect(TK_R_PAREN);
 
     new_table();
     ASTNode *true_stmt = read_cpd_stmt(), *false_stmt = NULL;
     restore_table();
 
     ensure_token(if_stmt_node(cond, true_stmt, false_stmt));
-    if (peek_token()->kind == ELIF)
+    if (peek_token()->type == TK_ELIF)
         false_stmt = read_elif_list();
-    else if (peek_token()->kind == ELSE)
+    else if (peek_token()->type == TK_ELSE)
     {
-        expect(ELSE);
+        expect(TK_ELSE);
 
         new_table();
         false_stmt = read_cpd_stmt();
@@ -1363,13 +1246,13 @@ static ASTNode *read_if_stmt()
 
 static ASTNode *read_io_stmt()
 {
-    Token *token = expect2(INPUT, PRINT);
-    expect(L_PAREN);
+    Token *token = expect2(TK_INPUT, TK_PRINT);
+    expect(TK_L_PAREN);
     ASTNode *arg_list = read_arg_expr_list();
-    expect(R_PAREN);
-    expect(SEMICOLON);
+    expect(TK_R_PAREN);
+    expect(TK_SEMICOLON);
     ASTNode *node;
-    if (token->kind == INPUT)
+    if (token->type == TK_INPUT)
     {
         for (auto arg : *arg_list->list_vals)
         {
@@ -1393,9 +1276,9 @@ static ASTNode *read_initializer_list()
     }
 
     ensure_token(init_list);
-    while (peek_token()->kind == COMMA)
+    while (peek_token()->type == TK_COMMA)
     {
-        expect(COMMA);
+        expect(TK_COMMA);
         init = read_initializer();
         if (init != NULL)
         {
@@ -1409,14 +1292,14 @@ static ASTNode *read_initializer_list()
 static ASTNode *read_initializer()
 {
     ensure_token(NULL);
-    if (peek_token()->kind == L_BRACK)
+    if (peek_token()->type == TK_L_BRACK)
     {
-        expect(L_BRACK);
+        expect(TK_L_BRACK);
         ASTNode *node = read_initializer_list();
         ensure_token(NULL);
-        if (peek_token()->kind == COMMA)
-            expect(COMMA);
-        expect(R_BRACK);
+        if (peek_token()->type == TK_COMMA)
+            expect(TK_COMMA);
+        expect(TK_R_BRACK);
         return node;
     }
     return read_logic_or_expr();
@@ -1425,19 +1308,19 @@ static ASTNode *read_initializer()
 static ASTNode *read_init_decl(bool is_mutable)
 {
     ASTNode *init = NULL;
-    Token *token = expect(IDENTIFIER);
-    if (cur_table->contains(token->identifier))
+    Token *token = expect(TK_IDENTIFIER);
+    if (cur_table->contains(*token->identifier))
     {
         err("line: %ld, duplicated definition of \"%s\"\n", token->ln, token->identifier);
     }
 
     ASTNode *ident = ident_node(token->identifier, is_mutable);
-    cur_table->put(ident->name, ident);
+    cur_table->put(*ident->name, ident);
 
     ensure_token(decl_node(ident, init));
-    if (peek_token()->kind == ASSIGN)
+    if (peek_token()->type == TK_ASSIGN)
     {
-        expect(ASSIGN);
+        expect(TK_ASSIGN);
         init = read_initializer();
     }
 
@@ -1452,34 +1335,34 @@ static ASTNode *read_init_decl(bool is_mutable)
 
 static ASTNode *read_decl_stmt()
 {
-    Token *token = expect2(VAR, VAL);
+    Token *token = expect2(TK_VAR, TK_VAL);
     ASTNode *decl_lst = decl_lst_node(new std::vector<ASTNode *>());
 
-    bool is_mutable = token->kind == VAR;
+    bool is_mutable = token->type == TK_VAR;
     ASTNode *decl = read_init_decl(is_mutable);
     if (decl != NULL)
         decl_lst->decl_list->push_back(decl);
 
     ensure_token(decl_lst);
-    while (peek_token()->kind == COMMA)
+    while (peek_token()->type == TK_COMMA)
     {
-        expect(COMMA);
+        expect(TK_COMMA);
         decl = read_init_decl(is_mutable);
         if (decl != NULL)
             decl_lst->decl_list->push_back(decl);
         ensure_token(decl_lst);
     }
-    expect(SEMICOLON);
+    expect(TK_SEMICOLON);
     return decl_lst;
 }
 
 static ASTNode *read_while_stmt()
 {
-    expect(WHILE);
-    expect(L_PAREN);
+    expect(TK_WHILE);
+    expect(TK_L_PAREN);
     new_table();
     ASTNode *cond = read_logic_or_expr();
-    expect(R_PAREN);
+    expect(TK_R_PAREN);
     ASTNode *body = read_cpd_stmt();
     if (cond == NULL || body == NULL)
         return NULL;
@@ -1498,37 +1381,37 @@ static ASTNode *read_program()
     {
         ASTNode *stmt = NULL;
         bool cur_nd_fl_bk = false;
-        switch (peek_token()->kind)
+        switch (peek_token()->type)
         {
-        case FOR:
+        case TK_FOR:
             stmt = read_for_stmt();
             cur_nd_fl_bk = true;
             break;
-        case FUNC:
+        case TK_FUNC:
             stmt = read_func_decl();
             break;
-        case IF:
+        case TK_IF:
             stmt = read_if_stmt();
             cur_nd_fl_bk = true;
             break;
-        case INPUT:
-        case PRINT:
+        case TK_INPUT:
+        case TK_PRINT:
             stmt = read_io_stmt();
             break;
-        case VAL:
-        case VAR:
+        case TK_VAL:
+        case TK_VAR:
             stmt = read_decl_stmt();
             break;
-        case WHILE:
+        case TK_WHILE:
             stmt = read_while_stmt();
             cur_nd_fl_bk = true;
             break;
-        case BREAK:
-        case CONTINUE:
+        case TK_BREAK:
+        case TK_CONTINUE:
             get_token();
             ensure_in_iter();
             break;
-        case RETURN:
+        case TK_RETURN:
             get_token();
             ensure_in_func_decl();
             break;
@@ -1551,16 +1434,11 @@ static ASTNode *read_program()
     return program;
 }
 
-void init_parser()
-{
-    tk_idx = 0;
-    tks = NULL;
-    need_fill_back = false;
-    prev_stmt = NULL;
-}
-
 ASTNode *parse(std::vector<Token *> *tokens)
 {
+    tk_idx = 0;
     tks = tokens;
+    need_fill_back = false;
+    prev_stmt = NULL;
     return read_program();
 }

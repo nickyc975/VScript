@@ -1,6 +1,14 @@
 #ifndef VS_H
 #define VS_H
 
+#define is_num_str(type) (type != NONE && type != BOOL)
+#define is_num(type) (is_num_str(type) && type != STRING)
+#define is_int(type) (is_num(type) && type != FLOAT)
+
+typedef bool vs_bool_t;
+typedef char vs_char_t;
+typedef long long vs_int_t;
+typedef long double vs_float_t;
 typedef unsigned int vs_id_t;
 typedef unsigned int vs_size_t;
 typedef unsigned int vs_addr_t;
@@ -72,12 +80,22 @@ typedef enum
     CHAR,
     INT,
     FLOAT,
-    STRING,
-    LIST,
-    FUNC
+    STRING
 } VALUE_TYPE;
 
-static char *TYPE_STR[] = {"NONE", "BOOL", "CHAR", "INT", "FLOAT", "STRING", "LIST", "FUNC"};
+static char *TYPE_STR[] = {"NONE", "BOOL", "CHAR", "INT", "FLOAT", "STRING"};
+
+typedef enum
+{
+    DATA,
+    FUNC,
+    LIST
+} OBJECT_TYPE;
+
+static char *OBJ_STR[] = {"DATA", "CODE", "LIST"};
+
+class VSValue;
+class VSFunction;
 
 class VSObject
 {
@@ -86,39 +104,65 @@ private:
 
 public:
     vs_id_t obj_id;
-    vs_size_t ref_cnt;
+    OBJECT_TYPE type;
+
+    union
+    {
+        VSValue *value;
+        VSFunction *function;
+        std::vector<VSObject> *obj_list;
+    };
 
     VSObject();
     ~VSObject();
-
-    virtual std::string to_bytes();
 };
 
-class VSValue : VSObject
+class VSMemItem
+{
+public:
+    vs_size_t size;
+    vs_size_t refcnt;
+
+    VSMemItem()
+    {
+        refcnt = 0;
+    }
+
+    ~VSMemItem()
+    {
+    }
+
+    virtual char *to_bytes();
+    virtual std::string to_string();
+};
+
+class VSValue: VSMemItem
 {
 private:
     VSValue();
-    static VSValue *NONE_VAL;
+    VSValue(vs_bool_t bool_val);
+    static VSValue *NONE_VAL, *TRUE_VAL, *FALSE_VAL;
+
 public:
     const VALUE_TYPE type;
     const union
     {
-        bool bool_val;
-        char char_val;
-        long long int_val;
-        long double float_val;
-        std::string *str_val;
-        std::vector<VSObject *> *list_val;
+        const vs_bool_t bool_val;
+        const vs_char_t char_val;
+        const vs_int_t int_val;
+        const vs_float_t float_val;
+        const std::string *str_val;
     };
 
-    VSValue(bool val);
-    VSValue(char val);
-    VSValue(long long val);
-    VSValue(long double val);
+    VSValue(vs_char_t val);
+    VSValue(vs_int_t val);
+    VSValue(vs_float_t val);
     VSValue(std::string *val);
-    VSValue(std::vector<VSObject *> *val);
 
-    static VSValue *none();
+    static VSValue *None();
+    static VSValue *True();
+    static VSValue *False();
+    static VSValue *copy(VSValue *old);
     static VSValue *i_add(VSValue *left, VSValue *right);
     static VSValue *i_sub(VSValue *left, VSValue *right);
     static VSValue *i_mul(VSValue *left, VSValue *right);
@@ -134,12 +178,9 @@ public:
     static VSValue *i_or(VSValue *left, VSValue *right);
     static VSValue *i_not(VSValue *val);
     static VSValue *i_neg(VSValue *val);
-    static VSValue *i_idx(VSValue *list, VSValue *index);
-    static VSValue *i_idx(VSValue *list, VSValue *index, VSValue *new_val);
-    static VSValue *i_apd(VSValue *list, VSValue *new_val);
 };
 
-class VSInst : VSObject
+class VSInst: VSMemItem
 {
 public:
     INST_TYPE inst;
@@ -149,19 +190,18 @@ public:
     ~VSInst();
 };
 
-class VSCodeBlock : VSObject
+class VSFunction: VSMemItem
 {
 public:
     std::string name;
     vs_size_t arg_num;
     vs_size_t lvar_num;
     std::vector<VSInst> code;
-    std::vector<VSValue *> consts;
-    std::vector<VSCodeBlock *> blocks;
+    std::vector<VSObject> consts;
     std::vector<std::string> varnames;
 
-    VSCodeBlock();
-    ~VSCodeBlock();
+    VSFunction();
+    ~VSFunction();
 };
 
 #endif

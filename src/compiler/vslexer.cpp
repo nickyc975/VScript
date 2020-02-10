@@ -1,3 +1,5 @@
+#include <cstring>
+
 #include "compiler.hpp"
 
 #define BUFFER_SIZE 128
@@ -30,10 +32,8 @@ char escape(char c)
 int recognize_id(File *file, Token *token)
 {
     int len = file->getword(buffer, BUFFER_SIZE);
-    token->identifier = (char *)malloc(len + 1);
-    strcpy(token->identifier, buffer);
-    token->identifier[len] = 0;
-    token->kind = IDENTIFIER;
+    token->identifier = new std::string(buffer);
+    token->type = TK_IDENTIFIER;
     return 0;
 }
 
@@ -42,8 +42,8 @@ int recognize_none(File *file, Token *token)
     int len = file->getword(buffer, BUFFER_SIZE);
     if (len == 4 && !strcmp("none", buffer))
     {
-        token->kind = CONSTANT;
-        token->value = new Value();
+        token->type = TK_CONSTANT;
+        token->value = VSValue::None();
         return 0;
     }
     file->seek(-len);
@@ -56,13 +56,13 @@ int recognize_bool(File *file, Token *token)
     int len = file->getword(buffer, BUFFER_SIZE);
     if (!strcmp("true", buffer))
     {
-        token->kind = CONSTANT;
-        token->value = new Value(true);
+        token->type = TK_CONSTANT;
+        token->value = VSValue::True();
     }
     else if (!strcmp("false", buffer))
     {
-        token->kind = CONSTANT;
-        token->value = new Value(false);
+        token->type = TK_CONSTANT;
+        token->value = VSValue::False();
     }
     else
     {
@@ -75,15 +75,15 @@ int recognize_bool(File *file, Token *token)
 
 int recognize_num(File *file, Token *token)
 {
-    token->kind = CONSTANT;
+    token->type = TK_CONSTANT;
     file->getnum(buffer, BUFFER_SIZE);
     if (strchr(buffer, '.') != NULL)
     {
-        token->value = new Value(atof(buffer));
+        token->value = new VSValue((long double)atof(buffer));
     }
     else
     {
-        token->value = new Value(atoll(buffer));
+        token->value = new VSValue(atoll(buffer));
     }
     return 0;
 }
@@ -99,13 +99,13 @@ int recognize_char(File *file, Token *token)
         return len;
     }
     
-    token->kind = CONSTANT;
+    token->type = TK_CONSTANT;
     if (buffer[1] == '\\') {
-        token->value = new Value(escape(buffer[2]));
+        token->value = new VSValue(escape(buffer[2]));
     }
     else
     {
-        token->value = new Value(buffer[1]);
+        token->value = new VSValue(buffer[1]);
         file->seek(-1);
     }
     return 0;
@@ -145,8 +145,8 @@ int recognize_str(File *file, Token *token)
     if (c == '\"')
     {
         str_buffer[len] = '\0';
-        token->kind = CONSTANT;
-        token->value = new Value(str_buffer);
+        token->type = TK_CONSTANT;
+        token->value = new VSValue(new std::string(str_buffer));
         return 0;
     }
 
@@ -163,7 +163,7 @@ int recognize_keyword(File *file, Token *token)
         case 'c':
             if (!strcmp(buffer, "continue"))
             {
-                token->kind = CONTINUE;
+                token->type = TK_CONTINUE;
             }
             else
             {
@@ -173,11 +173,11 @@ int recognize_keyword(File *file, Token *token)
         case 'i':
             if (!strcmp(buffer, "if"))
             {
-                token->kind = IF;
+                token->type = TK_IF;
             }
             else if (!strcmp(buffer, "input"))
             {
-                token->kind = INPUT;
+                token->type = TK_INPUT;
             }
             else
             {
@@ -187,11 +187,11 @@ int recognize_keyword(File *file, Token *token)
         case 'e':
             if (!strcmp(buffer, "else"))
             {
-                token->kind = ELSE;
+                token->type = TK_ELSE;
             }
             else if (!strcmp(buffer, "elif"))
             {
-                token->kind = ELIF;
+                token->type = TK_ELIF;
             }
             else
             {
@@ -201,7 +201,7 @@ int recognize_keyword(File *file, Token *token)
         case 'w':
             if (!strcmp(buffer, "while"))
             {
-                token->kind = WHILE;
+                token->type = TK_WHILE;
             }
             else
             {
@@ -211,11 +211,11 @@ int recognize_keyword(File *file, Token *token)
         case 'f':
             if (!strcmp(buffer, "for"))
             {
-                token->kind = FOR;
+                token->type = TK_FOR;
             }
             else if (!strcmp(buffer, "func"))
             {
-                token->kind = FUNC;
+                token->type = TK_FUNC;
             }
             else
             {
@@ -225,7 +225,7 @@ int recognize_keyword(File *file, Token *token)
         case 'r':
             if (!strcmp(buffer, "return"))
             {
-                token->kind = RETURN;
+                token->type = TK_RETURN;
             }
             else
             {
@@ -235,7 +235,7 @@ int recognize_keyword(File *file, Token *token)
         case 'b':
             if (!strcmp(buffer, "break"))
             {
-                token->kind = BREAK;
+                token->type = TK_BREAK;
             }
             else
             {
@@ -245,11 +245,11 @@ int recognize_keyword(File *file, Token *token)
         case 'v':
             if (!strcmp(buffer, "val"))
             {
-                token->kind = VAL;
+                token->type = TK_VAL;
             }
             else if (!strcmp(buffer, "var"))
             {
-                token->kind = VAR;
+                token->type = TK_VAR;
             }
             else
             {
@@ -259,7 +259,7 @@ int recognize_keyword(File *file, Token *token)
         case 'p':
             if (!strcmp(buffer, "print"))
             {
-                token->kind = PRINT;
+                token->type = TK_PRINT;
             }
             else
             {
@@ -354,135 +354,135 @@ void tokenize(File *file, std::vector<Token *> &tokens)
             case '=':
                 if (file->nextchar() == '=') {
                     file->getchar();
-                    token->kind = EQ;
+                    token->type = TK_EQ;
                 } else {
-                    token->kind = ASSIGN;
+                    token->type = TK_ASSIGN;
                 }
                 tokens.push_back(token);
                 break;
             case '+':
                 if (file->nextchar() == '=') {
                     file->getchar();
-                    token->kind = ADD_ASSIGN;
+                    token->type = TK_ADD_ASSIGN;
                 } else {
-                    token->kind = ADD;
+                    token->type = TK_ADD;
                 }
                 tokens.push_back(token);
                 break;
             case '-':
                 if (file->nextchar() == '=') {
                     file->getchar();
-                    token->kind = SUB_ASSIGN;
+                    token->type = TK_SUB_ASSIGN;
                 } else {
-                    token->kind = SUB;
+                    token->type = TK_SUB;
                 }
                 tokens.push_back(token);
                 break;
             case '*':
                 if (file->nextchar() == '=') {
                     file->getchar();
-                    token->kind = MUL_ASSIGN;
+                    token->type = TK_MUL_ASSIGN;
                 } else {
-                    token->kind = MUL;
+                    token->type = TK_MUL;
                 }
                 tokens.push_back(token);
                 break;
             case '/':
                 if (file->nextchar() == '=') {
                     file->getchar();
-                    token->kind = DIV_ASSIGN;
+                    token->type = TK_DIV_ASSIGN;
                 } else if (file->nextchar() == '/') {
                     while (file->nextchar() != EOF && file->getchar() != '\n');
                     break;
                 } else {
-                    token->kind = DIV;
+                    token->type = TK_DIV;
                 }
                 tokens.push_back(token);
                 break;
             case '%':
                 if (file->nextchar() == '=') {
                     file->getchar();
-                    token->kind = MOD_ASSIGN;
+                    token->type = TK_MOD_ASSIGN;
                 } else {
-                    token->kind = MOD;
+                    token->type = TK_MOD;
                 }
                 tokens.push_back(token);
                 break;
             case '&':
                 if (file->nextchar() == '=') {
                     file->getchar();
-                    token->kind = AND_ASSIGN;
+                    token->type = TK_AND_ASSIGN;
                 } else {
-                    token->kind = AND;
+                    token->type = TK_AND;
                 }
                 tokens.push_back(token);
                 break;
             case '|':
                 if (file->nextchar() == '=') {
                     file->getchar();
-                    token->kind = OR_ASSIGN;
+                    token->type = TK_OR_ASSIGN;
                 } else {
-                    token->kind = OR;
+                    token->type = TK_OR;
                 }
                 tokens.push_back(token);
                 break;
             case '!':
                 if (file->nextchar() == '=') {
                     file->getchar();
-                    token->kind = NEQ;
+                    token->type = TK_NEQ;
                 } else {
-                    token->kind = NOT;
+                    token->type = TK_NOT;
                 }
                 tokens.push_back(token);
                 break;
             case '<':
                 if (file->nextchar() == '=') {
                     file->getchar();
-                    token->kind = LE;
+                    token->type = TK_LE;
                 } else {
-                    token->kind = LT;
+                    token->type = TK_LT;
                 }
                 tokens.push_back(token);
                 break;
             case '>':
                 if (file->nextchar() == '=') {
                     file->getchar();
-                    token->kind = GE;
+                    token->type = TK_GE;
                 } else {
-                    token->kind = GT;
+                    token->type = TK_GT;
                 }
                 tokens.push_back(token);
                 break;
             case ',':
-                token->kind = COMMA;
+                token->type = TK_COMMA;
                 tokens.push_back(token);
                 break;
             case ';':
-                token->kind = SEMICOLON;
+                token->type = TK_SEMICOLON;
                 tokens.push_back(token);
                 break;
             case '(':
-                token->kind = L_PAREN;
+                token->type = TK_L_PAREN;
                 tokens.push_back(token);
                 break;
             case ')':
-                token->kind = R_PAREN;
+                token->type = TK_R_PAREN;
                 tokens.push_back(token);
                 break;
             case '[':
-                token->kind = L_BRACK;
+                token->type = TK_L_BRACK;
                 tokens.push_back(token);
                 break;
             case ']':
-                token->kind = R_BRACK;
+                token->type = TK_R_BRACK;
                 tokens.push_back(token);
                 break;
             case '{':
-                token->kind = L_CURLY;
+                token->type = TK_L_CURLY;
                 tokens.push_back(token);
                 break;
             case '}':
-                token->kind = R_CURLY;
+                token->type = TK_R_CURLY;
                 tokens.push_back(token);
                 break;
             case ' ':

@@ -37,6 +37,7 @@ typedef enum
     TK_OR_ASSIGN,
     TK_NOT,
     TK_ASSIGN,
+    TK_NOP,
 
     // declaration keywords
     TK_VAL,
@@ -93,7 +94,7 @@ typedef enum
     TK_END
 } TOKEN_TYPE;
 
-static char *TK_STR[] = 
+static char *TOKEN_STR[] = 
 {
     "CONSTANT",
     "IDENTIFIER",
@@ -186,7 +187,7 @@ public:
     long long ln, col;
 
     // token content
-    char *identifier;
+    std::string *identifier;
     VSValue *value;
 
     Token(long long ln, long long col) : ln(ln), col(col)
@@ -218,7 +219,7 @@ public:
         // identifiers
         struct
         {
-            char *name;
+            std::string *name;
             bool is_mutable;
         };
 
@@ -330,12 +331,13 @@ public:
     }
     ~ASTNode()
     {
-
+        if (node_type == AST_CONST && value != NULL && value->type != NONE && value->type != BOOL)
+            delete value;
     }
-
-    void tokenize(File *file, std::vector<Token *> &tokens);
-    ASTNode *parse(std::vector<Token *> *tokens);
-    VSCodeBlock *gencode(ASTNode *astree);
 };
+
+void tokenize(File *file, std::vector<Token *> &tokens);
+ASTNode *parse(std::vector<Token *> *tokens);
+VSFunction *gencode(ASTNode *astree);
 
 #endif

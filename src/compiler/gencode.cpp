@@ -1,7 +1,7 @@
 #include "compiler.hpp"
 
-addr_t cur_addr;
-static SymTable<addr_t> *cur_table;
+vs_addr_t cur_addr;
+static SymTable<vs_addr_t> *cur_table;
 static std::vector<char *> *code_vec;
 static std::vector<std::vector<char *> *> *func_vec;
 
@@ -80,6 +80,6 @@ void gencode(ASTNode *astree, std::vector<char *> *code)
     cur_addr = 0;
     code_vec = new std::vector<char *>();
     func_vec = new std::vector<std::vector<char *> *>();
-    cur_table = new SymTable<addr_t>(NULL);
+    cur_table = new SymTable<vs_addr_t>(NULL);
     gen_program(astree);
 }
