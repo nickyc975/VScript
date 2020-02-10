@@ -327,6 +327,6 @@ public:
 
 void tokenize(File *file, std::vector<Token *> &tokens);
 ASTNode *parse(std::vector<Token *> *tokens);
-VSFunction *gencode(ASTNode *astree);
+VSCodeObject *gencode(ASTNode *astree);
 
 #endif

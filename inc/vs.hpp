@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <unordered_map>
 
 #define is_num_str(type) (type != NONE && type != BOOL)
 #define is_num(type) (is_num_str(type) && type != STRING)
@@ -18,35 +19,67 @@ typedef unsigned int vs_addr_t;
 
 typedef enum
 {
-    I_ADD,
-    I_SUB,
-    I_MUL,
-    I_DIV,
-    I_MOD,
-    I_LT,
-    I_GT,
-    I_LE,
-    I_GE,
-    I_EQ,
-    I_NEQ,
-    I_AND,
-    I_OR,
-    I_NOT,
-    I_BLD_LST,
-    I_INDEX,
-    I_APPEND,
-    I_LOAD,
-    I_STORE,
-    I_JMP,
-    I_JIF,
-    I_CALL,
-    I_RET,
-    I_INPUT,
-    I_PRINT,
-    I_NOP
-} INST_TYPE;
+    // no arg, operate top 1 or 2 VSObject in the stack
+    OP_ADD,
+    OP_SUB,
+    OP_MUL,
+    OP_DIV,
+    OP_MOD,
+    OP_LT,
+    OP_GT,
+    OP_LE,
+    OP_GE,
+    OP_EQ,
+    OP_NEQ,
+    OP_AND,
+    OP_OR,
+    OP_NOT,
 
-static char *INST_STR[] =
+    // 1 arg, list length, create a list of objects in the stack
+    OP_BUILD_LIST,
+
+    // no arg, load the value at index in the list
+    OP_INDEX_LOAD,
+
+    // no arg, store the value at index of the list
+    OP_INDEX_STORE,
+
+    // no arg append a value at the end of the list
+    OP_APPEND,
+
+    // 1 arg, load the object with the name at the top of the stack
+    OP_LOAD_NAME,
+
+    // 1 arg, load the object at index in the const vector
+    OP_LOAD_CONST,
+
+    // 1 arg, store stack top to name
+    OP_STORE_NAME,
+
+    // 1 arg, store stack top to const
+    OP_STORE_CONST,
+
+    // no arg, jump to stack top
+    OP_JMP,
+
+    // no arg, jump to stack second if stack top
+    OP_JIF,
+
+    // no arg, call stack top
+    OP_CALL,
+
+    // 1 arg, put the arg at stack top
+    OP_RET,
+
+    // no arg, read a value from cmd and push it into stack
+    OP_INPUT,
+
+    // no arg, print stack stop
+    OP_PRINT,
+    OP_NOP
+} OPCODE;
+
+static char *OPCODE_STR[] =
 {
     "ADD",
     "SUB",
@@ -65,7 +98,8 @@ static char *INST_STR[] =
     "BLD_LIST",
     "INDEX",
     "APPEND",
-    "LOAD",
+    "LOAD_NAME",
+    "LOAD_CONST",
     "STORE",
     "JMP",
     "JIF",
@@ -91,14 +125,14 @@ static char *TYPE_STR[] = {"NONE", "BOOL", "CHAR", "INT", "FLOAT", "STRING"};
 typedef enum
 {
     DATA,
-    FUNC,
+    CODE,
     LIST
 } OBJECT_TYPE;
 
 static char *OBJ_STR[] = {"DATA", "CODE", "LIST"};
 
 class VSValue;
-class VSFunction;
+class VSCodeObject;
 
 class VSObject
 {
@@ -112,7 +146,7 @@ public:
     union
     {
         VSValue *value;
-        VSFunction *function;
+        VSCodeObject *codeblock;
         std::vector<VSObject> *obj_list;
     };
 
@@ -154,6 +188,9 @@ public:
     VSValue(vs_float_t val);
     VSValue(std::string val);
 
+    char *to_bytes();
+    std::string to_string();
+
     static VSValue *None();
     static VSValue *True();
     static VSValue *False();
@@ -178,28 +215,33 @@ public:
 class VSInst: VSMemItem
 {
 public:
-    INST_TYPE inst;
-    vs_addr_t operand;
+    const OPCODE opcode;
 
-    VSInst(INST_TYPE inst, vs_addr_t operand);
+    // const addr
+    const vs_addr_t addr;
+
+    // var name
+    const std::string name;
+
+    VSInst(OPCODE opcode, vs_addr_t addr);
+    VSInst(OPCODE opcode, std::string name);
     ~VSInst();
 
     char *to_bytes();
     std::string to_string();
 };
 
-class VSFunction: VSMemItem
+class VSCodeObject: VSMemItem
 {
 public:
     std::string name;
     vs_size_t arg_num;
-    vs_size_t lvar_num;
     std::vector<VSInst> code;
     std::vector<VSObject> consts;
     std::vector<std::string> varnames;
 
-    VSFunction();
-    ~VSFunction();
+    VSCodeObject();
+    ~VSCodeObject();
 
     char *to_bytes();
     std::string to_string();

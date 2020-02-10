@@ -1,10 +1,5 @@
 #include "compiler.hpp"
 
-vs_addr_t cur_addr;
-static SymTable<vs_addr_t> *cur_table;
-static std::vector<char *> *code_vec;
-static std::vector<std::vector<char *> *> *func_vec;
-
 static void gen_primary_expr(ASTNode *node);
 static void gen_arg_expr_list(ASTNode *node);
 static void gen_postfix_expr(ASTNode *node);
@@ -31,14 +26,14 @@ static void gen_initializer(ASTNode *node);
 static void gen_init_decl(ASTNode *node);
 static void gen_decl_stmt(ASTNode *node);
 static void gen_while_stmt(ASTNode *node);
-static VSFunction *gen_function(ASTNode *node);
+static VSCodeObject *gen_function(ASTNode *node);
 
 static void gen_decl_stmt(ASTNode *node)
 {
 
 }
 
-static VSFunction *gen_function(ASTNode *node)
+static VSCodeObject *gen_function(ASTNode *node)
 {
     for (auto stmt : *node->statements)
     {
@@ -75,11 +70,7 @@ static VSFunction *gen_function(ASTNode *node)
     }
 }
 
-VSFunction *gencode(ASTNode *astree)
+VSCodeObject *gencode(ASTNode *astree)
 {
-    cur_addr = 0;
-    code_vec = new std::vector<char *>();
-    func_vec = new std::vector<std::vector<char *> *>();
-    cur_table = new SymTable<vs_addr_t>(NULL);
     return gen_function(astree);
 }

@@ -111,3 +111,7 @@ A dynamic type programming language.
 ## 优化任务
 
 * 常量计算与合并
+
+## 虚拟机
+
+* 栈中存放VSObject，

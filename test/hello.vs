@@ -1,4 +1,4 @@
-func main() {
+func main(argc, argv) {
     print("Hello World!\n");
     var x = 3, y = 5, z = "abc";
     for (var i = 0; i < y; i += x) {
