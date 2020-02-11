@@ -46,10 +46,7 @@ int main(int argc, char **argv)
         print_ast(astree);
     }
     VSCodeObject *program = gencode(astree);
-    for (auto inst : program->code)
-    {
-        printf("%s\n", inst.to_string().c_str());
-    }
+    fprint_code(fopen((char *)"test/hello.vss", "w"), program);
     return 0;
 }
 

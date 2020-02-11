@@ -5,6 +5,7 @@
 
 void init_printer();
 void print_ast(ASTNode *root);
+void fprint_code(FILE *file, VSCodeObject *code);
 
 #endif
 

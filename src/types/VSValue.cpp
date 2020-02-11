@@ -337,20 +337,26 @@ const char *VSValue::to_bytes()
 
 const std::string VSValue::to_string()
 {
+    std::string str;
     switch (this->type)
     {
     case NONE:
         return "__vs_none__";
     case BOOL:
-        return "__vs_bool_" + std::to_string(this->bool_val) + "__";
+        str = this->bool_val ? "true" : "false";
+        return "__vs_bool_" + str + "__";
     case CHAR:
-        return "__vs_char_" + std::to_string(this->char_val) + "__";
+        str = std::to_string(this->char_val);
+        return "__vs_char_" + str + "__";
     case INT:
-        return "__vs_int_" + std::to_string(this->int_val) + "__";
+        str = std::to_string(this->int_val);
+        return "__vs_int_" + str + "__";
     case FLOAT:
-        return "__vs_float_" + std::to_string(this->float_val) + "__";
+        str = std::to_string(this->float_val);
+        return "__vs_float_" + str + "__";
     case STRING:
-        return "__vs_string_" + *this->str_val + "__";
+        str = *this->str_val;
+        return "__vs_string_" + str + "__";
     default:
         return "__vs_undefined__";
     }

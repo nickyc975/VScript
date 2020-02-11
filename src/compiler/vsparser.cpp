@@ -613,7 +613,7 @@ static ASTNode *read_arg_expr_list()
     ensure_token(arg_list);
     if (peek_token()->type == TK_R_PAREN)
         return arg_list;
-    ASTNode *arg = read_logic_or_expr();
+    ASTNode *arg = read_initializer();
     if (arg == NULL)
     {
         ensure_token(arg_list);
@@ -624,7 +624,7 @@ static ASTNode *read_arg_expr_list()
     while (peek_token()->type == TK_COMMA)
     {
         expect(TK_COMMA);
-        arg = read_logic_or_expr();
+        arg = read_initializer();
         if (arg == NULL)
         {
             ensure_token(arg_list);

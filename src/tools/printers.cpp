@@ -24,13 +24,18 @@ static void print_break_node(ASTNode *node);
 static void print_cpd_stmt_node(ASTNode *node);
 static void print_return_node(ASTNode *node);
 
-static void print_indent()
+static void fprint_indent(FILE *file)
 {
     int i = 0;
     for (; i < indent; i++)
     {
-        printf("    ");
+        fprintf(file, "    ");
     }
+}
+
+static void print_indent()
+{
+    fprint_indent(stdout);
 }
 
 void init_printer()
@@ -229,7 +234,6 @@ static void print_lst_val_node(ASTNode *node)
     indent++;
     for (ASTNode *child : *node->list_vals)
     {
-
         print_ast(child);
     }
     indent--;
@@ -383,5 +387,60 @@ static void print_return_node(ASTNode *node)
     printf("return: \n");
     indent++;
     print_ast(node->ret_val);
+    indent--;
+}
+
+void fprint_code(FILE *file, VSCodeObject *code)
+{
+    int count = 0;
+    VSObject *object;
+    fprint_indent(file);
+    fprintf(file, "%s: \n", code->name.c_str());
+    for (auto inst : code->code)
+    {
+        fprint_indent(file);
+        fprintf(file, "%d: %s\t", count, OPCODE_STR[inst.opcode]);
+        switch (inst.opcode)
+        {
+        case OP_LOAD_NAME:
+        case OP_STORE_NAME:
+            fprintf(file, "%s\n", code->varnames[inst.operand].c_str());
+            break;
+        case OP_STORE_CONST:
+        case OP_LOAD_CONST:
+            object = &(code->consts[inst.operand]);
+            if (object->type == OBJ_DATA)
+            {
+                fprintf(file, "%s\n", object->value->to_string().c_str());
+            }
+            else if (object->type == OBJ_CODE)
+            {
+                fprintf(file, "%s\n", object->codeblock->name.c_str());
+            }
+            else
+            {
+                fprintf(file, "list\n");
+            }
+            break;
+        case OP_JIF:
+        case OP_JMP:
+        case OP_BUILD_LIST:
+            fprintf(file, "%u\n", inst.operand);
+            break;
+        default:
+            fprintf(file, "\n");
+            break;
+        }
+        count++;
+    }
+
+    indent++;
+    for (auto obj : code->consts)
+    {
+        if (obj.type == OBJ_CODE)
+        {
+            fprint_code(file, obj.codeblock);
+        }
+    }
     indent--;
 }

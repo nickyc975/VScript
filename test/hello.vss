@@ -1,0 +1,129 @@
+__vs_main__: 
+0: LOAD_CONST	__vs_func__
+1: STORE_NAME	main
+2: LOAD_CONST	__vs_none__
+3: STORE_NAME	none_val
+4: LOAD_CONST	__vs_bool_false__
+5: STORE_NAME	bool_val
+6: LOAD_CONST	__vs_int_1__
+7: STORE_NAME	char_val
+8: LOAD_CONST	__vs_int_92834087__
+9: STORE_NAME	int_val
+10: LOAD_CONST	__vs_float_1.240000__
+11: STORE_NAME	float_val
+12: LOAD_CONST	__vs_string_hello world!
+__
+13: STORE_NAME	str_val
+14: LOAD_CONST	__vs_string___
+15: STORE_NAME	empty_str
+16: LOAD_CONST	__vs_int_1__
+17: STORE_NAME	a1
+18: LOAD_NAME	int_val
+19: STORE_NAME	a2
+20: LOAD_CONST	__vs_int_32__
+21: STORE_NAME	a4
+22: LOAD_NAME	a4
+23: LOAD_NAME	a2
+24: LOAD_NAME	a1
+25: ADD	
+26: ADD	
+27: LOAD_CONST	__vs_int_4__
+28: LOAD_CONST	__vs_int_3__
+29: LOAD_CONST	__vs_int_2__
+30: LOAD_CONST	__vs_int_1__
+31: BUILD_LIST	5
+32: STORE_NAME	array_val
+33: BUILD_LIST	0
+34: STORE_NAME	avl
+35: LOAD_CONST	__vs_int_16__
+36: LOAD_NAME	a4
+37: DIV	
+38: LOAD_NAME	a1
+39: ADD	
+40: LOAD_NAME	array_val
+41: INDEX_LOAD	
+42: STORE_NAME	test
+43: LOAD_CONST	__vs_while__
+44: GOTO	
+45: LOAD_CONST	__vs_int_3__
+46: LOAD_CONST	__vs_int_2__
+47: LOAD_CONST	__vs_int_1__
+48: BUILD_LIST	3
+49: LOAD_CONST	__vs_int_3__
+50: BUILD_LIST	2
+51: LOAD_NAME	main
+52: CALL	
+    __vs_func__: 
+    0: LOAD_CONST	__vs_string_Hello World!
+__
+    1: PRINT	
+    2: LOAD_CONST	__vs_int_3__
+    3: STORE_NAME	x
+    4: LOAD_CONST	__vs_int_5__
+    5: STORE_NAME	y
+    6: LOAD_CONST	__vs_string_abc__
+    7: STORE_NAME	z
+    8: LOAD_CONST	__vs_for__
+    9: GOTO	
+    10: LOAD_NAME	z
+    11: PRINT	
+    12: LOAD_CONST	__vs_int_0__
+    13: RET	
+        __vs_for__: 
+        0: LOAD_CONST	__vs_int_0__
+        1: STORE_NAME	i
+        2: LOAD_NAME	y
+        3: LOAD_NAME	i
+        4: LT	
+        5: JIF	7
+        6: JMP	12
+        7: LOAD_NAME	z
+        8: LOAD_NAME	z
+        9: ADD	
+        10: STORE_NAME	z
+        11: JMP	2
+        12: NOP	
+    __vs_while__: 
+    0: LOAD_CONST	__vs_int_0__
+    1: LOAD_NAME	int_val
+    2: LT	
+    3: JIF	5
+    4: JMP	27
+    5: LOAD_CONST	__vs_int_0__
+    6: STORE_NAME	a
+    7: LOAD_CONST	__vs_int_0__
+    8: LOAD_NAME	int_val
+    9: GT	
+    10: NOT	
+    11: JIF	15
+    12: LOAD_CONST	__vs_if__
+    13: GOTO	
+    14: JMP	25
+    15: LOAD_CONST	__vs_int_-1__
+    16: LOAD_NAME	int_val
+    17: LT	
+    18: NOT	
+    19: JIF	23
+    20: LOAD_CONST	__vs_elif__
+    21: GOTO	
+    22: JMP	25
+    23: LOAD_CONST	__vs_else__
+    24: GOTO	
+    25: NOP	
+    26: JMP	0
+    27: NOP	
+        __vs_if__: 
+        0: LOAD_CONST	__vs_int_1__
+        1: LOAD_NAME	a
+        2: ADD	
+        3: STORE_NAME	a
+        __vs_elif__: 
+        0: LOAD_CONST	__vs_int_2__
+        1: LOAD_NAME	a
+        2: SUB	
+        3: STORE_NAME	a
+        __vs_else__: 
+        0: LOAD_CONST	__vs_int_3__
+        1: LOAD_NAME	a
+        2: MUL	
+        3: STORE_NAME	a
