@@ -66,8 +66,17 @@ typedef enum
     // no arg, jump to stack second if stack top
     OP_JIF,
 
-    // goto loop_start of current block
-    OP_LOOP,
+    // 1 arg, jump to point in current block
+    OP_IN_BLK_JMP,
+
+    // 1 arg, jump to point in current block if stack top is true
+    OP_IN_BLK_JIF,
+
+    // break current loop
+    OP_BREAK,
+
+    // goto loop_start of current loop
+    OP_CONTINUE,
 
     // no arg, call stack top
     OP_CALL,
@@ -110,7 +119,10 @@ static char *OPCODE_STR[] =
     "STORE_CONST",
     "JMP",
     "JIF",
-    "LOOP",
+    "IN_BLK_JMP",
+    "IN_BLK_JIF",
+    "BREAK",
+    "CONTINUE",
     "CALL",
     "RET",
     "INPUT",
@@ -233,9 +245,9 @@ public:
 class VSInst: VSMemItem
 {
 public:
-    const OPCODE opcode;
-    // const addr
-    const vs_addr_t operand;
+    OPCODE opcode;
+    // constant addr
+    vs_addr_t operand;
 
     VSInst(OPCODE opcode);
     VSInst(OPCODE opcode, vs_addr_t operand);

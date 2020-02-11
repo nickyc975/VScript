@@ -725,7 +725,7 @@ static ASTNode *read_unary_expr()
     return node;
 }
 
-static ASTNode *read_multTK_expr()
+static ASTNode *read_mult_expr()
 {
     Token *token;
     ASTNode *node = read_unary_expr();
@@ -749,13 +749,13 @@ static ASTNode *read_multTK_expr()
 static ASTNode *read_additive_expr()
 {
     Token *token;
-    ASTNode *node = read_multTK_expr();
+    ASTNode *node = read_mult_expr();
     if (node == NULL || !has_token())
         return node;
     while (peek_token()->type == TK_ADD || peek_token()->type == TK_SUB)
     {
         token = get_token();
-        ASTNode *right = read_multTK_expr();
+        ASTNode *right = read_mult_expr();
         if (right == NULL)
         {
             ensure_token(node);

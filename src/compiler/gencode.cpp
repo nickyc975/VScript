@@ -14,9 +14,9 @@
     delete varnamestack.top(); \
     varnamestack.pop();
 
-std::stack<VSCodeObject *> codestack;
-std::stack<std::unordered_map<std::string, vs_addr_t> *> conststack;
-std::stack<std::unordered_map<std::string, vs_addr_t> *> varnamestack;
+static std::stack<VSCodeObject *> codestack;
+static std::stack<std::unordered_map<std::string, vs_addr_t> *> conststack;
+static std::stack<std::unordered_map<std::string, vs_addr_t> *> varnamestack;
 
 static void gen_const(ASTNode *node);
 static void gen_ident(ASTNode *node);
@@ -29,6 +29,7 @@ static void gen_return(ASTNode *node);
 static void gen_break(ASTNode *node);
 static void gen_continue(ASTNode *node);
 static void gen_expr(ASTNode *node);
+static void gen_expr_list(ASTNode *node);
 static void gen_decl_stmt(ASTNode *node);
 static void gen_assign_stmt(ASTNode *node);
 static void gen_input_stmt(ASTNode *node);
@@ -81,7 +82,7 @@ static void do_store(OPCODE opcode, ASTNode *assign_var)
     auto varnames = varnamestack.top();
     if (opcode != OP_NOP)
     {
-        gen_expr(assign_var);
+        gen_expr_list(assign_var);
         cur->add_inst(VSInst(opcode));
     }
     if (assign_var->node_type == AST_IDENT)
@@ -91,8 +92,8 @@ static void do_store(OPCODE opcode, ASTNode *assign_var)
     }
     else if (assign_var->node_type == AST_LST_IDX)
     {
-        gen_expr(assign_var->list_index);
-        gen_expr(assign_var->list_name);
+        gen_expr_list(assign_var->list_index);
+        gen_expr_list(assign_var->list_name);
         cur->add_inst(VSInst(OP_INDEX_STORE));
     }
 }
@@ -128,15 +129,15 @@ static void gen_ident(ASTNode *node)
 static void gen_b_expr(ASTNode *node)
 {
     VSCodeObject *cur = codestack.top();
-    gen_expr(node->r_operand);
-    gen_expr(node->l_operand);
+    gen_expr_list(node->r_operand);
+    gen_expr_list(node->l_operand);
     cur->add_inst(VSInst(get_b_op(node->b_opcode)));
 }
 
 static void gen_u_expr(ASTNode *node)
 {
     VSCodeObject *cur = codestack.top();
-    gen_expr(node->operand);
+    gen_expr_list(node->operand);
     switch (node->u_opcode)
     {
     case TK_SUB:
@@ -153,8 +154,8 @@ static void gen_u_expr(ASTNode *node)
 static void gen_list_idx(ASTNode *node)
 {
     VSCodeObject *cur = codestack.top();
-    gen_expr(node->list_index);
-    gen_expr(node->list_name);
+    gen_expr_list(node->list_index);
+    gen_expr_list(node->list_name);
     cur->add_inst(VSInst(OP_INDEX_LOAD));
 }
 
@@ -165,7 +166,7 @@ static void gen_list_val(ASTNode *node)
     int index = node->list_vals->size() - 1;
     while (index >= 0)
     {
-        gen_expr(node->list_vals->at(index));
+        gen_expr_list(node->list_vals->at(index));
         index--;
     }
     cur->add_inst(VSInst(OP_BUILD_LIST, node->list_vals->size()));
@@ -175,7 +176,7 @@ static void gen_func_call(ASTNode *node)
 {
     VSCodeObject *cur = codestack.top();
     gen_list_val(node->arg_node);
-    gen_expr(node->func_name);
+    gen_expr_list(node->func_name);
     cur->add_inst(VSInst(OP_CALL));
 }
 
@@ -186,20 +187,20 @@ static void gen_return(ASTNode *node)
     if (node->ret_val == NULL)
         cur->add_inst(VSInst(OP_LOAD_CONST, 0));
     else
-        gen_expr(node->ret_val);
+        gen_expr_list(node->ret_val);
     cur->add_inst(VSInst(OP_RET));
 }
 
 static void gen_break(ASTNode *node)
 {
     VSCodeObject *cur = codestack.top();
-    cur->add_inst(VSInst(OP_RET));
+    cur->add_inst(VSInst(OP_BREAK));
 }
 
 static void gen_continue(ASTNode *node)
 {
     VSCodeObject *cur = codestack.top();
-    cur->add_inst(VSInst(OP_LOOP));
+    cur->add_inst(VSInst(OP_CONTINUE));
 }
 
 static void gen_expr(ASTNode *node)
@@ -233,6 +234,19 @@ static void gen_expr(ASTNode *node)
     }
 }
 
+static void gen_expr_list(ASTNode *node)
+{
+    if (node->node_type == AST_EXPR_LST)
+    {
+        for (auto expr : *node->expr_list)
+        {
+            gen_expr(expr);
+        }
+        return;
+    }
+    gen_expr(node);
+}
+
 static void gen_decl_stmt(ASTNode *node)
 {
     VSCodeObject *cur = codestack.top();
@@ -249,7 +263,7 @@ static void gen_decl_stmt(ASTNode *node)
         vs_addr_t index = varnames->at(*name);
         if (child->init_val != NULL)
         {
-            gen_expr(child->init_val);
+            gen_expr_list(child->init_val);
             cur->add_inst(VSInst(OP_STORE_NAME, index));
         }
     }
@@ -257,7 +271,7 @@ static void gen_decl_stmt(ASTNode *node)
 
 static void gen_assign_stmt(ASTNode *node)
 {
-    gen_expr(node->assign_val);
+    gen_expr_list(node->assign_val);
     do_store(get_b_op(node->assign_opcode), node->assign_var);
 }
 
@@ -276,14 +290,55 @@ static void gen_print_stmt(ASTNode *node)
     VSCodeObject *cur = codestack.top();
     for (auto arg : *node->list_vals)
     {
-        gen_expr(arg);
+        gen_expr_list(arg);
         cur->add_inst(VSInst(OP_PRINT));
     }
 }
 
 static void gen_for_stmt(ASTNode *node)
 {
-    
+    VSCodeObject *cur, *parent = codestack.top();
+    parent->add_inst(VSInst(OP_LOAD_CONST, parent->const_num));
+    parent->add_inst(VSInst(OP_JMP));
+
+    enter_blk("__vs_for__", LOOP_BLK);
+
+    cur = codestack.top();
+    parent->add_const(new VSObject(cur));
+    if (node->for_init != NULL)
+    {
+        if (node->for_init->node_type == AST_DECL_LST)
+        {
+            gen_decl_stmt(node->for_init);
+        }
+        else
+        {
+            gen_expr_list(node->for_init);
+        }
+    }
+
+    cur->loop_start = cur->inst_num;
+
+    if (node->for_cond != NULL)
+    {
+        gen_expr_list(node->for_cond);
+    }
+
+    vs_addr_t jif_pos = cur->inst_num;
+    cur->add_inst(VSInst(OP_IN_BLK_JIF, jif_pos + 2));
+    cur->add_inst(VSInst(OP_IN_BLK_JMP, 0));
+
+    gen_cpd_stmt(node->for_body);
+
+    if (node->for_incr != NULL)
+    {
+        gen_expr_list(node->for_incr);
+    }
+
+    cur->code[jif_pos + 1].operand = cur->inst_num;
+    cur->add_inst(VSInst(OP_NOP));
+
+    leave_blk();
 }
 
 static void gen_func_decl(ASTNode *node)
@@ -348,7 +403,7 @@ static void gen_cpd_stmt(ASTNode *node)
             break;
         case AST_EXPR_LST:
         default:
-            gen_expr(stmt);
+            gen_expr_list(stmt);
             break;
         }
     }
