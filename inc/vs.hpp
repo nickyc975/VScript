@@ -277,6 +277,7 @@ public:
     void add_inst(VSInst inst);
     void add_const(VSObject *object);
     void add_varname(std::string varname);
+    void add_argname(std::string argname);
 };
 
 #endif

@@ -48,3 +48,9 @@ void VSCodeObject::add_varname(std::string varname)
     this->varnames.push_back(varname);
     this->lvar_num++;
 }
+
+void VSCodeObject::add_argname(std::string argname)
+{
+    this->add_varname(name);
+    this->arg_num++;
+}

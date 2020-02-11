@@ -351,6 +351,34 @@ static void gen_for_stmt(ASTNode *node)
 
 static void gen_func_decl(ASTNode *node)
 {
+    VSCodeObject *parent = codestack.top();
+    std::string *name = node->func_name->name;
+    auto varnames = varnamestack.top();
+    if (varnames->find(*name) == varnames->end())
+    {
+        parent->add_varname(*name);
+        (*varnames)[*name] = parent->lvar_num - 1;
+    }
+    vs_addr_t index = (*varnames)[*name];
+    parent->add_inst(VSInst(OP_LOAD_CONST, parent->const_num));
+    parent->add_inst(VSInst(OP_STORE_NAME, index));
+
+    enter_blk("__vs_func__", FUNC_BLK);
+
+    varnames = varnamestack.top();
+    VSCodeObject *cur = codestack.top();
+    parent->add_const(new VSObject(cur));
+
+    // 
+    for (auto arg : *node->arg_node->list_vals)
+    {
+        cur->add_argname(*arg->name);
+        (*varnames)[*arg->name] = cur->lvar_num - 1;
+    }
+
+    gen_cpd_stmt(node->func_body);
+
+    leave_blk();
 }
 
 static void gen_elif_list(ASTNode *node)
