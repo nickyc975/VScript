@@ -292,7 +292,6 @@ public:
         {
             ASTNode *while_cond;
             ASTNode *while_stmt;
-            ASTNode *while_next;
         };
 
         // for statements
@@ -302,7 +301,6 @@ public:
             ASTNode *for_cond;
             ASTNode *for_incr;
             ASTNode *for_body;
-            ASTNode *for_next;
         };
 
         // program or compound statements

@@ -18,9 +18,6 @@ static unsigned int tk_idx;
 static std::vector<Token *> *tks;
 static SymTable<ASTNode *> *cur_table;
 
-static bool need_fill_back;
-static ASTNode *prev_stmt;
-
 static ASTNode *read_primary_expr();
 static ASTNode *read_arg_expr_list();
 static ASTNode *read_postfix_expr();
@@ -192,31 +189,6 @@ static bool ensure_in_func_decl()
     ensure_token(false);
     err("line %ld, return must be in function declaration\n", peek_token()->ln);
     return false;
-}
-
-static void fill_back(ASTNode *prev, ASTNode *next)
-{
-    switch (prev->node_type)
-    {
-    case AST_FOR_STMT:
-        prev->for_next = next;
-        break;
-    case AST_WHILE_STMT:
-        prev->while_next = next;
-        break;
-    case AST_IF_STMT:
-        if (prev->false_smt == NULL)
-        {
-            prev->false_smt = next;
-        }
-        else if (prev->false_smt->node_type == AST_ELIF_LST && prev->false_smt->else_node == NULL)
-        {
-            prev->false_smt->else_node = next;
-        }
-        break;
-    default:
-        break;
-    }
 }
 
 static ASTNode *cal_u_expr(TOKEN_TYPE op, ASTNode *value)
@@ -516,23 +488,21 @@ static ASTNode *elif_lst_node(std::vector<ASTNode *> *elif_list, ASTNode *else_n
     return node;
 }
 
-static ASTNode *while_stmt_node(ASTNode *while_cond, ASTNode *while_stmt, ASTNode *while_next)
+static ASTNode *while_stmt_node(ASTNode *while_cond, ASTNode *while_stmt)
 {
     ASTNode *node = new ASTNode(AST_WHILE_STMT, AST_UNKNOW);
     node->while_cond = while_cond;
     node->while_stmt = while_stmt;
-    node->while_next = while_next;
     return node;
 }
 
-static ASTNode *for_stmt_node(ASTNode *for_init, ASTNode *for_cond, ASTNode *for_incr, ASTNode *for_body, ASTNode *for_next)
+static ASTNode *for_stmt_node(ASTNode *for_init, ASTNode *for_cond, ASTNode *for_incr, ASTNode *for_body)
 {
     ASTNode *node = new ASTNode(AST_FOR_STMT, AST_UNKNOW);
     node->for_init = for_init;
     node->for_cond = for_cond;
     node->for_incr = for_incr;
     node->for_body = for_body;
-    node->for_next = for_next;
     return node;
 }
 
@@ -915,12 +885,10 @@ static ASTNode *read_stmt()
         switch (peek_token()->type)
         {
         case TK_FOR:
-            need_fill_back = true;
             return read_for_stmt();
         case TK_FUNC:
             return read_func_decl();
         case TK_IF:
-            need_fill_back = true;
             return read_if_stmt();
         case TK_INPUT:
         case TK_PRINT:
@@ -929,7 +897,6 @@ static ASTNode *read_stmt()
         case TK_VAR:
             return read_decl_stmt();
         case TK_WHILE:
-            need_fill_back = true;
             return read_while_stmt();
         case TK_CONTINUE:
             expect(TK_CONTINUE);
@@ -964,8 +931,6 @@ static ASTNode *read_cpd_stmt()
     ensure_token(cpd_stmt);
     while (peek_token()->type != TK_R_CURLY)
     {
-        bool old_nd_fl_bk = need_fill_back;
-        need_fill_back = false;
         if (peek_token()->type == TK_VAL || peek_token()->type == TK_VAR)
         {
             stmt = read_decl_stmt();
@@ -978,15 +943,6 @@ static ASTNode *read_cpd_stmt()
         if (stmt != NULL)
         {
             cpd_stmt->statements->push_back(stmt);
-            if (old_nd_fl_bk && prev_stmt != NULL)
-            {
-                fill_back(prev_stmt, stmt);
-            }
-
-            if (need_fill_back)
-            {
-                prev_stmt = stmt;
-            }
         }
         ensure_token(cpd_stmt);
     }
@@ -1018,7 +974,7 @@ static ASTNode *read_for_stmt()
     }
     expect(TK_R_PAREN);
     body = read_cpd_stmt();
-    ASTNode *for_stmt = for_stmt_node(init, cond, incr, body, NULL);
+    ASTNode *for_stmt = for_stmt_node(init, cond, incr, body);
     cur_table->top = for_stmt;
 
     // restore parent table
@@ -1286,7 +1242,7 @@ static ASTNode *read_while_stmt()
     ASTNode *body = read_cpd_stmt();
     if (cond == NULL || body == NULL)
         return NULL;
-    ASTNode *while_stmt = while_stmt_node(cond, body, NULL);
+    ASTNode *while_stmt = while_stmt_node(cond, body);
     cur_table->top = while_stmt;
     restore_table();
     return while_stmt;
@@ -1300,19 +1256,16 @@ static ASTNode *read_program()
     while (has_token())
     {
         ASTNode *stmt = NULL;
-        bool cur_nd_fl_bk = false;
         switch (peek_token()->type)
         {
         case TK_FOR:
             stmt = read_for_stmt();
-            cur_nd_fl_bk = true;
             break;
         case TK_FUNC:
             stmt = read_func_decl();
             break;
         case TK_IF:
             stmt = read_if_stmt();
-            cur_nd_fl_bk = true;
             break;
         case TK_INPUT:
         case TK_PRINT:
@@ -1324,7 +1277,6 @@ static ASTNode *read_program()
             break;
         case TK_WHILE:
             stmt = read_while_stmt();
-            cur_nd_fl_bk = true;
             break;
         case TK_BREAK:
         case TK_CONTINUE:
@@ -1343,12 +1295,6 @@ static ASTNode *read_program()
         if (stmt != NULL)
         {
             program->statements->push_back(stmt);
-            if (need_fill_back && prev_stmt != NULL)
-            {
-                fill_back(prev_stmt, stmt);
-            }
-            need_fill_back = cur_nd_fl_bk;
-            prev_stmt = stmt;
         }
     }
     return program;
@@ -1358,7 +1304,5 @@ ASTNode *parse(std::vector<Token *> *tokens)
 {
     tk_idx = 0;
     tks = tokens;
-    need_fill_back = false;
-    prev_stmt = NULL;
     return read_program();
 }
