@@ -64,17 +64,14 @@ typedef enum
     // 1 arg, store stack top to const
     OP_STORE_CONST,
 
-    // no arg, jump to stack top
-    OP_JMP,
-
-    // no arg, jump to stack second if stack top
-    OP_JIF,
+    // no arg, go to stack top
+    OP_GOTO,
 
     // 1 arg, jump to point in current block
-    OP_IN_BLK_JMP,
+    OP_JMP,
 
     // 1 arg, jump to point in current block if stack top is true
-    OP_IN_BLK_JIF,
+    OP_JIF,
 
     // break current loop
     OP_BREAK,
@@ -121,10 +118,9 @@ static char *OPCODE_STR[] =
     "LOAD_CONST",
     "STORE_NAME",
     "STORE_CONST",
+    "GOTO",
     "JMP",
     "JIF",
-    "IN_BLK_JMP",
-    "IN_BLK_JIF",
     "BREAK",
     "CONTINUE",
     "CALL",
@@ -167,10 +163,8 @@ class VSCodeObject;
 
 class VSObject
 {
-private:
-    static vs_id_t id;
-
 public:
+    static vs_id_t id;
     OBJECT_TYPE type;
     const vs_id_t obj_id;
 

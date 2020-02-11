@@ -8,6 +8,16 @@ VSInst::VSInst(OPCODE opcode, vs_addr_t operand): opcode(opcode), operand(operan
 {
 }
 
+const char *VSInst::to_bytes()
+{
+    return this->to_string().c_str();
+}
+
+const std::string VSInst::to_string()
+{
+    return std::string(OPCODE_STR[this->opcode]) + "\t" + std::to_string(this->operand);
+}
+
 VSCodeObject::VSCodeObject(std::string name, CODE_BLK_TYPE type) : name(name), type(type)
 {
     this->arg_num = 0;

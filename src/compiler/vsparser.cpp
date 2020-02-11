@@ -252,7 +252,6 @@ static ASTNode *cal_num_b_expr(TOKEN_TYPE op, ASTNode *left, ASTNode *right)
         return NULL;
     }
 
-    VSValue *old = left->value;
     switch (op)
     {
     case TK_ADD:

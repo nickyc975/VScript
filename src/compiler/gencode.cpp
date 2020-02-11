@@ -2,15 +2,18 @@
 
 #include "compiler.hpp"
 
-#define enter_blk(name, type) \
-    codestack.push(new VSCodeObject(name, type)); \
+#define enter_blk(name, type)                                          \
+    codestack.push(new VSCodeObject(name, type));                      \
     conststack.push(new std::unordered_map<std::string, vs_addr_t>()); \
+    (*conststack.top())["__vs_none__"] = 0; \
+    (*conststack.top())["__vs_bool_true__"] = 1; \
+    (*conststack.top())["__vs_bool_false__"] = 2; \
     varnamestack.push(new std::unordered_map<std::string, vs_addr_t>());
 
-#define leave_blk() \
-    codestack.pop(); \
-    delete conststack.top(); \
-    conststack.pop(); \
+#define leave_blk()            \
+    codestack.pop();           \
+    delete conststack.top();   \
+    conststack.pop();          \
     delete varnamestack.top(); \
     varnamestack.pop();
 
@@ -37,7 +40,7 @@ static void gen_print_stmt(ASTNode *node);
 static void gen_cpd_stmt(ASTNode *node);
 static void gen_for_stmt(ASTNode *node);
 static void gen_func_decl(ASTNode *node);
-static void gen_elif_stmt(ASTNode *node);
+static void gen_elif_list(ASTNode *node);
 static void gen_if_stmt(ASTNode *node);
 static void gen_while_stmt(ASTNode *node);
 
@@ -103,12 +106,12 @@ static void gen_const(ASTNode *node)
     VSValue *value = node->value;
     auto consts = conststack.top();
     VSCodeObject *cur = codestack.top();
-    if (consts->find(value->to_string()) != consts->end())
+    if (consts->find(value->to_string()) == consts->end())
     {
         cur->add_const(new VSObject(value));
-        consts->insert_or_assign(value->to_string(), cur->const_num - 1);
+        (*consts)[value->to_string()] = cur->const_num - 1;
     }
-    vs_addr_t index = consts->at(value->to_string());
+    vs_addr_t index = (*consts)[value->to_string()];
     cur->add_inst(VSInst(OP_LOAD_CONST, index));
 }
 
@@ -117,12 +120,12 @@ static void gen_ident(ASTNode *node)
     std::string *name = node->name;
     auto varnames = varnamestack.top();
     VSCodeObject *cur = codestack.top();
-    if (varnames->find(*name) != varnames->end())
+    if (varnames->find(*name) == varnames->end())
     {
         cur->add_varname(*name);
-        varnames->insert_or_assign(*name, cur->lvar_num - 1);
+        (*varnames)[*name] = cur->lvar_num - 1;
     }
-    vs_addr_t index = varnames->at(*name);
+    vs_addr_t index = (*varnames)[*name];
     cur->add_inst(VSInst(OP_LOAD_NAME, index));
 }
 
@@ -205,7 +208,6 @@ static void gen_continue(ASTNode *node)
 
 static void gen_expr(ASTNode *node)
 {
-    VSCodeObject *cur = codestack.top();
     switch (node->node_type)
     {
     case AST_CONST:
@@ -258,9 +260,9 @@ static void gen_decl_stmt(ASTNode *node)
         if (varnames->find(*name) == varnames->end())
         {
             cur->add_varname(*name);
-            varnames->insert_or_assign(*name, cur->lvar_num - 1);
+            (*varnames)[*name] = cur->lvar_num - 1;
         }
-        vs_addr_t index = varnames->at(*name);
+        vs_addr_t index = (*varnames)[*name];
         if (child->init_val != NULL)
         {
             gen_expr_list(child->init_val);
@@ -299,7 +301,7 @@ static void gen_for_stmt(ASTNode *node)
 {
     VSCodeObject *cur, *parent = codestack.top();
     parent->add_inst(VSInst(OP_LOAD_CONST, parent->const_num));
-    parent->add_inst(VSInst(OP_JMP));
+    parent->add_inst(VSInst(OP_GOTO));
 
     enter_blk("__vs_for__", LOOP_BLK);
 
@@ -330,8 +332,8 @@ static void gen_for_stmt(ASTNode *node)
     }
 
     vs_addr_t jif_pos = cur->inst_num;
-    cur->add_inst(VSInst(OP_IN_BLK_JIF, jif_pos + 2));
-    cur->add_inst(VSInst(OP_IN_BLK_JMP, 0));
+    cur->add_inst(VSInst(OP_JIF, jif_pos + 2));
+    cur->add_inst(VSInst(OP_JMP, 0));
 
     gen_cpd_stmt(node->for_body);
 
@@ -339,8 +341,8 @@ static void gen_for_stmt(ASTNode *node)
     {
         gen_expr_list(node->for_incr);
     }
-    
-    cur->add_inst(VSInst(OP_IN_BLK_JMP, cur->loop_start));
+
+    cur->add_inst(VSInst(OP_JMP, cur->loop_start));
     cur->code[jif_pos + 1].operand = cur->inst_num;
     cur->add_inst(VSInst(OP_NOP));
 
@@ -349,30 +351,111 @@ static void gen_for_stmt(ASTNode *node)
 
 static void gen_func_decl(ASTNode *node)
 {
-
 }
 
-static void gen_elif_stmt(ASTNode *node)
+static void gen_elif_list(ASTNode *node)
 {
+    auto jmp_pos = std::vector<vs_size_t>();
+    VSCodeObject *cur, *parent = codestack.top();
+    for (auto child : *node->elif_list)
+    {
+        if (child->if_cond != NULL)
+        {
+            gen_expr_list(child->if_cond);
+        }
+        else
+        {
+            parent->add_inst(VSInst(OP_LOAD_CONST, CONST_TRUE_ADDR));
+        }
 
+        parent->add_inst(VSInst(OP_NOT));
+        parent->add_inst(VSInst(OP_JIF, parent->inst_num + 4));
+        parent->add_inst(VSInst(OP_LOAD_CONST, parent->const_num));
+        parent->add_inst(VSInst(OP_GOTO));
+
+        jmp_pos.push_back(parent->inst_num);
+        parent->add_inst(VSInst(OP_JMP, 0));
+
+        enter_blk("__vs_elif__", LOOP_BLK);
+
+        cur = codestack.top();
+        parent->add_const(new VSObject(cur));
+
+        gen_cpd_stmt(child->true_smt);
+
+        leave_blk();
+    }
+
+    if (node->else_node != NULL)
+    {
+        parent->add_inst(VSInst(OP_LOAD_CONST, parent->const_num));
+        parent->add_inst(VSInst(OP_GOTO));
+
+        enter_blk("__vs_else__", LOOP_BLK);
+
+        cur = codestack.top();
+        parent->add_const(new VSObject(cur));
+
+        gen_cpd_stmt(node->else_node);
+
+        leave_blk();
+    }
+
+    for (auto pos : jmp_pos)
+    {
+        parent->code[pos].operand = parent->inst_num;
+    }
 }
 
 static void gen_if_stmt(ASTNode *node)
 {
+    VSCodeObject *cur, *parent = codestack.top();
+    if (node->if_cond != NULL)
+    {
+        gen_expr_list(node->if_cond);
+    }
+    else
+    {
+        parent->add_inst(VSInst(OP_LOAD_CONST, CONST_TRUE_ADDR));
+    }
 
+    parent->add_inst(VSInst(OP_NOT));
+    parent->add_inst(VSInst(OP_JIF, parent->inst_num + 4));
+    parent->add_inst(VSInst(OP_LOAD_CONST, parent->const_num));
+    parent->add_inst(VSInst(OP_GOTO));
+
+    vs_size_t jmp_pos = parent->inst_num;
+    parent->add_inst(VSInst(OP_JMP, 0));
+
+    enter_blk("__vs_if__", LOOP_BLK);
+
+    cur = codestack.top();
+    parent->add_const(new VSObject(cur));
+
+    gen_cpd_stmt(node->true_smt);
+
+    leave_blk();
+
+    if (node->false_smt != NULL)
+    {
+        gen_elif_list(node->false_smt);
+    }
+
+    parent->code[jmp_pos].operand = parent->inst_num;
+    parent->add_inst(VSInst(OP_NOP));
 }
 
 static void gen_while_stmt(ASTNode *node)
 {
     VSCodeObject *cur, *parent = codestack.top();
     parent->add_inst(VSInst(OP_LOAD_CONST, parent->const_num));
-    parent->add_inst(VSInst(OP_JMP));
+    parent->add_inst(VSInst(OP_GOTO));
 
     enter_blk("__vs_while__", LOOP_BLK);
 
     cur = codestack.top();
     parent->add_const(new VSObject(cur));
-    
+
     cur->loop_start = 0;
     if (node->while_cond != NULL)
     {
@@ -384,12 +467,12 @@ static void gen_while_stmt(ASTNode *node)
     }
 
     vs_addr_t jif_pos = cur->inst_num;
-    cur->add_inst(VSInst(OP_IN_BLK_JIF, jif_pos + 2));
-    cur->add_inst(VSInst(OP_IN_BLK_JMP, 0));
+    cur->add_inst(VSInst(OP_JIF, jif_pos + 2));
+    cur->add_inst(VSInst(OP_JMP, 0));
 
     gen_cpd_stmt(node->while_stmt);
 
-    cur->add_inst(VSInst(OP_IN_BLK_JMP, cur->loop_start));
+    cur->add_inst(VSInst(OP_JMP, cur->loop_start));
     cur->code[jif_pos + 1].operand = cur->inst_num;
     cur->add_inst(VSInst(OP_NOP));
 
@@ -398,7 +481,6 @@ static void gen_while_stmt(ASTNode *node)
 
 static void gen_cpd_stmt(ASTNode *node)
 {
-    VSCodeObject *cur = codestack.top();
     for (auto stmt : *node->statements)
     {
         switch (stmt->node_type)
@@ -424,7 +506,7 @@ static void gen_cpd_stmt(ASTNode *node)
         case AST_PRINT_STMT:
             gen_print_stmt(stmt);
             break;
-        case AST_ASSIGN:    
+        case AST_ASSIGN:
             gen_assign_stmt(stmt);
             break;
         case AST_RETURN:

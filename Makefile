@@ -4,7 +4,8 @@ vpath %.cpp src src/compiler src/runtime src/tools src/types
 CXX=g++
 CXXFLAGS=-I inc -g -Wall -Wextra -Wno-write-strings
 
-SRCS=vslexer.cpp vsparser.cpp printers.cpp error.cpp File.cpp VSValue.cpp vs.cpp
+SRCS=vslexer.cpp vsparser.cpp gencode.cpp printers.cpp error.cpp File.cpp VSObject.cpp \
+	VSCodeObject.cpp VSValue.cpp vs.cpp
 OBJECTS=$(SRCS:.cpp=.o)
 
 OUTPUT_DIR=build

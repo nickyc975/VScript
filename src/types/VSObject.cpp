@@ -1,5 +1,7 @@
 #include "vs.hpp"
 
+vs_id_t VSObject::id = 0;
+
 VSObject::VSObject(): obj_id(++id)
 {
 }

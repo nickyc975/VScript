@@ -40,10 +40,15 @@ int main(int argc, char **argv)
     {
         print_tk_lst(token_list, (char *)"test/tokens.txt");
     }
-    ASTNode *program = parse(&token_list);
+    ASTNode *astree = parse(&token_list);
     if (parser)
     {
-        print_ast(program);
+        print_ast(astree);
+    }
+    VSCodeObject *program = gencode(astree);
+    for (auto inst : program->code)
+    {
+        printf("%s\n", inst.to_string().c_str());
     }
     return 0;
 }
