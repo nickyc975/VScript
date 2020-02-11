@@ -1,11 +1,22 @@
 #include "vs.hpp"
 
+VSInst::VSInst(OPCODE opcode): opcode(opcode), operand(0)
+{
+}
+
+VSInst::VSInst(OPCODE opcode, vs_addr_t operand): opcode(opcode), operand(operand)
+{
+}
+
 VSCodeObject::VSCodeObject(std::string name, CODE_BLK_TYPE type) : name(name), type(type)
 {
     this->arg_num = 0;
     this->inst_num = 0;
     this->lvar_num = 0;
     this->const_num = 0;
+
+    // save none as the first const of every code object.
+    this->add_const(new VSObject(VSValue::None()));
 }
 
 void VSCodeObject::add_inst(VSInst inst)

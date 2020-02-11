@@ -25,7 +25,7 @@ static ASTNode *read_primary_expr();
 static ASTNode *read_arg_expr_list();
 static ASTNode *read_postfix_expr();
 static ASTNode *read_unary_expr();
-static ASTNode *read_multTK_expr();
+static ASTNode *read_mult_expr();
 static ASTNode *read_additive_expr();
 static ASTNode *read_relational_expr();
 static ASTNode *read_equality_expr();

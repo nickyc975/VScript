@@ -34,6 +34,7 @@ typedef enum
     OP_AND,
     OP_OR,
     OP_NOT,
+    OP_NEG,
 
     // 1 arg, list length, create a list of objects in the stack
     OP_BUILD_LIST,
@@ -65,6 +66,9 @@ typedef enum
     // no arg, jump to stack second if stack top
     OP_JIF,
 
+    // goto loop_start of current block
+    OP_LOOP,
+
     // no arg, call stack top
     OP_CALL,
 
@@ -95,6 +99,7 @@ static char *OPCODE_STR[] =
     "AND",
     "OR",
     "NOT",
+    "NEG",
     "BUILD_LIST",
     "INDEX_LOAD",
     "INDEX_STORE",
@@ -105,6 +110,7 @@ static char *OPCODE_STR[] =
     "STORE_CONST",
     "JMP",
     "JIF",
+    "LOOP",
     "CALL",
     "RET",
     "INPUT",
@@ -137,7 +143,7 @@ typedef enum
 {
     NORM_BLK,
     FUNC_BLK,
-    ITER_BLK
+    LOOP_BLK
 } CODE_BLK_TYPE;
 
 class VSValue;
@@ -228,16 +234,11 @@ class VSInst: VSMemItem
 {
 public:
     const OPCODE opcode;
-
     // const addr
-    const vs_addr_t addr;
+    const vs_addr_t operand;
 
-    // var name
-    const std::string name;
-
-    VSInst(OPCODE opcode, vs_addr_t addr);
-    VSInst(OPCODE opcode, std::string name);
-    ~VSInst();
+    VSInst(OPCODE opcode);
+    VSInst(OPCODE opcode, vs_addr_t operand);
 
     const char *to_bytes();
     const std::string to_string();
@@ -253,6 +254,9 @@ public:
     vs_size_t inst_num;
     vs_size_t lvar_num;
     vs_size_t const_num;
+
+    // For loop block, this indicates the start point of the loop body.
+    vs_addr_t loop_start;
 
     std::vector<VSInst> code;
     std::vector<VSObject> consts;
