@@ -185,7 +185,7 @@ static void gen_return(ASTNode *node)
     VSCodeObject *cur = codestack.top();
     // set none as the default return value
     if (node->ret_val == NULL)
-        cur->add_inst(VSInst(OP_LOAD_CONST, 0));
+        cur->add_inst(VSInst(OP_LOAD_CONST, CONST_NONE_ADDR));
     else
         gen_expr_list(node->ret_val);
     cur->add_inst(VSInst(OP_RET));
@@ -305,6 +305,7 @@ static void gen_for_stmt(ASTNode *node)
 
     cur = codestack.top();
     parent->add_const(new VSObject(cur));
+
     if (node->for_init != NULL)
     {
         if (node->for_init->node_type == AST_DECL_LST)
@@ -323,6 +324,10 @@ static void gen_for_stmt(ASTNode *node)
     {
         gen_expr_list(node->for_cond);
     }
+    else
+    {
+        cur->add_inst(VSInst(OP_LOAD_CONST, CONST_TRUE_ADDR));
+    }
 
     vs_addr_t jif_pos = cur->inst_num;
     cur->add_inst(VSInst(OP_IN_BLK_JIF, jif_pos + 2));
@@ -334,7 +339,8 @@ static void gen_for_stmt(ASTNode *node)
     {
         gen_expr_list(node->for_incr);
     }
-
+    
+    cur->add_inst(VSInst(OP_IN_BLK_JMP, cur->loop_start));
     cur->code[jif_pos + 1].operand = cur->inst_num;
     cur->add_inst(VSInst(OP_NOP));
 
@@ -358,7 +364,36 @@ static void gen_if_stmt(ASTNode *node)
 
 static void gen_while_stmt(ASTNode *node)
 {
+    VSCodeObject *cur, *parent = codestack.top();
+    parent->add_inst(VSInst(OP_LOAD_CONST, parent->const_num));
+    parent->add_inst(VSInst(OP_JMP));
 
+    enter_blk("__vs_while__", LOOP_BLK);
+
+    cur = codestack.top();
+    parent->add_const(new VSObject(cur));
+    
+    cur->loop_start = 0;
+    if (node->while_cond != NULL)
+    {
+        gen_expr_list(node->for_init);
+    }
+    else
+    {
+        cur->add_inst(VSInst(OP_LOAD_CONST, CONST_TRUE_ADDR));
+    }
+
+    vs_addr_t jif_pos = cur->inst_num;
+    cur->add_inst(VSInst(OP_IN_BLK_JIF, jif_pos + 2));
+    cur->add_inst(VSInst(OP_IN_BLK_JMP, 0));
+
+    gen_cpd_stmt(node->while_stmt);
+
+    cur->add_inst(VSInst(OP_IN_BLK_JMP, cur->loop_start));
+    cur->code[jif_pos + 1].operand = cur->inst_num;
+    cur->add_inst(VSInst(OP_NOP));
+
+    leave_blk();
 }
 
 static void gen_cpd_stmt(ASTNode *node)

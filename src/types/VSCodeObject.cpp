@@ -15,8 +15,10 @@ VSCodeObject::VSCodeObject(std::string name, CODE_BLK_TYPE type) : name(name), t
     this->lvar_num = 0;
     this->const_num = 0;
 
-    // save none as the first const of every code object.
+    // set constants
     this->add_const(new VSObject(VSValue::None()));
+    this->add_const(new VSObject(VSValue::True()));
+    this->add_const(new VSObject(VSValue::False()));
 }
 
 void VSCodeObject::add_inst(VSInst inst)

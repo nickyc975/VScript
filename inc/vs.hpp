@@ -9,6 +9,10 @@
 #define is_num(type) (is_num_str(type) && type != STRING)
 #define is_int(type) (is_num(type) && type != FLOAT)
 
+#define CONST_NONE_ADDR 0
+#define CONST_TRUE_ADDR 1
+#define CONST_FALSE_ADDR 2
+
 typedef bool vs_bool_t;
 typedef char vs_char_t;
 typedef long long vs_int_t;
