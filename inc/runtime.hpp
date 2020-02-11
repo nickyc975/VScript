@@ -7,6 +7,8 @@
 class VSCallStackFrame
 {
 public:
+    vs_size_t pc;
+    VSCodeObject *code;
     VSCallStackFrame *prev;
     std::vector<VSObject> args;
     std::unordered_map<std::string, VSObject> vars;

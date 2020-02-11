@@ -1,3 +1,4 @@
+#include <cstring>
 #include <string>
 #include <vector>
 
@@ -326,5 +327,31 @@ VSValue *VSValue::i_neg(VSValue *val)
         return new VSValue((vs_float_t)(-val->float_val));
     default:
         return VSValue::None();
+    }
+}
+
+const char *VSValue::to_bytes()
+{
+    return this->to_string().c_str();
+}
+
+const std::string VSValue::to_string()
+{
+    switch (this->type)
+    {
+    case NONE:
+        return "__vs_none__";
+    case BOOL:
+        return "__vs_bool_" + std::to_string(this->bool_val) + "__";
+    case CHAR:
+        return "__vs_char_" + std::to_string(this->char_val) + "__";
+    case INT:
+        return "__vs_int_" + std::to_string(this->int_val) + "__";
+    case FLOAT:
+        return "__vs_float_" + std::to_string(this->float_val) + "__";
+    case STRING:
+        return "__vs_string_" + *this->str_val + "__";
+    default:
+        return "__vs_undefined__";
     }
 }

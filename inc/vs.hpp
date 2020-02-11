@@ -68,7 +68,7 @@ typedef enum
     // no arg, call stack top
     OP_CALL,
 
-    // 1 arg, put the arg at stack top
+    // no arg, end current block
     OP_RET,
 
     // no arg, read a value from cmd and push it into stack
@@ -95,12 +95,14 @@ static char *OPCODE_STR[] =
     "AND",
     "OR",
     "NOT",
-    "BLD_LIST",
-    "INDEX",
+    "BUILD_LIST",
+    "INDEX_LOAD",
+    "INDEX_STORE",
     "APPEND",
     "LOAD_NAME",
     "LOAD_CONST",
-    "STORE",
+    "STORE_NAME",
+    "STORE_CONST",
     "JMP",
     "JIF",
     "CALL",
@@ -124,12 +126,19 @@ static char *TYPE_STR[] = {"NONE", "BOOL", "CHAR", "INT", "FLOAT", "STRING"};
 
 typedef enum
 {
-    DATA,
-    CODE,
-    LIST
+    OBJ_DATA,
+    OBJ_CODE,
+    OBJ_LIST
 } OBJECT_TYPE;
 
 static char *OBJ_STR[] = {"DATA", "CODE", "LIST"};
+
+typedef enum
+{
+    NORM_BLK,
+    FUNC_BLK,
+    ITER_BLK
+} CODE_BLK_TYPE;
 
 class VSValue;
 class VSCodeObject;
@@ -140,8 +149,8 @@ private:
     static vs_id_t id;
 
 public:
-    vs_id_t obj_id;
     OBJECT_TYPE type;
+    const vs_id_t obj_id;
 
     union
     {
@@ -151,7 +160,10 @@ public:
     };
 
     VSObject();
-    ~VSObject();
+    VSObject(OBJECT_TYPE type);
+    VSObject(VSValue *value);
+    VSObject(VSCodeObject *codeblock);
+    VSObject(std::vector<VSObject> *obj_list);
 };
 
 class VSMemItem
@@ -162,8 +174,8 @@ public:
 
     VSMemItem(){refcnt = 0;}
 
-    virtual char *to_bytes(){return NULL;}
-    virtual std::string to_string(){return std::string();}
+    virtual const char *to_bytes(){return NULL;}
+    virtual const std::string to_string(){return std::string();}
 };
 
 class VSValue: VSMemItem
@@ -188,8 +200,8 @@ public:
     VSValue(vs_float_t val);
     VSValue(std::string val);
 
-    char *to_bytes();
-    std::string to_string();
+    const char *to_bytes();
+    const std::string to_string();
 
     static VSValue *None();
     static VSValue *True();
@@ -227,24 +239,30 @@ public:
     VSInst(OPCODE opcode, std::string name);
     ~VSInst();
 
-    char *to_bytes();
-    std::string to_string();
+    const char *to_bytes();
+    const std::string to_string();
 };
 
 class VSCodeObject: VSMemItem
 {
 public:
-    std::string name;
+    const std::string name;
+    const CODE_BLK_TYPE type;
+
     vs_size_t arg_num;
+    vs_size_t inst_num;
+    vs_size_t lvar_num;
+    vs_size_t const_num;
+
     std::vector<VSInst> code;
     std::vector<VSObject> consts;
     std::vector<std::string> varnames;
 
-    VSCodeObject();
-    ~VSCodeObject();
+    VSCodeObject(std::string name, CODE_BLK_TYPE type);
 
-    char *to_bytes();
-    std::string to_string();
+    void add_inst(VSInst inst);
+    void add_const(VSObject *object);
+    void add_varname(std::string varname);
 };
 
 #endif
