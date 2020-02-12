@@ -1108,16 +1108,8 @@ static ASTNode *read_if_stmt()
     restore_table();
 
     ensure_token(if_stmt_node(cond, true_stmt, false_stmt));
-    if (peek_token()->type == TK_ELIF)
+    if (peek_token()->type == TK_ELIF || peek_token()->type == TK_ELSE)
         false_stmt = read_elif_list();
-    else if (peek_token()->type == TK_ELSE)
-    {
-        expect(TK_ELSE);
-
-        new_table();
-        false_stmt = read_cpd_stmt();
-        restore_table();
-    }
     return if_stmt_node(cond, true_stmt, false_stmt);
 }
 
