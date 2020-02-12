@@ -8,6 +8,14 @@ func main(argc, argv) {
     return 0;
 }
 
+func fib(n) {
+    if (n > 2) {
+        return fib(n - 2) + fib(n - 1);
+    } else {
+        return n;
+    }
+}
+
 val none_val = none;
 // none_val += 10;
 val bool_val = !true | false & false | !(3 < 4);
@@ -38,3 +46,4 @@ while (int_val < 0)
 }
 
 main(3, [1, 2, 3]);
+fib(10);

@@ -1,7 +1,9 @@
 #include "compiler.hpp"
 
 // Create new table for compound statements.
-#define new_table() cur_table = new SymTable<ASTNode *>(cur_table)
+#define new_table() \
+    cur_table = new SymTable<ASTNode *>(cur_table); \
+    cur_table->top = NULL;
 
 // Restore parent table.
 #define restore_table() cur_table = cur_table->get_parent()
@@ -164,7 +166,7 @@ static bool ensure_in_iter()
     SymTable<ASTNode *> *temp = cur_table;
     while (temp != NULL)
     {
-        if (temp->top->node_type == AST_WHILE_STMT || temp->top->node_type == AST_FOR_STMT)
+        if (temp->top != NULL && temp->top->node_type == AST_WHILE_STMT || temp->top->node_type == AST_FOR_STMT)
         {
             return true;
         }
@@ -180,7 +182,7 @@ static bool ensure_in_func_decl()
     SymTable<ASTNode *> *temp = cur_table;
     while (temp != NULL)
     {
-        if (temp->top->node_type == AST_FUNC_DECL)
+        if (temp->top != NULL && temp->top->node_type == AST_FUNC_DECL)
         {
             return true;
         }
