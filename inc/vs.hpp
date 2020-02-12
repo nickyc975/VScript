@@ -184,6 +184,8 @@ public:
     VSObject(VSValue *value);
     VSObject(VSCodeObject *codeblock);
     VSObject(std::vector<VSObject> *obj_list);
+
+    VSObject& operator=(const VSObject &that);
 };
 
 class VSMemItem
