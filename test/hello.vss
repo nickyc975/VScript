@@ -1,7 +1,7 @@
 __vs_main__: 
-0: LOAD_CONST	__vs_func__
+0: LOAD_CONST	main
 1: STORE_LOCAL	main
-2: LOAD_CONST	__vs_func__
+2: LOAD_CONST	fib
 3: STORE_LOCAL	fib
 4: LOAD_CONST	none
 5: STORE_LOCAL	none_val
@@ -56,12 +56,18 @@ __vs_main__:
 53: LOAD_LOCAL	main
 54: CALL	
 55: PRINT	
-56: LOAD_CONST	10
-57: BUILD_LIST	1
-58: LOAD_LOCAL	fib
-59: CALL	
-60: PRINT	
-    __vs_func__: 
+56: LOAD_CONST	
+
+57: PRINT	
+58: LOAD_CONST	10
+59: BUILD_LIST	1
+60: LOAD_LOCAL	fib
+61: CALL	
+62: PRINT	
+63: LOAD_CONST	
+
+64: PRINT	
+    main: 
     0: LOAD_CONST	Hello World!
 
     1: PRINT	
@@ -77,6 +83,8 @@ __vs_main__:
     11: PRINT	
     12: LOAD_CONST	0
     13: RET	
+    14: LOAD_CONST	none
+    15: RET	
         __vs_for__: 
         0: LOAD_CONST	0
         1: STORE_LOCAL	i
@@ -97,7 +105,7 @@ __vs_main__:
         16: STORE_LOCAL	i
         17: JMP	2
         18: NOP	
-    __vs_func__: 
+    fib: 
     0: LOAD_CONST	2
     1: LOAD_LOCAL	n
     2: GT	
@@ -109,6 +117,8 @@ __vs_main__:
     8: LOAD_CONST	__vs_else__
     9: GOTO	
     10: NOP	
+    11: LOAD_CONST	none
+    12: RET	
         __vs_if__: 
         0: LOAD_CONST	1
         1: LOAD_NAME	n

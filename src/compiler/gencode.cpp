@@ -440,6 +440,10 @@ static void gen_func_decl(ASTNode *node)
     // Gen function body.
     gen_cpd_stmt(node->func_body);
 
+    // default return none
+    cur->add_inst(VSInst(OP_LOAD_CONST, CONST_NONE_ADDR));
+    cur->add_inst(VSInst(OP_RET));
+
     leave_blk();
 }
 

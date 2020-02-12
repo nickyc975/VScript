@@ -1,9 +1,9 @@
 #include "runtime.hpp"
 
-#define print_indent(indent) \
+#define print_indent(indent)         \
     for (int i = 0; i < indent; i++) \
-    { \
-        printf(" "); \
+    {                                \
+        printf(" ");                 \
     }
 
 #define check_list_index(index)                                                    \
@@ -22,6 +22,11 @@
         err("invalid list index: %lld\n", index.value->int_val);                   \
         terminate(TERM_ERROR);                                                     \
     }
+
+#define leave_blk()                     \
+    VSCallStackFrame *temp = cur_frame; \
+    cur_frame = temp->prev;             \
+    delete temp;
 
 static VSCallStackFrame *cur_frame;
 static std::stack<VSObject> cmptstack;
@@ -56,6 +61,7 @@ static void do_jif(vs_addr_t addr);
 static void do_break();
 static void do_continue();
 static void do_call();
+static void do_ret();
 static void do_input();
 static void do_print();
 
@@ -83,7 +89,7 @@ static void find_blk_type(CODE_BLK_TYPE type)
         cur_frame = temp->prev;
         delete temp;
     }
-    
+
     if (cur_frame == NULL)
     {
         warn("missing code block type: \"%s\"\n", CODE_BLK_STR[type]);
@@ -579,9 +585,7 @@ static void do_jif(vs_addr_t addr)
 static void do_break()
 {
     find_blk_type(LOOP_BLK);
-    VSCallStackFrame *temp = cur_frame;
-    cur_frame = cur_frame->prev;
-    delete temp;
+    leave_blk();
 
     if (cur_frame == NULL)
     {
@@ -620,7 +624,7 @@ static void do_call()
 
     if (args.obj_list->size() != func.codeblock->arg_num)
     {
-        err("function \"%s\" expects %u args but got only %u args\n", 
+        err("function \"%s\" expects %u args but got only %u args\n",
             func.codeblock->name.c_str(), func.codeblock->arg_num, args.obj_list->size());
         terminate(TERM_ERROR);
     }
@@ -635,9 +639,7 @@ static void do_call()
 static void do_ret()
 {
     find_blk_type(FUNC_BLK);
-    // VSCallStackFrame *temp = cur_frame;
-    // cur_frame = cur_frame->prev;
-    // delete temp;
+    leave_blk();
 
     if (cur_frame == NULL)
     {
@@ -663,7 +665,7 @@ static void eval()
     {
         vs_addr_t addr = cur_frame->pc++;
         VSInst inst = cur_frame->code->code[addr];
-        note("%s\n", OPCODE_STR[inst.opcode]);
+        // note("%s\n", OPCODE_STR[inst.opcode]);
         switch (inst.opcode)
         {
         case OP_ADD:
@@ -781,5 +783,10 @@ int execute(VSCodeObject *code)
 {
     cmptstack = std::stack<VSObject>();
     cur_frame = new VSCallStackFrame(NULL, code);
-    eval();
+
+    while (cur_frame != NULL)
+    {
+        eval();
+        leave_blk();
+    }
 }
