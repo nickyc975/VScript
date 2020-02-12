@@ -423,7 +423,7 @@ static void gen_func_decl(ASTNode *node)
     parent->add_inst(VSInst(OP_LOAD_CONST, parent->const_num));
     parent->add_inst(VSInst(OP_STORE_LOCAL, (*locals)[*name]));
 
-    enter_blk("__vs_func__", FUNC_BLK);
+    enter_blk(*name, FUNC_BLK);
 
     // Add function code to parent code consts.
     locals = localstack.top();

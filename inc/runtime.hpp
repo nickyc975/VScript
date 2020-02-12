@@ -2,7 +2,6 @@
 #define VS_RUNTIME_H
 
 #include <stack>
-#include <iostream>
 
 #include "vs.hpp"
 #include "error.hpp"

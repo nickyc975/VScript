@@ -3,7 +3,7 @@
 #define print_indent(indent) \
     for (int i = 0; i < indent; i++) \
     { \
-        std::cout << ' '; \
+        printf(" "); \
     }
 
 #define check_list_index(index)                                                    \
@@ -53,6 +53,9 @@ static void do_load_const(vs_addr_t addr);
 static void do_goto();
 static void do_jmp(vs_addr_t addr);
 static void do_jif(vs_addr_t addr);
+static void do_break();
+static void do_continue();
+static void do_call();
 static void do_input();
 static void do_print();
 
@@ -93,22 +96,22 @@ static void print_obj(VSObject object, int indent)
     print_indent(indent);
     if (object.type == OBJ_DATA)
     {
-        std::cout << object.value->to_string();
+        printf("%s", object.value->to_string().c_str());
     }
     else if (object.type == OBJ_CODE)
     {
-        std::cout << CODE_BLK_STR[object.codeblock->type] << " " << object.codeblock->name;
+        printf("%s %s", CODE_BLK_STR[object.codeblock->type], object.codeblock->name.c_str());
     }
     else
     {
-        std::cout << "[" << std::endl;
+        printf("]\n");
         for (auto o : *object.obj_list)
         {
             print_obj(o, indent + 1);
-            std::cout << "," << std::endl;
+            printf(",\n");
         }
         print_indent(indent);
-        std::cout << "]";
+        printf("]\n");
     }
 }
 
@@ -537,12 +540,6 @@ static void do_goto()
         terminate(TERM_ERROR);
     }
     cur_frame = new VSCallStackFrame(cur_frame, object.codeblock);
-
-    eval();
-
-    VSCallStackFrame *temp = cur_frame;
-    cur_frame = temp->prev;
-    delete temp;
 }
 
 static void do_jmp(vs_addr_t addr)
@@ -583,7 +580,7 @@ static void do_break()
 {
     find_blk_type(LOOP_BLK);
     VSCallStackFrame *temp = cur_frame;
-    cur_frame = temp->prev;
+    cur_frame = cur_frame->prev;
     delete temp;
 
     if (cur_frame == NULL)
@@ -629,24 +626,18 @@ static void do_call()
     }
 
     cur_frame = new VSCallStackFrame(cur_frame, func.codeblock);
-    for (auto o : *args.obj_list)
+    for (vs_size_t i = 0; i < args.obj_list->size(); i++)
     {
-        cur_frame->locals.push_back(o);
+        cur_frame->locals[i] = (*args.obj_list)[i];
     }
-
-    eval();
-
-    VSCallStackFrame *temp = cur_frame;
-    cur_frame = temp->prev;
-    delete temp;
 }
 
 static void do_ret()
 {
     find_blk_type(FUNC_BLK);
-    VSCallStackFrame *temp = cur_frame;
-    cur_frame = temp->prev;
-    delete temp;
+    // VSCallStackFrame *temp = cur_frame;
+    // cur_frame = cur_frame->prev;
+    // delete temp;
 
     if (cur_frame == NULL)
     {
@@ -672,6 +663,7 @@ static void eval()
     {
         vs_addr_t addr = cur_frame->pc++;
         VSInst inst = cur_frame->code->code[addr];
+        note("%s\n", OPCODE_STR[inst.opcode]);
         switch (inst.opcode)
         {
         case OP_ADD:
