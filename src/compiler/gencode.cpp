@@ -459,7 +459,7 @@ static void gen_elif_list(ASTNode *node)
         jmp_pos.push_back(parent->inst_num);
         parent->add_inst(VSInst(OP_JMP, 0));
 
-        enter_blk("__vs_elif__", LOOP_BLK);
+        enter_blk("__vs_elif__", NORM_BLK);
 
         cur = codestack.top();
         parent->add_const(new VSObject(cur));
@@ -474,7 +474,7 @@ static void gen_elif_list(ASTNode *node)
         parent->add_inst(VSInst(OP_LOAD_CONST, parent->const_num));
         parent->add_inst(VSInst(OP_GOTO));
 
-        enter_blk("__vs_else__", LOOP_BLK);
+        enter_blk("__vs_else__", NORM_BLK);
 
         cur = codestack.top();
         parent->add_const(new VSObject(cur));
@@ -510,7 +510,7 @@ static void gen_if_stmt(ASTNode *node)
     vs_size_t jmp_pos = parent->inst_num;
     parent->add_inst(VSInst(OP_JMP, 0));
 
-    enter_blk("__vs_if__", LOOP_BLK);
+    enter_blk("__vs_if__", NORM_BLK);
 
     cur = codestack.top();
     parent->add_const(new VSObject(cur));
