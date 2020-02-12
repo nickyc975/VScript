@@ -341,23 +341,18 @@ const std::string VSValue::to_string()
     switch (this->type)
     {
     case NONE:
-        return "__vs_none__";
+        return "none";
     case BOOL:
-        str = this->bool_val ? "true" : "false";
-        return "__vs_bool_" + str + "__";
+        return this->bool_val ? "true" : "false";
     case CHAR:
-        str = std::to_string(this->char_val);
-        return "__vs_char_" + str + "__";
+        return std::string(1, this->char_val);
     case INT:
-        str = std::to_string(this->int_val);
-        return "__vs_int_" + str + "__";
+        return std::to_string(this->int_val);
     case FLOAT:
-        str = std::to_string(this->float_val);
-        return "__vs_float_" + str + "__";
+        return std::to_string(this->float_val);
     case STRING:
-        str = *this->str_val;
-        return "__vs_string_" + str + "__";
+        return *this->str_val;
     default:
-        return "__vs_undefined__";
+        return "undefined";
     }
 }

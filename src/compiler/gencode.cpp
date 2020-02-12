@@ -83,6 +83,27 @@ static OPCODE get_b_op(TOKEN_TYPE tk)
     }
 }
 
+static std::string get_key(VSValue *value)
+{
+    switch (value->type)
+    {
+    case NONE:
+        return "__vs_none__";
+    case BOOL:
+        return "__vs_bool_" + value->to_string() + "__";
+    case CHAR:
+        return "__vs_char_" + value->to_string() + "__";
+    case INT:
+        return "__vs_int_" + value->to_string() + "__";
+    case FLOAT:
+        return "__vs_float_" + value->to_string() + "__";
+    case STRING:
+        return "__vs_str_" + value->to_string() + "__";
+    default:
+        return value->to_string();
+    }
+}
+
 static void do_store(OPCODE opcode, ASTNode *assign_var)
 {
     VSCodeObject *cur = codestack.top();
@@ -125,12 +146,13 @@ static void gen_const(ASTNode *node)
     VSValue *value = node->value;
     auto consts = conststack.top();
     VSCodeObject *cur = codestack.top();
-    if (consts->find(value->to_string()) == consts->end())
+    std::string const_key = get_key(value);
+    if (consts->find(const_key) == consts->end())
     {
         cur->add_const(new VSObject(value));
-        (*consts)[value->to_string()] = cur->const_num - 1;
+        (*consts)[const_key] = cur->const_num - 1;
     }
-    vs_addr_t index = (*consts)[value->to_string()];
+    vs_addr_t index = (*consts)[const_key];
     cur->add_inst(VSInst(OP_LOAD_CONST, index));
 }
 
