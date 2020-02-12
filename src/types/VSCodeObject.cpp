@@ -20,10 +20,11 @@ const std::string VSInst::to_string()
 
 VSCodeObject::VSCodeObject(std::string name, CODE_BLK_TYPE type) : name(name), type(type)
 {
-    this->arg_num = 0;
     this->inst_num = 0;
-    this->lvar_num = 0;
     this->const_num = 0;
+    this->arg_num = 0;
+    this->lvar_num = 0;
+    this->nlvar_num = 0;
 
     // set constants
     this->add_const(new VSObject(VSValue::None()));
@@ -43,14 +44,20 @@ void VSCodeObject::add_const(VSObject *object)
     this->const_num++;
 }
 
-void VSCodeObject::add_varname(std::string varname)
+void VSCodeObject::add_arg(std::string name)
 {
-    this->varnames.push_back(varname);
+    this->add_local(name);
+    this->arg_num++;
+}
+
+void VSCodeObject::add_local(std::string name)
+{
+    this->local_names.push_back(name);
     this->lvar_num++;
 }
 
-void VSCodeObject::add_argname(std::string argname)
+void VSCodeObject::add_non_local(std::string name)
 {
-    this->add_varname(name);
-    this->arg_num++;
+    this->non_local_names.push_back(name);
+    this->nlvar_num++;
 }

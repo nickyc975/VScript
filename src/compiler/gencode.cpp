@@ -2,24 +2,28 @@
 
 #include "compiler.hpp"
 
-#define enter_blk(name, type)                                          \
-    codestack.push(new VSCodeObject(name, type));                      \
-    conststack.push(new std::unordered_map<std::string, vs_addr_t>()); \
-    (*conststack.top())["__vs_none__"] = 0; \
-    (*conststack.top())["__vs_bool_true__"] = 1; \
-    (*conststack.top())["__vs_bool_false__"] = 2; \
-    varnamestack.push(new std::unordered_map<std::string, vs_addr_t>());
+#define enter_blk(name, type)                                             \
+    codestack.push(new VSCodeObject(name, type));                         \
+    conststack.push(new std::unordered_map<std::string, vs_addr_t>());    \
+    (*conststack.top())["__vs_none__"] = 0;                               \
+    (*conststack.top())["__vs_bool_true__"] = 1;                          \
+    (*conststack.top())["__vs_bool_false__"] = 2;                         \
+    localstack.push(new std::unordered_map<std::string, vs_addr_t>());    \
+    nonlocalstack.push(new std::unordered_map<std::string, vs_addr_t>()); \
 
 #define leave_blk()            \
     codestack.pop();           \
     delete conststack.top();   \
     conststack.pop();          \
-    delete varnamestack.top(); \
-    varnamestack.pop();
+    delete localstack.top();    \
+    localstack.pop();           \
+    delete nonlocalstack.top(); \
+    nonlocalstack.pop();
 
 static std::stack<VSCodeObject *> codestack;
 static std::stack<std::unordered_map<std::string, vs_addr_t> *> conststack;
-static std::stack<std::unordered_map<std::string, vs_addr_t> *> varnamestack;
+static std::stack<std::unordered_map<std::string, vs_addr_t> *> localstack;
+static std::stack<std::unordered_map<std::string, vs_addr_t> *> nonlocalstack;
 
 static void gen_const(ASTNode *node);
 static void gen_ident(ASTNode *node);
@@ -82,16 +86,31 @@ static OPCODE get_b_op(TOKEN_TYPE tk)
 static void do_store(OPCODE opcode, ASTNode *assign_var)
 {
     VSCodeObject *cur = codestack.top();
-    auto varnames = varnamestack.top();
+    auto locals = localstack.top();
+    auto nonlocals = nonlocalstack.top();
+
     if (opcode != OP_NOP)
     {
         gen_expr_list(assign_var);
         cur->add_inst(VSInst(opcode));
     }
+
     if (assign_var->node_type == AST_IDENT)
     {
         std::string *name = assign_var->name;
-        cur->add_inst(VSInst(OP_STORE_NAME, varnames->at(*name)));
+        if (locals->find(*name) != locals->end())
+        {
+            cur->add_inst(VSInst(OP_STORE_LOCAL, (*locals)[*name]));
+        }
+        else
+        {
+            if (nonlocals->find(*name) == nonlocals->end())
+            {
+                cur->add_non_local(*name);
+                (*nonlocals)[*name] = cur->nlvar_num - 1;
+            }
+            cur->add_inst(VSInst(OP_STORE_NAME, (*nonlocals)[*name]));
+        }
     }
     else if (assign_var->node_type == AST_LST_IDX)
     {
@@ -117,16 +136,24 @@ static void gen_const(ASTNode *node)
 
 static void gen_ident(ASTNode *node)
 {
-    std::string *name = node->name;
-    auto varnames = varnamestack.top();
     VSCodeObject *cur = codestack.top();
-    if (varnames->find(*name) == varnames->end())
+    auto locals = localstack.top();
+    auto nonlocals = nonlocalstack.top();
+
+    std::string *name = node->name;
+    if (locals->find(*name) != locals->end())
     {
-        cur->add_varname(*name);
-        (*varnames)[*name] = cur->lvar_num - 1;
+        cur->add_inst(VSInst(OP_LOAD_LOCAL, (*locals)[*name]));
     }
-    vs_addr_t index = (*varnames)[*name];
-    cur->add_inst(VSInst(OP_LOAD_NAME, index));
+    else
+    {
+        if (nonlocals->find(*name) == nonlocals->end())
+        {
+            cur->add_non_local(*name);
+            (*nonlocals)[*name] = cur->nlvar_num - 1;
+        }
+        cur->add_inst(VSInst(OP_LOAD_NAME, (*nonlocals)[*name]));
+    }
 }
 
 static void gen_b_expr(ASTNode *node)
@@ -252,21 +279,23 @@ static void gen_expr_list(ASTNode *node)
 static void gen_decl_stmt(ASTNode *node)
 {
     VSCodeObject *cur = codestack.top();
-    auto varnames = varnamestack.top();
-    // child is decl node, contains ident and init
+    auto locals = localstack.top();
+
+    // "child" is decl node, contains ident and init
     for (auto child : *node->decl_list)
     {
         std::string *name = child->var_name->name;
-        if (varnames->find(*name) == varnames->end())
+        if (locals->find(*name) == locals->end())
         {
-            cur->add_varname(*name);
-            (*varnames)[*name] = cur->lvar_num - 1;
+            cur->add_local(*name);
+            (*locals)[*name] = cur->lvar_num - 1;
         }
-        vs_addr_t index = (*varnames)[*name];
+
+        // Assign value.
         if (child->init_val != NULL)
         {
             gen_expr_list(child->init_val);
-            cur->add_inst(VSInst(OP_STORE_NAME, index));
+            cur->add_inst(VSInst(OP_STORE_LOCAL, (*locals)[*name]));
         }
     }
 }
@@ -352,30 +381,34 @@ static void gen_for_stmt(ASTNode *node)
 static void gen_func_decl(ASTNode *node)
 {
     VSCodeObject *parent = codestack.top();
+    auto locals = localstack.top();
+    auto nonlocals = nonlocalstack.top();
+
+    // Add function name to parent code locals.
     std::string *name = node->func_name->name;
-    auto varnames = varnamestack.top();
-    if (varnames->find(*name) == varnames->end())
+    if (locals->find(*name) == locals->end())
     {
-        parent->add_varname(*name);
-        (*varnames)[*name] = parent->lvar_num - 1;
+        parent->add_local(*name);
+        (*locals)[*name] = parent->lvar_num - 1;
     }
-    vs_addr_t index = (*varnames)[*name];
     parent->add_inst(VSInst(OP_LOAD_CONST, parent->const_num));
-    parent->add_inst(VSInst(OP_STORE_NAME, index));
+    parent->add_inst(VSInst(OP_STORE_LOCAL, (*locals)[*name]));
 
     enter_blk("__vs_func__", FUNC_BLK);
 
-    varnames = varnamestack.top();
+    // Add function code to parent code consts.
+    locals = localstack.top();
     VSCodeObject *cur = codestack.top();
     parent->add_const(new VSObject(cur));
 
-    // 
+    // Add function arg names to function locals.
     for (auto arg : *node->arg_node->list_vals)
     {
-        cur->add_argname(*arg->name);
-        (*varnames)[*arg->name] = cur->lvar_num - 1;
+        cur->add_arg(*arg->name);
+        (*locals)[*arg->name] = cur->lvar_num - 1;
     }
 
+    // Gen function body.
     gen_cpd_stmt(node->func_body);
 
     leave_blk();
@@ -558,7 +591,8 @@ VSCodeObject *gencode(ASTNode *astree)
 {
     codestack = std::stack<VSCodeObject *>();
     conststack = std::stack<std::unordered_map<std::string, vs_addr_t> *>();
-    varnamestack = std::stack<std::unordered_map<std::string, vs_addr_t> *>();
+    localstack = std::stack<std::unordered_map<std::string, vs_addr_t> *>();
+    nonlocalstack = std::stack<std::unordered_map<std::string, vs_addr_t> *>();
 
     enter_blk("__vs_main__", NORM_BLK);
 

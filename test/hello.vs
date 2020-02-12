@@ -1,6 +1,6 @@
 func main(argc, argv) {
     print("Hello World!\n");
-    var x = 3, y = 5, z = "abc";
+    var x = argc, y = 5, z = argv;
     for (var i = 0; i < y; i += x) {
         z += z;
     }
@@ -9,7 +9,7 @@ func main(argc, argv) {
 }
 
 func fib(n) {
-    if (n > 2) {
+    if (n > 2) { 
         return fib(n - 2) + fib(n - 1);
     } else {
         return n;

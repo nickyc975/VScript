@@ -402,11 +402,14 @@ void fprint_code(FILE *file, VSCodeObject *code)
         fprintf(file, "%d: %s\t", count, OPCODE_STR[inst.opcode]);
         switch (inst.opcode)
         {
+        case OP_LOAD_LOCAL:
+        case OP_STORE_LOCAL:
+            fprintf(file, "%s\n", code->local_names[inst.operand].c_str());
+            break;
         case OP_LOAD_NAME:
         case OP_STORE_NAME:
-            fprintf(file, "%s\n", code->varnames[inst.operand].c_str());
+            fprintf(file, "%s\n", code->non_local_names[inst.operand].c_str());
             break;
-        case OP_STORE_CONST:
         case OP_LOAD_CONST:
             object = &(code->consts[inst.operand]);
             if (object->type == OBJ_DATA)

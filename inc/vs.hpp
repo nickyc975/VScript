@@ -52,17 +52,20 @@ typedef enum
     // no arg append a value at the end of the list
     OP_APPEND,
 
-    // 1 arg, load the object with the name at the top of the stack
+    // 1 arg, load the local object indicated by the arg
+    OP_LOAD_LOCAL,
+
+    // 1 arg, load the object with the name indicated by the arg
     OP_LOAD_NAME,
+
+    // 1 arg, store stack top to local indicated by the arg
+    OP_STORE_LOCAL,
+
+    // 1 arg, store stack top to name indicated by the arg
+    OP_STORE_NAME,
 
     // 1 arg, load the object at index in the const vector
     OP_LOAD_CONST,
-
-    // 1 arg, store stack top to name
-    OP_STORE_NAME,
-
-    // 1 arg, store stack top to const
-    OP_STORE_CONST,
 
     // no arg, go to stack top
     OP_GOTO,
@@ -114,10 +117,11 @@ static char *OPCODE_STR[] =
     "INDEX_LOAD",
     "INDEX_STORE",
     "APPEND",
+    "LOAD_LOCAL",
     "LOAD_NAME",
-    "LOAD_CONST",
+    "STORE_LOCAL",
     "STORE_NAME",
-    "STORE_CONST",
+    "LOAD_CONST",
     "GOTO",
     "JMP",
     "JIF",
@@ -260,24 +264,27 @@ public:
     const std::string name;
     const CODE_BLK_TYPE type;
 
-    vs_size_t arg_num;
     vs_size_t inst_num;
-    vs_size_t lvar_num;
     vs_size_t const_num;
+    vs_size_t arg_num;
+    vs_size_t lvar_num;
+    vs_size_t nlvar_num;
 
     // For loop block, this indicates the start point of the loop body.
     vs_addr_t loop_start;
 
     std::vector<VSInst> code;
     std::vector<VSObject> consts;
-    std::vector<std::string> varnames;
+    std::vector<std::string> local_names;
+    std::vector<std::string> non_local_names;
 
     VSCodeObject(std::string name, CODE_BLK_TYPE type);
 
     void add_inst(VSInst inst);
     void add_const(VSObject *object);
-    void add_varname(std::string varname);
-    void add_argname(std::string argname);
+    void add_arg(std::string name);
+    void add_local(std::string name);
+    void add_non_local(std::string name);
 };
 
 #endif
