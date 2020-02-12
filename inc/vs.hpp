@@ -162,6 +162,8 @@ typedef enum
     LOOP_BLK
 } CODE_BLK_TYPE;
 
+static char *CODE_BLK_STR[] = {"NORM", "FUNC", "LOOP"};
+
 class VSValue;
 class VSCodeObject;
 

@@ -47,7 +47,7 @@ int main(int argc, char **argv)
     }
     VSCodeObject *program = gencode(astree);
     fprint_code(fopen((char *)"test/hello.vss", "w"), program);
-    execute(program);
+    // execute(program);
     return 0;
 }
 

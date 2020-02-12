@@ -2,6 +2,7 @@ func main(argc, argv) {
     print("Hello World!\n");
     var x = argc, y = 5, z = argv;
     for (var i = 0; i < y; i += x) {
+        print(i);
         z += z;
     }
     print(z);
@@ -45,5 +46,5 @@ while (int_val < 0)
     }
 }
 
-main(3, [1, 2, 3]);
-fib(10);
+print(main(2, [1, 2, 3]));
+print(fib(10));

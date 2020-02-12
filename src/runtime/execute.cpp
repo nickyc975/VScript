@@ -1,10 +1,30 @@
 #include "runtime.hpp"
 
-static std::stack<VSObject> cmptstack;
-static std::stack<VSCallStackFrame *> callstack;
+#define print_indent(indent) \
+    for (int i = 0; i < indent; i++) \
+    { \
+        std::cout << ' '; \
+    }
 
-static void push(VSObject object);
-static VSObject pop();
+#define check_list_index(index)                                                    \
+    if (index.type != OBJ_DATA)                                                    \
+    {                                                                              \
+        err("object type \"%s\" can not be index\n", OBJ_STR[index.type]);         \
+        terminate(TERM_ERROR);                                                     \
+    }                                                                              \
+    if (index.value->type != INT)                                                  \
+    {                                                                              \
+        err("value type \"%s\" can not be index\n", TYPE_STR[index.value->type]);  \
+        terminate(TERM_ERROR);                                                     \
+    }                                                                              \
+    if (index.value->int_val < 0 || index.value->int_val >= list.obj_list->size()) \
+    {                                                                              \
+        err("invalid list index: %lld\n", index.value->int_val);                   \
+        terminate(TERM_ERROR);                                                     \
+    }
+
+static VSCallStackFrame *cur_frame;
+static std::stack<VSObject> cmptstack;
 
 static void do_add();
 static void do_sub();
@@ -21,8 +41,8 @@ static void do_and();
 static void do_or();
 static void do_not();
 static void do_neg();
-static void do_build_list();
-static void do_index_load(vs_size_t size);
+static void do_build_list(vs_size_t size);
+static void do_index_load();
 static void do_index_store();
 static void do_append();
 static void do_load_local(vs_addr_t addr);
@@ -33,10 +53,6 @@ static void do_load_const(vs_addr_t addr);
 static void do_goto();
 static void do_jmp(vs_addr_t addr);
 static void do_jif(vs_addr_t addr);
-static void do_break();
-static void do_continue();
-static void do_call();
-static void do_ret();
 static void do_input();
 static void do_print();
 
@@ -55,6 +71,47 @@ static VSObject pop()
     return object;
 }
 
+static void find_blk_type(CODE_BLK_TYPE type)
+{
+    VSCallStackFrame *temp;
+    while (cur_frame != NULL && cur_frame->code->type != type)
+    {
+        temp = cur_frame;
+        cur_frame = temp->prev;
+        delete temp;
+    }
+    
+    if (cur_frame == NULL)
+    {
+        warn("missing code block type: \"%s\"\n", CODE_BLK_STR[type]);
+        terminate(TERM_WARN);
+    }
+}
+
+static void print_obj(VSObject object, int indent)
+{
+    print_indent(indent);
+    if (object.type == OBJ_DATA)
+    {
+        std::cout << object.value->to_string();
+    }
+    else if (object.type == OBJ_CODE)
+    {
+        std::cout << CODE_BLK_STR[object.codeblock->type] << " " << object.codeblock->name;
+    }
+    else
+    {
+        std::cout << "[" << std::endl;
+        for (auto o : *object.obj_list)
+        {
+            print_obj(o, indent + 1);
+            std::cout << "," << std::endl;
+        }
+        print_indent(indent);
+        std::cout << "]";
+    }
+}
+
 static void do_add()
 {
     VSObject left = pop();
@@ -65,16 +122,22 @@ static void do_add()
         result.type = OBJ_DATA;
         result.value = VSValue::i_add(left.value, right.value);
     }
-    else if (left.type == OBJ_LIST && left.type == OBJ_LIST)
+    else if (left.type == OBJ_LIST && right.type == OBJ_LIST)
     {
         result.type = OBJ_LIST;
         result.obj_list = new std::vector<VSObject>();
-        result.obj_list->assign(left.obj_list->begin(), left.obj_list->end());
-        result.obj_list->assign(right.obj_list->begin(), right.obj_list->end());
+        for (auto o : *left.obj_list)
+        {
+            result.obj_list->push_back(o);
+        }
+        for (auto o : *right.obj_list)
+        {
+            result.obj_list->push_back(o);
+        }
     }
     else
     {
-        err("Runtime error: can not apply \"+\" on objects.");
+        err("Runtime error: can not apply \"+\" on objects.\n");
         terminate(TERM_ERROR);
     }
     push(result);
@@ -92,7 +155,7 @@ static void do_sub()
     }
     else
     {
-        err("Runtime error: can not apply \"-\" on objects.");
+        err("Runtime error: can not apply \"-\" on objects.\n");
         terminate(TERM_ERROR);
     }
     push(result);
@@ -110,7 +173,7 @@ static void do_mul()
     }
     else
     {
-        err("Runtime error: can not apply \"*\" on objects.");
+        err("Runtime error: can not apply \"*\" on objects.\n");
         terminate(TERM_ERROR);
     }
     push(result);
@@ -128,7 +191,7 @@ static void do_div()
     }
     else
     {
-        err("Runtime error: can not apply \"/\" on objects.");
+        err("Runtime error: can not apply \"/\" on objects.\n");
         terminate(TERM_ERROR);
     }
     push(result);
@@ -146,7 +209,7 @@ static void do_mod()
     }
     else
     {
-        err("Runtime error: can not apply \"%\" on objects.");
+        err("Runtime error: can not apply \"%\" on objects.\n");
         terminate(TERM_ERROR);
     }
     push(result);
@@ -164,7 +227,7 @@ static void do_lt()
     }
     else
     {
-        err("Runtime error: can not apply \"<\" on objects.");
+        err("Runtime error: can not apply \"<\" on objects.\n");
         terminate(TERM_ERROR);
     }
     push(result);
@@ -182,7 +245,7 @@ static void do_gt()
     }
     else
     {
-        err("Runtime error: can not apply \">\" on objects.");
+        err("Runtime error: can not apply \">\" on objects.\n");
         terminate(TERM_ERROR);
     }
     push(result);
@@ -200,7 +263,7 @@ static void do_le()
     }
     else
     {
-        err("Runtime error: can not apply \"<=\" on objects.");
+        err("Runtime error: can not apply \"<=\" on objects.\n");
         terminate(TERM_ERROR);
     }
     push(result);
@@ -218,7 +281,7 @@ static void do_ge()
     }
     else
     {
-        err("Runtime error: can not apply \">=\" on objects.");
+        err("Runtime error: can not apply \">=\" on objects.\n");
         terminate(TERM_ERROR);
     }
     push(result);
@@ -236,7 +299,7 @@ static void do_eq()
     }
     else
     {
-        err("Runtime error: can not apply \"==\" on objects.");
+        err("Runtime error: can not apply \"==\" on objects.\n");
         terminate(TERM_ERROR);
     }
     push(result);
@@ -254,7 +317,7 @@ static void do_neq()
     }
     else
     {
-        err("Runtime error: can not apply \"!=\" on objects.");
+        err("Runtime error: can not apply \"!=\" on objects.\n");
         terminate(TERM_ERROR);
     }
     push(result);
@@ -272,7 +335,7 @@ static void do_and()
     }
     else
     {
-        err("Runtime error: can not apply \"&\" on objects.");
+        err("Runtime error: can not apply \"&\" on objects.\n");
         terminate(TERM_ERROR);
     }
     push(result);
@@ -290,7 +353,7 @@ static void do_or()
     }
     else
     {
-        err("Runtime error: can not apply \"|\" on objects.");
+        err("Runtime error: can not apply \"|\" on objects.\n");
         terminate(TERM_ERROR);
     }
     push(result);
@@ -307,7 +370,7 @@ static void do_not()
     }
     else
     {
-        err("Runtime error: can not apply \"!\" on objects.");
+        err("Runtime error: can not apply \"!\" on objects.\n");
         terminate(TERM_ERROR);
     }
     push(result);
@@ -324,26 +387,71 @@ static void do_neg()
     }
     else
     {
-        err("Runtime error: can not apply \"-\" on objects.");
+        err("Runtime error: can not apply \"-\" on objects.\n");
         terminate(TERM_ERROR);
     }
     push(result);
 }
 
-static void do_build_list(){}
+static void do_build_list(vs_size_t size)
+{
+    VSObject object = VSObject(new std::vector<VSObject>());
+    for (vs_size_t i = 0; i < size && !cmptstack.empty(); i++)
+    {
+        object.obj_list->push_back(pop());
+    }
+    push(object);
+}
 
-static void do_index_load(vs_size_t size){}
+static void do_index_load()
+{
+    VSObject list = pop();
+    VSObject index = pop();
+    if (list.type != OBJ_LIST)
+    {
+        err("object type \"%s\" can not be indexed\n", OBJ_STR[list.type]);
+        terminate(TERM_ERROR);
+    }
 
-static void do_index_store(){}
+    check_list_index(index);
 
-static void do_append(){}
+    push((*list.obj_list)[index.value->int_val]);
+}
+
+static void do_index_store()
+{
+    VSObject list = pop();
+    VSObject index = pop();
+    VSObject value = pop();
+    if (list.type != OBJ_LIST)
+    {
+        err("object type \"%s\" can not be indexed\n", OBJ_STR[list.type]);
+        terminate(TERM_ERROR);
+    }
+
+    check_list_index(index);
+
+    (*list.obj_list)[index.value->int_val] = value;
+}
+
+static void do_append()
+{
+    VSObject list = pop();
+    VSObject value = pop();
+    if (list.type != OBJ_LIST)
+    {
+        err("object type \"%s\" can not be indexed\n", OBJ_STR[list.type]);
+        terminate(TERM_ERROR);
+    }
+
+    list.obj_list->push_back(value);
+}
 
 static void do_load_local(vs_addr_t addr)
 {
-    VSCallStackFrame *cur_frame = callstack.top();
     if (addr >= cur_frame->lvar_num)
     {
-        err("Internal error!");
+        err("invalid local var addr: %u, number of names: %u\n", addr, cur_frame->lvar_num);
         terminate(TERM_ERROR);
     }
     VSObject object = cur_frame->locals[addr];
@@ -353,65 +461,216 @@ static void do_load_local(vs_addr_t addr)
 static void do_store_local(vs_addr_t addr)
 {
     VSObject object = pop();
-    VSCallStackFrame *cur_frame = callstack.top();
     if (addr >= cur_frame->lvar_num)
     {
-        err("Internal error!");
+        err("invalid local var addr: %u, number of names: %u\n", addr, cur_frame->lvar_num);
         terminate(TERM_ERROR);
     }
     cur_frame->locals[addr] = object;
 }
 
-static void do_load_name(vs_addr_t addr){}
+static void do_load_name(vs_addr_t addr)
+{
+    if (addr > cur_frame->nlvar_num)
+    {
+        err("invalid non-local name addr: %u, number of names: %u\n", addr, cur_frame->nlvar_num);
+        terminate(TERM_ERROR);
+    }
 
-static void do_store_name(vs_addr_t addr){}
+    VSCallStackFrame *temp = cur_frame->prev;
+    std::string name = cur_frame->code->non_local_names[addr];
+    while (temp != NULL)
+    {
+        auto iter = temp->localnames.find(name);
+        if (iter != temp->localnames.end())
+        {
+            push(temp->locals[iter->second]);
+            return;
+        }
+        temp = temp->prev;
+    }
+    err("name \"%s\" undefined\n", name.c_str());
+    terminate(TERM_ERROR);
+}
+
+static void do_store_name(vs_addr_t addr)
+{
+    if (addr > cur_frame->nlvar_num)
+    {
+        err("invalid non-local name addr: %u, number of names: %u\n", addr, cur_frame->nlvar_num);
+        terminate(TERM_ERROR);
+    }
+
+    VSCallStackFrame *temp = cur_frame->prev;
+    std::string name = cur_frame->code->non_local_names[addr];
+    while (temp != NULL)
+    {
+        auto iter = temp->localnames.find(name);
+        if (iter != temp->localnames.end())
+        {
+            temp->locals[iter->second] = pop();
+            return;
+        }
+        temp = temp->prev;
+    }
+    err("name \"%s\" undefined\n", name.c_str());
+    terminate(TERM_ERROR);
+}
 
 static void do_load_const(vs_addr_t addr)
 {
-    VSCallStackFrame *cur_frame = callstack.top();
-    if (addr >= cur_frame->lvar_num)
+    if (addr >= cur_frame->const_num)
     {
-        err("Internal error!");
+        err("invalid const addr: %u, number of consts: %u\n", addr, cur_frame->const_num);
         terminate(TERM_ERROR);
     }
     VSObject object = cur_frame->code->consts[addr];
     push(object);
 }
 
-static void do_goto(){}
+static void do_goto()
+{
+    VSObject object = pop();
+    if (object.type != OBJ_CODE)
+    {
+        err("can not goto object type \"%s\"\n", OBJ_STR[object.type]);
+        terminate(TERM_ERROR);
+    }
+    cur_frame = new VSCallStackFrame(cur_frame, object.codeblock);
 
-static void do_jmp(vs_addr_t addr){}
+    eval();
 
-static void do_jif(vs_addr_t addr){}
+    VSCallStackFrame *temp = cur_frame;
+    cur_frame = temp->prev;
+    delete temp;
+}
 
-static void do_break(){}
+static void do_jmp(vs_addr_t addr)
+{
+    if (addr >= cur_frame->inst_num)
+    {
+        err("invalid jmp target: %u, number of insts: %u\n", addr, cur_frame->inst_num);
+        terminate(TERM_ERROR);
+    }
+    cur_frame->pc = addr;
+}
 
-static void do_continue(){}
+static void do_jif(vs_addr_t addr)
+{
+    VSObject cond = pop();
+    if (cond.type != OBJ_DATA)
+    {
+        err("object type \"%s\" can not be condition\n", OBJ_STR[cond.type]);
+        terminate(TERM_ERROR);
+    }
+    if (cond.value->type != BOOL)
+    {
+        err("value type \"%s\" can not be condition\n", TYPE_STR[cond.value->type]);
+        terminate(TERM_ERROR);
+    }
+    if (addr >= cur_frame->inst_num)
+    {
+        err("invalid jif target: %u, number of insts: %u\n", addr, cur_frame->inst_num);
+        terminate(TERM_ERROR);
+    }
+    if (cond.value->bool_val)
+    {
+        cur_frame->pc = addr;
+    }
+}
 
-static void do_call(){}
+static void do_break()
+{
+    find_blk_type(LOOP_BLK);
+    VSCallStackFrame *temp = cur_frame;
+    cur_frame = temp->prev;
+    delete temp;
 
-static void do_ret(){}
+    if (cur_frame == NULL)
+    {
+        warn("directly ending with break\n");
+        terminate(TERM_WARN);
+    }
+}
+
+static void do_continue()
+{
+    find_blk_type(LOOP_BLK);
+    cur_frame->pc = cur_frame->code->loop_start;
+}
+
+static void do_call()
+{
+    VSObject func = pop();
+    VSObject args = pop();
+    if (func.type != OBJ_CODE)
+    {
+        err("can not call object type: \"%s\"\n", OBJ_STR[func.type]);
+        terminate(TERM_ERROR);
+    }
+
+    if (func.codeblock->type != FUNC_BLK)
+    {
+        err("can not call code block type: \"%s\"\n", CODE_BLK_STR[func.codeblock->type]);
+        terminate(TERM_ERROR);
+    }
+
+    if (args.type != OBJ_LIST)
+    {
+        err("object type \"%s\" can not be function arg list\n", OBJ_STR[args.type]);
+        terminate(TERM_ERROR);
+    }
+
+    if (args.obj_list->size() != func.codeblock->arg_num)
+    {
+        err("function \"%s\" expects %u args but got only %u args\n", 
+            func.codeblock->name.c_str(), func.codeblock->arg_num, args.obj_list->size());
+        terminate(TERM_ERROR);
+    }
+
+    cur_frame = new VSCallStackFrame(cur_frame, func.codeblock);
+    for (auto o : *args.obj_list)
+    {
+        cur_frame->locals.push_back(o);
+    }
+
+    eval();
+
+    VSCallStackFrame *temp = cur_frame;
+    cur_frame = temp->prev;
+    delete temp;
+}
+
+static void do_ret()
+{
+    find_blk_type(FUNC_BLK);
+    VSCallStackFrame *temp = cur_frame;
+    cur_frame = temp->prev;
+    delete temp;
+
+    if (cur_frame == NULL)
+    {
+        warn("directly ending with return\n");
+        terminate(TERM_WARN);
+    }
+}
 
 static void do_input()
 {
-
+    push(VSObject(VSValue::None()));
 }
 
 static void do_print()
 {
     VSObject object = pop();
-    if (object.type == OBJ_DATA)
-    {
-        std::cout << object.value->to_string();
-    }
+    print_obj(object, 0);
 }
 
 static void eval()
 {
-    VSCallStackFrame *cur_frame = callstack.top();
     while (cur_frame->pc < cur_frame->inst_num)
     {
-        vs_addr_t addr = cur_frame->pc;
+        vs_addr_t addr = cur_frame->pc++;
         VSInst inst = cur_frame->code->code[addr];
         switch (inst.opcode)
         {
@@ -461,10 +720,10 @@ static void eval()
             do_neg();
             break;
         case OP_BUILD_LIST:
-            do_build_list();
+            do_build_list(inst.operand);
             break;
         case OP_INDEX_LOAD:
-            do_index_load(inst.operand);
+            do_index_load();
             break;
         case OP_INDEX_STORE:
             do_index_store();
@@ -518,7 +777,6 @@ static void eval()
         default:
             break;
         }
-        cur_frame->pc++;
     }
 }
 
@@ -530,7 +788,6 @@ static void terminate(TERM_STATUS status)
 int execute(VSCodeObject *code)
 {
     cmptstack = std::stack<VSObject>();
-    callstack = std::stack<VSCallStackFrame *>();
-    callstack.push(new VSCallStackFrame(NULL, code));
+    cur_frame = new VSCallStackFrame(NULL, code);
     eval();
 }

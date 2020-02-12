@@ -38,7 +38,7 @@ static void gen_continue(ASTNode *node);
 static void gen_expr(ASTNode *node);
 static void gen_expr_list(ASTNode *node);
 static void gen_decl_stmt(ASTNode *node);
-static void gen_assign_stmt(ASTNode *node);
+static void gen_assign_expr(ASTNode *node);
 static void gen_input_stmt(ASTNode *node);
 static void gen_print_stmt(ASTNode *node);
 static void gen_cpd_stmt(ASTNode *node);
@@ -291,11 +291,11 @@ static void gen_expr_list(ASTNode *node)
     {
         for (auto expr : *node->expr_list)
         {
-            gen_expr(expr);
+            gen_assign_expr(expr);
         }
         return;
     }
-    gen_expr(node);
+    gen_assign_expr(node);
 }
 
 static void gen_decl_stmt(ASTNode *node)
@@ -322,10 +322,17 @@ static void gen_decl_stmt(ASTNode *node)
     }
 }
 
-static void gen_assign_stmt(ASTNode *node)
+static void gen_assign_expr(ASTNode *node)
 {
-    gen_expr_list(node->assign_val);
-    do_store(get_b_op(node->assign_opcode), node->assign_var);
+    if (node->node_type == AST_ASSIGN)
+    {
+        gen_expr(node->assign_val);
+        do_store(get_b_op(node->assign_opcode), node->assign_var);
+    }
+    else
+    {
+        gen_expr(node);
+    }
 }
 
 static void gen_input_stmt(ASTNode *node)
@@ -590,7 +597,7 @@ static void gen_cpd_stmt(ASTNode *node)
             gen_print_stmt(stmt);
             break;
         case AST_ASSIGN:
-            gen_assign_stmt(stmt);
+            gen_assign_expr(stmt);
             break;
         case AST_RETURN:
             gen_return(stmt);

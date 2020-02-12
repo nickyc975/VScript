@@ -17,9 +17,12 @@ typedef enum
 class VSCallStackFrame
 {
 public:
-    vs_size_t pc;
+    vs_addr_t pc;
     vs_size_t inst_num;
+    vs_size_t const_num;
+    vs_size_t arg_num;
     vs_size_t lvar_num;
+    vs_size_t nlvar_num;
 
     VSCodeObject *code;
     VSCallStackFrame *prev;

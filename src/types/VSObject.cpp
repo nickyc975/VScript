@@ -5,11 +5,8 @@ vs_id_t VSObject::id = 0;
 
 VSObject::VSObject(): obj_id(++id)
 {
-}
-
-VSObject::VSObject(OBJECT_TYPE type): type(type), obj_id(++id)
-{
-    
+    this->type = OBJ_DATA;
+    this->value = VSValue::None();
 }
 
 VSObject::VSObject(VSValue *value): type(OBJ_DATA), obj_id(++id), value(value)
