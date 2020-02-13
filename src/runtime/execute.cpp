@@ -475,6 +475,16 @@ static void do_store_local(vs_addr_t addr)
         err("invalid local var addr: %u, number of names: %u\n", addr, cur_frame->lvar_num);
         terminate(TERM_ERROR);
     }
+
+    VSObject orig = cur_frame->locals[addr];
+    if (object.type == OBJ_DATA)
+    {
+        INC_REF(object.value);
+    }
+    if (orig.type == OBJ_DATA)
+    {
+        DEC_REF(orig.value);
+    }
     cur_frame->locals[addr] = object;
 }
 
@@ -517,7 +527,17 @@ static void do_store_name(vs_addr_t addr)
         auto iter = temp->localnames.find(name);
         if (iter != temp->localnames.end())
         {
-            temp->locals[iter->second] = pop();
+            VSObject obj = pop();
+            VSObject orig = temp->locals[iter->second];
+            if (obj.type == OBJ_DATA)
+            {
+                INC_REF(obj.value);
+            }
+            if (orig.type == OBJ_DATA)
+            {
+                DEC_REF(orig.value);
+            }
+            temp->locals[iter->second] = obj;
             return;
         }
         temp = temp->prev;

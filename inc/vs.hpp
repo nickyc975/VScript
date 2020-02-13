@@ -13,6 +13,21 @@
 #define CONST_TRUE_ADDR 1
 #define CONST_FALSE_ADDR 2
 
+#define INC_REF(value) value->refcnt++
+#define DEC_REF(value)                              \
+    if (value->type != NONE && value->type != BOOL) \
+    {                                               \
+        value->refcnt--;                            \
+        if (value->refcnt == 0)                     \
+        {                                           \
+            if (value->type == STRING)              \
+            {                                       \
+                delete value->str_val;              \
+            }                                       \
+            delete value;                           \
+        }                                           \
+    }
+
 typedef bool vs_bool_t;
 typedef char vs_char_t;
 typedef long long vs_int_t;
@@ -97,42 +112,41 @@ typedef enum
 } OPCODE;
 
 static char *OPCODE_STR[] =
-{
-    "ADD",
-    "SUB",
-    "MUL",
-    "DIV",
-    "MOD",
-    "LT",
-    "GT",
-    "LE",
-    "GE",
-    "EQ",
-    "NEQ",
-    "AND",
-    "OR",
-    "NOT",
-    "NEG",
-    "BUILD_LIST",
-    "INDEX_LOAD",
-    "INDEX_STORE",
-    "APPEND",
-    "LOAD_LOCAL",
-    "LOAD_NAME",
-    "STORE_LOCAL",
-    "STORE_NAME",
-    "LOAD_CONST",
-    "GOTO",
-    "JMP",
-    "JIF",
-    "BREAK",
-    "CONTINUE",
-    "CALL",
-    "RET",
-    "INPUT",
-    "PRINT",
-    "NOP"
-};
+    {
+        "ADD",
+        "SUB",
+        "MUL",
+        "DIV",
+        "MOD",
+        "LT",
+        "GT",
+        "LE",
+        "GE",
+        "EQ",
+        "NEQ",
+        "AND",
+        "OR",
+        "NOT",
+        "NEG",
+        "BUILD_LIST",
+        "INDEX_LOAD",
+        "INDEX_STORE",
+        "APPEND",
+        "LOAD_LOCAL",
+        "LOAD_NAME",
+        "STORE_LOCAL",
+        "STORE_NAME",
+        "LOAD_CONST",
+        "GOTO",
+        "JMP",
+        "JIF",
+        "BREAK",
+        "CONTINUE",
+        "CALL",
+        "RET",
+        "INPUT",
+        "PRINT",
+        "NOP"};
 
 typedef enum
 {
@@ -174,8 +188,7 @@ public:
     OBJECT_TYPE type;
     const vs_id_t obj_id;
 
-    union
-    {
+    union {
         VSValue *value;
         VSCodeObject *codeblock;
         std::vector<VSObject> *obj_list;
@@ -187,7 +200,7 @@ public:
     VSObject(VSCodeObject *codeblock);
     VSObject(std::vector<VSObject> *obj_list);
 
-    VSObject& operator=(const VSObject &that);
+    VSObject &operator=(const VSObject &that);
 };
 
 class VSMemItem
@@ -196,13 +209,13 @@ public:
     vs_size_t size;
     vs_size_t refcnt;
 
-    VSMemItem(){refcnt = 0;}
+    VSMemItem() { refcnt = 0; }
 
-    virtual const char *to_bytes(){return NULL;}
-    virtual const std::string to_string(){return std::string();}
+    virtual const char *to_bytes() { return NULL; }
+    virtual const std::string to_string() { return std::string(); }
 };
 
-class VSValue: VSMemItem
+class VSValue : public VSMemItem
 {
 private:
     VSValue();
@@ -210,8 +223,7 @@ private:
 
 public:
     const VALUE_TYPE type;
-    const union
-    {
+    const union {
         const vs_bool_t bool_val;
         const vs_char_t char_val;
         const vs_int_t int_val;
@@ -248,7 +260,7 @@ public:
     static VSValue *i_neg(VSValue *val);
 };
 
-class VSInst: VSMemItem
+class VSInst : public VSMemItem
 {
 public:
     OPCODE opcode;
@@ -262,7 +274,7 @@ public:
     const std::string to_string();
 };
 
-class VSCodeObject: VSMemItem
+class VSCodeObject : public VSMemItem
 {
 public:
     const std::string name;

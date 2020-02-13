@@ -13,7 +13,6 @@ int main(int argc, char **argv)
     int show_lex = 0, show_parse = 0, show_gen = 0;
     argc--;
     argv++;
-
     if (argc > 0 && **argv == '-' && (*argv)[1] == 'l')
     {
         show_lex = 1;
@@ -26,7 +25,7 @@ int main(int argc, char **argv)
         argc--;
         argv++;
     }
-    if (argc > 0 && **argv == '-' && (*argv)[1] == 'p')
+    if (argc > 0 && **argv == '-' && (*argv)[1] == 's')
     {
         show_gen = 1;
         argc--;
@@ -37,7 +36,6 @@ int main(int argc, char **argv)
         printf("usage: vsc [-l] [-p] [-s] file ...\n");
         return -1;
     }
-
     file = new File(fopen(*argv, "r"));
     tokenize(file, token_list);
     if (show_lex)
@@ -52,7 +50,7 @@ int main(int argc, char **argv)
     VSCodeObject *program = gencode(astree);
     if (show_gen)
     {
-        fprint_code(fopen("hello.vss", "w"), program);
+        fprint_code(fopen("instructions.vss", "w"), program);
     }
     execute(program);
     return 0;
