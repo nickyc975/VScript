@@ -35,6 +35,14 @@ VSValue::VSValue(std::string val) : type(STRING)
     this->size = sizeof(*this) + sizeof(*this->str_val);
 }
 
+VSValue::~VSValue()
+{
+    if (this->type == STRING)
+    {
+        delete this->str_val;
+    }
+}
+
 VSValue *VSValue::None()
 {
     static VSValue NONE_VAL = VSValue();

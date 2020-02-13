@@ -76,10 +76,6 @@ void VSObject::decref()
         this->value->refcnt--;
         if (this->value->refcnt == 0)
         {
-            if (this->value->type == STRING)
-            {
-                delete this->value->str_val;
-            }
             delete this->value;
             this->value = VSValue::None();
         }

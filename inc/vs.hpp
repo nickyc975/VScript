@@ -198,6 +198,7 @@ public:
     vs_size_t refcnt;
 
     VSMemItem() { refcnt = 0; }
+    virtual ~VSMemItem() {}
 
     virtual const char *to_bytes() { return NULL; }
     virtual const std::string to_string() { return std::string(); }
@@ -223,6 +224,7 @@ public:
     VSValue(vs_int_t val);
     VSValue(vs_float_t val);
     VSValue(std::string val);
+    ~VSValue();
 
     const char *to_bytes();
     const std::string to_string();
