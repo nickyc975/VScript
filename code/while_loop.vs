@@ -1,6 +1,6 @@
 // test loop and ref count memory manage
 
-func fib(n) {
+func while_loop(n) {
     var i = 0;
     while (i < n) {
         i += 1;
@@ -8,4 +8,4 @@ func fib(n) {
     return i;
 }
 
-print(fib(100000000));
+print(while_loop(100000), "\n");
