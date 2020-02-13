@@ -20,13 +20,16 @@ vs: $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(foreach obj, $(OBJECTS), $(OUTPUT_DIR)/$(obj)) -o $(OUTPUT_DIR)/vs
 
 test: vs
-	$(OUTPUT_DIR)/$(VS) -l -p test/hello.vs
+	$(OUTPUT_DIR)/$(VS) -l -p -s test/hello.vs
 
 test-lex: vs
 	$(OUTPUT_DIR)/$(VS) -l test/hello.vs
 
 test-parse: vs
 	$(OUTPUT_DIR)/$(VS) -p test/hello.vs
+
+test-gencode: vs
+	$(OUTPUT_DIR)/$(VS) -s test/hello.vs
 
 clean:
 	rm -rf $(OUTPUT_DIR)/* *.o
