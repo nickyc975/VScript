@@ -17,7 +17,7 @@
         err("value type \"%s\" can not be index\n", TYPE_STR[index.value->type]);  \
         terminate(TERM_ERROR);                                                     \
     }                                                                              \
-    if (index.value->int_val < 0 || index.value->int_val >= list.obj_list->size()) \
+    if (index.value->int_val < 0 || index.value->int_val >= list.objlist->length()) \
     {                                                                              \
         err("invalid list index: %lld\n", index.value->int_val);                   \
         terminate(TERM_ERROR);                                                     \
@@ -111,7 +111,7 @@ static void print_obj(VSObject object, int indent)
     else
     {
         printf("[\n");
-        for (auto o : *object.obj_list)
+        for (auto o : object.objlist->data)
         {
             print_obj(o, indent + 1);
             printf(",\n");
@@ -134,14 +134,14 @@ static void do_add()
     else if (left.type == OBJ_LIST && right.type == OBJ_LIST)
     {
         result.type = OBJ_LIST;
-        result.obj_list = new std::vector<VSObject>();
-        for (auto o : *left.obj_list)
+        result.objlist = new VSObjectList();
+        for (auto o : left.objlist->data)
         {
-            result.obj_list->push_back(o);
+            result.objlist->add(o);
         }
-        for (auto o : *right.obj_list)
+        for (auto o : right.objlist->data)
         {
-            result.obj_list->push_back(o);
+            result.objlist->add(o);
         }
     }
     else
@@ -404,10 +404,10 @@ static void do_neg()
 
 static void do_build_list(vs_size_t size)
 {
-    VSObject object = VSObject(new std::vector<VSObject>());
+    VSObject object = VSObject(new VSObjectList());
     for (vs_size_t i = 0; i < size && !cmptstack.empty(); i++)
     {
-        object.obj_list->push_back(pop());
+        object.objlist->add(pop());
     }
     push(object);
 }
@@ -424,7 +424,7 @@ static void do_index_load()
 
     check_list_index(index);
 
-    push((*list.obj_list)[index.value->int_val]);
+    push((*list.objlist)[index.value->int_val]);
 }
 
 static void do_index_store()
@@ -440,7 +440,10 @@ static void do_index_store()
 
     check_list_index(index);
 
-    (*list.obj_list)[index.value->int_val] = value;
+    VSObject orig = (*list.objlist)[index.value->int_val];
+    value.incref();
+    orig.decref();
+    (*list.objlist)[index.value->int_val] = value;
 }
 
 static void do_append()
@@ -453,7 +456,7 @@ static void do_append()
         terminate(TERM_ERROR);
     }
 
-    list.obj_list->push_back(value);
+    list.objlist->add(value);
 }
 
 static void do_load_local(vs_addr_t addr)
@@ -477,14 +480,8 @@ static void do_store_local(vs_addr_t addr)
     }
 
     VSObject orig = cur_frame->locals[addr];
-    if (object.type == OBJ_DATA)
-    {
-        INC_REF(object.value);
-    }
-    if (orig.type == OBJ_DATA)
-    {
-        DEC_REF(orig.value);
-    }
+    object.incref();
+    orig.decref();
     cur_frame->locals[addr] = object;
 }
 
@@ -529,14 +526,8 @@ static void do_store_name(vs_addr_t addr)
         {
             VSObject obj = pop();
             VSObject orig = temp->locals[iter->second];
-            if (obj.type == OBJ_DATA)
-            {
-                INC_REF(obj.value);
-            }
-            if (orig.type == OBJ_DATA)
-            {
-                DEC_REF(orig.value);
-            }
+            obj.incref();
+            orig.decref();
             temp->locals[iter->second] = obj;
             return;
         }
@@ -642,17 +633,17 @@ static void do_call()
         terminate(TERM_ERROR);
     }
 
-    if (args.obj_list->size() != func.codeblock->arg_num)
+    if (args.objlist->length() != func.codeblock->arg_num)
     {
         err("function \"%s\" expects %u args but got only %u args\n",
-            func.codeblock->name.c_str(), func.codeblock->arg_num, args.obj_list->size());
+            func.codeblock->name.c_str(), func.codeblock->arg_num, args.objlist->length());
         terminate(TERM_ERROR);
     }
 
     cur_frame = new VSCallStackFrame(cur_frame, func.codeblock);
-    for (vs_size_t i = 0; i < args.obj_list->size(); i++)
+    for (vs_size_t i = 0; i < args.objlist->length(); i++)
     {
-        cur_frame->locals[i] = (*args.obj_list)[i];
+        cur_frame->locals[i] = (*args.objlist)[i];
     }
 }
 

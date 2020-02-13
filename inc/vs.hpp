@@ -13,21 +13,6 @@
 #define CONST_TRUE_ADDR 1
 #define CONST_FALSE_ADDR 2
 
-#define INC_REF(value) value->refcnt++
-#define DEC_REF(value)                              \
-    if (value->type != NONE && value->type != BOOL) \
-    {                                               \
-        value->refcnt--;                            \
-        if (value->refcnt == 0)                     \
-        {                                           \
-            if (value->type == STRING)              \
-            {                                       \
-                delete value->str_val;              \
-            }                                       \
-            delete value;                           \
-        }                                           \
-    }
-
 typedef bool vs_bool_t;
 typedef char vs_char_t;
 typedef long long vs_int_t;
@@ -179,6 +164,7 @@ typedef enum
 static char *CODE_BLK_STR[] = {"NORM", "FUNC", "LOOP"};
 
 class VSValue;
+class VSObjectList;
 class VSCodeObject;
 
 class VSObject
@@ -186,21 +172,23 @@ class VSObject
 public:
     static vs_id_t id;
     OBJECT_TYPE type;
-    const vs_id_t obj_id;
+    const vs_id_t objid;
 
     union {
         VSValue *value;
+        VSObjectList *objlist;
         VSCodeObject *codeblock;
-        std::vector<VSObject> *obj_list;
     };
 
     VSObject();
-    VSObject(OBJECT_TYPE type);
     VSObject(VSValue *value);
+    VSObject(VSObjectList *objlist);
     VSObject(VSCodeObject *codeblock);
-    VSObject(std::vector<VSObject> *obj_list);
 
     VSObject &operator=(const VSObject &that);
+
+    void incref();
+    void decref();
 };
 
 class VSMemItem
@@ -258,6 +246,25 @@ public:
     static VSValue *i_or(VSValue *left, VSValue *right);
     static VSValue *i_not(VSValue *val);
     static VSValue *i_neg(VSValue *val);
+};
+
+class VSObjectList : public VSMemItem
+{
+public:
+    std::vector<VSObject> data;
+
+    VSObjectList();
+
+    VSObjectList &operator=(const VSObjectList &that);
+    VSObject &operator[](vs_addr_t pos);
+
+    void add(VSObject object);
+    void put(vs_addr_t pos, VSObject object);
+    VSObject get(vs_addr_t pos);
+    VSObject remove();
+    void clear();
+    vs_size_t length();
+    vs_bool_t empty();
 };
 
 class VSInst : public VSMemItem

@@ -149,8 +149,9 @@ static void gen_const(ASTNode *node)
     std::string const_key = get_key(value);
     if (consts->find(const_key) == consts->end())
     {
-        INC_REF(value);
-        cur->add_const(new VSObject(value));
+        VSObject *object = new VSObject(value);
+        cur->add_const(object);
+        object->incref();
         (*consts)[const_key] = cur->const_num - 1;
     }
     vs_addr_t index = (*consts)[const_key];

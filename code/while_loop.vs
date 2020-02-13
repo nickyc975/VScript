@@ -1,4 +1,4 @@
-// test loop and ref count memory manage
+// test loop and ref count memory management
 
 func while_loop(n) {
     var i = 0;

@@ -7,12 +7,10 @@
 
 VSValue::VSValue() : type(NONE)
 {
-    INC_REF(this);
 }
 
 VSValue::VSValue(vs_bool_t val) : type(BOOL), bool_val(val)
 {
-    INC_REF(this);
     this->size = sizeof(*this);
 }
 

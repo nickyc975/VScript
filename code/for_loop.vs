@@ -1,4 +1,4 @@
-// test loop and ref count memory manage
+// test loop and ref count memory management
 
 func for_loop(n) {
     for (var i = 0; i < n; i += 1) {

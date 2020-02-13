@@ -3,28 +3,25 @@
 
 vs_id_t VSObject::id = 0;
 
-VSObject::VSObject(): obj_id(++id)
+VSObject::VSObject() : objid(++id)
 {
     this->type = OBJ_DATA;
     this->value = VSValue::None();
 }
 
-VSObject::VSObject(VSValue *value): type(OBJ_DATA), obj_id(++id), value(value)
+VSObject::VSObject(VSValue *value) : type(OBJ_DATA), objid(++id), value(value)
 {
-
 }
 
-VSObject::VSObject(VSCodeObject *codeblock): type(OBJ_CODE), obj_id(++id), codeblock(codeblock)
+VSObject::VSObject(VSCodeObject *codeblock) : type(OBJ_CODE), objid(++id), codeblock(codeblock)
 {
-
 }
 
-VSObject::VSObject(std::vector<VSObject> *obj_list): type(OBJ_LIST), obj_id(++id),obj_list(obj_list)
+VSObject::VSObject(VSObjectList *objlist) : type(OBJ_LIST), objid(++id), objlist(objlist)
 {
-
 }
 
-VSObject& VSObject::operator=(const VSObject &that)
+VSObject &VSObject::operator=(const VSObject &that)
 {
     if (this != &that)
     {
@@ -38,7 +35,7 @@ VSObject& VSObject::operator=(const VSObject &that)
             this->codeblock = that.codeblock;
             break;
         case OBJ_LIST:
-            this->obj_list = that.obj_list;
+            this->objlist = that.objlist;
             break;
         default:
             err("unknown object type");
@@ -46,4 +43,59 @@ VSObject& VSObject::operator=(const VSObject &that)
         }
     }
     return *this;
+}
+
+void VSObject::incref()
+{
+    if (this->type == OBJ_DATA)
+    {
+        if (this->value->type == NONE || this->value->type == BOOL)
+        {
+            return;
+        }
+        this->value->refcnt++;
+    }
+    else if (this->type == OBJ_LIST)
+    {
+        for (auto object : this->objlist->data)
+        {
+            object.incref();
+        }
+        this->objlist->refcnt++;
+    }
+}
+
+void VSObject::decref()
+{
+    if (this->type == OBJ_DATA)
+    {
+        if (this->value->type == NONE || this->value->type == BOOL)
+        {
+            return;
+        }
+        this->value->refcnt--;
+        if (this->value->refcnt == 0)
+        {
+            if (this->value->type == STRING)
+            {
+                delete this->value->str_val;
+            }
+            delete this->value;
+            this->value = VSValue::None();
+        }
+    }
+    else if (this->type == OBJ_LIST)
+    {
+        for (auto object : this->objlist->data)
+        {
+            object.decref();
+        }
+        this->objlist->refcnt--;
+        if (this->objlist->refcnt == 0)
+        {
+            delete this->objlist;
+            this->type = OBJ_DATA;
+            this->value = VSValue::None();
+        }
+    }
 }
