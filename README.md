@@ -1,49 +1,41 @@
 # VScript
 
-A dynamic type programming language.
+一种动态强类型编程语言，语法类似C语言，采用基于栈的虚拟机。
 
-## Lexical
+### 关键字
 
-### Keywords
+* 类型
 
-* Type
-
-```
-    none
-
-    bool
-
-    char
-
-    int
-
-    float
-
-    string
-```
-
-* Declaration
+语言支持的基本类型如下：
 
 ```
-    var
-
-    val
-
-    func
+    none, bool, char, int, float, str
 ```
 
-* Control
+此语言与Python类似，是动态强类型语言，变量类型在运行时确定，不支持隐式类型转换，后续会添加类型转换关键字。
+
+* 变量/常量/函数声明
 
 ```
-    if
+    var, val, func
+```
 
-    elif
+`var`用于声明变量，`val`用于声明常量，常量声明时必须初始化，之后不可以再次赋值。`func`用于声明函数，函数名也是常量，不可重新赋值。
 
-    else
+* 流程控制语句
 
-    while
+注意：__所有流程控制语句后接的语句块必须放在大括号内__
 
-    for
+```
+    if (<条件>) { <语句块> }
+
+    elif (<条件>) { <语句块> }
+
+    else { <语句块> }
+
+    while (<条件>) { <语句块> }
+
+    for (<条件>) { <语句块> }
 
     return
 
@@ -52,7 +44,9 @@ A dynamic type programming language.
     continue
 ```
 
-### Operator
+### 操作符
+
+支持的操作符如下：
 
 ```
     + - * / %
@@ -64,7 +58,9 @@ A dynamic type programming language.
     < > <= >= == !=
 ```
 
-### Delimiter
+其中，`+`和`+=`可用于除`none`和`bool`以外的所有类型，包括列表；比较运算符可以用于除列表以外的所有类型。
+
+### 分隔符
 
 ```
     , ;
@@ -72,7 +68,7 @@ A dynamic type programming language.
     ( ) [ ] { }
 ```
 
-### Constant
+### 常量表达式
 
 ```
     none: ^none$
@@ -88,30 +84,32 @@ A dynamic type programming language.
     string: ^\".+\"$
 ```
 
-### Identifier
+除以上基本类型常量外，还支持定义列表，如：
+
+```
+    var array = [none, true, '1', 123, 123.0, "123", [1, 2, 3]];
+```
+
+### 标识符
+
+标识符遵循C语言的标识符规范，其正则表达式如下：
 
 ```
     ^[A-Za-z_]\w*$
 ```
 
-## 语义分析任务
+### 其他
 
-* 符号表管理
+* 内存管理：目前实现了极其简单的引用计数，只能管理基本类型的值，并且没有循环引用检查；
 
-* val初始化检查
+* 错误处理：目前错误处理基本残废，如果代码出错大部分情况下都是直接崩溃；
 
-* if, for, while的回填
+### 待实现
 
-* 赋值操作左值检查
+* 更加完善的内存管理，在不考虑循环引用的情况下可以避免内存泄露；
 
-* continue, break 检查
+* 更加健壮的错误处理；
 
-* return　检查
+* 结构体/类的支持；
 
-## 优化任务
-
-* 常量计算与合并
-
-## 虚拟机
-
-* 栈中存放VSObject，
+* 对其他源文件的符号引用(import)；
