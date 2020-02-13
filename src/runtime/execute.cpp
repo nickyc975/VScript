@@ -110,7 +110,7 @@ static void print_obj(VSObject object, int indent)
     }
     else
     {
-        printf("]\n");
+        printf("[\n");
         for (auto o : *object.obj_list)
         {
             print_obj(o, indent + 1);

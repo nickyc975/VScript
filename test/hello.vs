@@ -1,11 +1,15 @@
+func println(n) {
+    print(n, '\n');
+}
+
 func main(argc, argv) {
-    print("Hello World!\n");
+    println("Hello World!");
     var x = argc, y = 5, z = argv;
     for (var i = 0; i < y; i += x) {
         print(i);
         z += z;
     }
-    print(z);
+    println(z);
     return 0;
 }
 
@@ -31,6 +35,10 @@ val array_val = [1, 2, 3, 4, a1 + a2 + a4];
 var avl = [];
 var test = array_val[a1 + a4 / 16];
 
+println(test);
+array_val[a1 * 2] = 10;
+println(array_val);
+
 // call main and print;
 
 var a = 0;
@@ -44,6 +52,6 @@ while (a < 10)
         break;
     }
 }
-print(a, "\n");
-print(main(2, [1, 2, 3]), "\n");
-print(fib(10), "\n");
+println(a);
+println(main(2, [1, 2, 3]));
+println(fib(10));
