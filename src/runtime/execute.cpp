@@ -789,4 +789,5 @@ int execute(VSCodeObject *code)
         eval();
         leave_blk();
     }
+    return 0;
 }

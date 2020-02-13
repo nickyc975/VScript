@@ -411,7 +411,6 @@ static void gen_func_decl(ASTNode *node)
 {
     VSCodeObject *parent = codestack.top();
     auto locals = localstack.top();
-    auto nonlocals = nonlocalstack.top();
 
     // Add function name to parent code locals.
     std::string *name = node->func_name->name;
@@ -564,7 +563,7 @@ static void gen_while_stmt(ASTNode *node)
     cur->add_inst(VSInst(OP_JIF, jif_pos + 2));
     cur->add_inst(VSInst(OP_JMP, 0));
 
-    gen_cpd_stmt(node->while_stmt);
+    gen_cpd_stmt(node->while_body);
 
     cur->add_inst(VSInst(OP_JMP, cur->loop_start));
     cur->code[jif_pos + 1].operand = cur->inst_num;

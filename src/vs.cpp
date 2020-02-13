@@ -79,7 +79,7 @@ void print_tk_lst(std::vector<Token *> token_list, char *filename)
                         fprintf(tokens_txt, "%lld\n", token->value->int_val);
                         break;
                     case FLOAT:
-                        fprintf(tokens_txt, "%f\n", token->value->float_val);
+                        fprintf(tokens_txt, "%lf\n", token->value->float_val);
                         break;
                     case STRING:
                         fprintf(tokens_txt, "%s\n", token->value->str_val->c_str());

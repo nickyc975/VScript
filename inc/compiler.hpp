@@ -291,7 +291,7 @@ public:
         struct
         {
             ASTNode *while_cond;
-            ASTNode *while_stmt;
+            ASTNode *while_body;
         };
 
         // for statements

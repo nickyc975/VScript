@@ -136,7 +136,7 @@ static void print_const_node(ASTNode *node)
         printf("%lld\n", node->value->int_val);
         break;
     case FLOAT:
-        printf("%f\n", node->value->float_val);
+        printf("%lf\n", node->value->float_val);
         break;
     case STRING:
         printf("%s\n", node->value->str_val->c_str());
@@ -327,7 +327,7 @@ static void print_while_stmt_node(ASTNode *node)
     printf("while_stmt: \n");
     indent++;
     print_ast(node->while_cond);
-    print_ast(node->while_stmt);
+    print_ast(node->while_body);
     indent--;
 }
 

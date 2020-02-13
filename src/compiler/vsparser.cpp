@@ -53,11 +53,6 @@ static bool has_token()
     return tk_idx < tks->size();
 }
 
-static int tokens_left()
-{
-    return tks->size() - tk_idx;
-}
-
 static Token *get_token()
 {
     return tks->at(tk_idx++);
@@ -72,11 +67,6 @@ static void unget_token()
 static Token *peek_token()
 {
     return tks->at(tk_idx);
-}
-
-static Token *next_token()
-{
-    return tks->at(tk_idx + 1);
 }
 
 static bool is_arith(TOKEN_TYPE opcode)
@@ -161,7 +151,7 @@ static bool ensure_lval(ASTNode *node)
     return true;
 }
 
-static bool ensure_in_iter()
+static bool ensure_in_loop()
 {
     SymTable<ASTNode *> *temp = cur_table;
     while (temp != NULL)
@@ -463,12 +453,12 @@ static ASTNode *func_call_node(ASTNode *func_name, ASTNode *arg_node)
     return node;
 }
 
-static ASTNode *func_decl_node(ASTNode *func_name, ASTNode *arg_node, ASTNode *func_body)
+static ASTNode *func_decl_node(ASTNode *func_name, ASTNode *arg_node)
 {
     ASTNode *node = new ASTNode(AST_FUNC_DECL, AST_UNKNOW);
     node->func_name = func_name;
     node->arg_node = arg_node;
-    node->func_body = func_body;
+    node->func_body = NULL;
     return node;
 }
 
@@ -489,21 +479,21 @@ static ASTNode *elif_lst_node(std::vector<ASTNode *> *elif_list, ASTNode *else_n
     return node;
 }
 
-static ASTNode *while_stmt_node(ASTNode *while_cond, ASTNode *while_stmt)
+static ASTNode *while_stmt_node(ASTNode *while_cond)
 {
     ASTNode *node = new ASTNode(AST_WHILE_STMT, AST_UNKNOW);
     node->while_cond = while_cond;
-    node->while_stmt = while_stmt;
+    node->while_body = NULL;
     return node;
 }
 
-static ASTNode *for_stmt_node(ASTNode *for_init, ASTNode *for_cond, ASTNode *for_incr, ASTNode *for_body)
+static ASTNode *for_stmt_node(ASTNode *for_init, ASTNode *for_cond, ASTNode *for_incr)
 {
     ASTNode *node = new ASTNode(AST_FOR_STMT, AST_UNKNOW);
     node->for_init = for_init;
     node->for_cond = for_cond;
     node->for_incr = for_incr;
-    node->for_body = for_body;
+    node->for_body = NULL;
     return node;
 }
 
@@ -902,12 +892,12 @@ static ASTNode *read_stmt()
         case TK_CONTINUE:
             expect(TK_CONTINUE);
             expect(TK_SEMICOLON);
-            ensure_in_iter();
+            ensure_in_loop();
             return continue_node();
         case TK_BREAK:
             expect(TK_BREAK);
             expect(TK_SEMICOLON);
-            ensure_in_iter();
+            ensure_in_loop();
             return break_node();
         case TK_RETURN:
             expect(TK_RETURN);
@@ -961,27 +951,33 @@ static ASTNode *read_for_stmt()
 
     ensure_token(NULL);
     TOKEN_TYPE type = peek_token()->type;
-    ASTNode *init = NULL, *cond = NULL, *incr = NULL, *body = NULL;
+    ASTNode *init = NULL, *cond = NULL, *incr = NULL;
+
+    // read for init
     if (type == TK_VAL || type == TK_VAR)
         init = read_decl_stmt();
     else
         init = read_expr_stmt();
+    
+    // read for cond
     cond = read_expr_stmt();
 
+    // read for incr
     ensure_token(NULL);
     if (peek_token()->type != TK_R_PAREN)
     {
         incr = read_expr();
     }
     expect(TK_R_PAREN);
-    body = read_cpd_stmt();
-    ASTNode *for_stmt = for_stmt_node(init, cond, incr, body);
-    cur_table->top = for_stmt;
+
+    ASTNode **for_stmt = &(cur_table->top);
+    *for_stmt = for_stmt_node(init, cond, incr);
+    (*for_stmt)->for_body = read_cpd_stmt();
 
     // restore parent table
     restore_table();
 
-    return for_stmt;
+    return *for_stmt;
 }
 
 static ASTNode *read_func_decl()
@@ -1005,6 +1001,7 @@ static ASTNode *read_func_decl()
 
     ASTNode *arg_node = lst_val_node(new std::vector<ASTNode *>());
 
+    // read func args
     ensure_token(NULL);
     if (peek_token()->type != TK_R_PAREN)
     {
@@ -1026,19 +1023,23 @@ static ASTNode *read_func_decl()
     }
     expect(TK_R_PAREN);
 
-    ASTNode *func = func_decl_node(ident, arg_node, NULL);
-    cur_table->top = func;
+    ASTNode **func = &(cur_table->top);
+    // set cur_table->top for ensure_in_func_decl().
+    *func = func_decl_node(ident, arg_node);
+
+    // read func body
     ASTNode *func_body = read_cpd_stmt();
     if (func_body == NULL)
     {
         ensure_token(NULL);
         err("line: %ld, missing function body\n", peek_token()->ln);
     }
-    func->func_body = func_body;
+    (*func)->func_body = func_body;
+
     // restore parent table
     restore_table();
 
-    return func;
+    return *func;
 }
 
 static ASTNode *read_elif_stmt()
@@ -1049,16 +1050,18 @@ static ASTNode *read_elif_stmt()
     // create symbol table for elif statement
     new_table();
 
+    // read elif cond
     ASTNode *cond = read_logic_or_expr();
+
     expect(TK_R_PAREN);
+
+    // read elif body
     ASTNode *body = read_cpd_stmt();
-    ASTNode *if_stmt = if_stmt_node(cond, body, NULL);
-    cur_table->top = if_stmt;
 
     // restore parent table
     restore_table();
 
-    return if_stmt;
+    return if_stmt_node(cond, body, NULL);
 }
 
 static ASTNode *read_elif_list()
@@ -1086,8 +1089,8 @@ static ASTNode *read_elif_list()
         // create new table for else statement
         new_table();
 
+        // read else body
         node = read_cpd_stmt();
-        cur_table->top = node;
 
         // restore parent table
         restore_table();
@@ -1232,13 +1235,18 @@ static ASTNode *read_while_stmt()
     new_table();
     ASTNode *cond = read_logic_or_expr();
     expect(TK_R_PAREN);
-    ASTNode *body = read_cpd_stmt();
-    if (cond == NULL || body == NULL)
+
+    if (cond == NULL)
         return NULL;
-    ASTNode *while_stmt = while_stmt_node(cond, body);
-    cur_table->top = while_stmt;
+
+    ASTNode **while_stmt = &(cur_table->top);
+    *while_stmt = while_stmt_node(cond);
+
+    // read while body
+    (*while_stmt)->while_body = read_cpd_stmt();
+
     restore_table();
-    return while_stmt;
+    return *while_stmt;
 }
 
 static ASTNode *read_program()
@@ -1274,7 +1282,7 @@ static ASTNode *read_program()
         case TK_BREAK:
         case TK_CONTINUE:
             get_token();
-            ensure_in_iter();
+            ensure_in_loop();
             break;
         case TK_RETURN:
             get_token();
