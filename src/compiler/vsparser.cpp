@@ -166,7 +166,7 @@ static bool ensure_in_iter()
     SymTable<ASTNode *> *temp = cur_table;
     while (temp != NULL)
     {
-        if (temp->top != NULL && temp->top->node_type == AST_WHILE_STMT || temp->top->node_type == AST_FOR_STMT)
+        if (temp->top != NULL && (temp->top->node_type == AST_WHILE_STMT || temp->top->node_type == AST_FOR_STMT))
         {
             return true;
         }

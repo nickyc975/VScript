@@ -33,18 +33,17 @@ var test = array_val[a1 + a4 / 16];
 
 // call main and print;
 
-while (int_val < 0)
+var a = 0;
+while (a < 10)
 {
-    var a = 0;
-    // int_val += 1;
-    if (int_val > 0) {
+    if (a < 3) {
         a += 1;
-    } elif (int_val < -1) {
-        a -= 2;
+    } elif (a < 7) {
+        a += 2;
     } else {
-        a *= 3;
+        break;
     }
 }
-
+print(a, "\n");
 print(main(2, [1, 2, 3]), "\n");
 print(fib(10), "\n");

@@ -45,28 +45,35 @@ __vs_main__:
 42: LOAD_LOCAL	array_val
 43: INDEX_LOAD	
 44: STORE_LOCAL	test
-45: LOAD_CONST	__vs_while__
-46: GOTO	
-47: LOAD_CONST	3
-48: LOAD_CONST	2
-49: LOAD_CONST	1
-50: BUILD_LIST	3
-51: LOAD_CONST	2
-52: BUILD_LIST	2
-53: LOAD_LOCAL	main
-54: CALL	
-55: PRINT	
-56: LOAD_CONST	
+45: LOAD_CONST	0
+46: STORE_LOCAL	a
+47: LOAD_CONST	__vs_while__
+48: GOTO	
+49: LOAD_LOCAL	a
+50: PRINT	
+51: LOAD_CONST	
 
-57: PRINT	
-58: LOAD_CONST	10
-59: BUILD_LIST	1
-60: LOAD_LOCAL	fib
-61: CALL	
-62: PRINT	
-63: LOAD_CONST	
+52: PRINT	
+53: LOAD_CONST	3
+54: LOAD_CONST	2
+55: LOAD_CONST	1
+56: BUILD_LIST	3
+57: LOAD_CONST	2
+58: BUILD_LIST	2
+59: LOAD_LOCAL	main
+60: CALL	
+61: PRINT	
+62: LOAD_CONST	
 
-64: PRINT	
+63: PRINT	
+64: LOAD_CONST	10
+65: BUILD_LIST	1
+66: LOAD_LOCAL	fib
+67: CALL	
+68: PRINT	
+69: LOAD_CONST	
+
+70: PRINT	
     main: 
     0: LOAD_CONST	Hello World!
 
@@ -138,34 +145,32 @@ __vs_main__:
         0: LOAD_NAME	n
         1: RET	
     __vs_while__: 
-    0: LOAD_CONST	0
-    1: LOAD_NAME	int_val
+    0: LOAD_CONST	10
+    1: LOAD_NAME	a
     2: LT	
     3: JIF	5
-    4: JMP	27
-    5: LOAD_CONST	0
-    6: STORE_LOCAL	a
-    7: LOAD_CONST	0
-    8: LOAD_NAME	int_val
-    9: GT	
-    10: NOT	
-    11: JIF	15
-    12: LOAD_CONST	__vs_if__
-    13: GOTO	
-    14: JMP	25
-    15: LOAD_CONST	-1
-    16: LOAD_NAME	int_val
-    17: LT	
-    18: NOT	
-    19: JIF	23
-    20: LOAD_CONST	__vs_elif__
-    21: GOTO	
-    22: JMP	25
-    23: LOAD_CONST	__vs_else__
-    24: GOTO	
+    4: JMP	25
+    5: LOAD_CONST	3
+    6: LOAD_NAME	a
+    7: LT	
+    8: NOT	
+    9: JIF	13
+    10: LOAD_CONST	__vs_if__
+    11: GOTO	
+    12: JMP	23
+    13: LOAD_CONST	7
+    14: LOAD_NAME	a
+    15: LT	
+    16: NOT	
+    17: JIF	21
+    18: LOAD_CONST	__vs_elif__
+    19: GOTO	
+    20: JMP	23
+    21: LOAD_CONST	__vs_else__
+    22: GOTO	
+    23: NOP	
+    24: JMP	0
     25: NOP	
-    26: JMP	0
-    27: NOP	
         __vs_if__: 
         0: LOAD_CONST	1
         1: LOAD_NAME	a
@@ -174,10 +179,7 @@ __vs_main__:
         __vs_elif__: 
         0: LOAD_CONST	2
         1: LOAD_NAME	a
-        2: SUB	
+        2: ADD	
         3: STORE_NAME	a
         __vs_else__: 
-        0: LOAD_CONST	3
-        1: LOAD_NAME	a
-        2: MUL	
-        3: STORE_NAME	a
+        0: BREAK	

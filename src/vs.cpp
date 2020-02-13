@@ -36,15 +36,15 @@ int main(int argc, char **argv)
 
     file = new File(fopen(*argv, "r"));
     tokenize(file, token_list);
-    // if (lexer)
-    // {
-    //     print_tk_lst(token_list, (char *)"test/tokens.txt");
-    // }
+    if (lexer)
+    {
+        print_tk_lst(token_list, (char *)"test/tokens.txt");
+    }
     ASTNode *astree = parse(&token_list);
-    // if (parser)
-    // {
-    //     print_ast(astree);
-    // }
+    if (parser)
+    {
+        print_ast(astree);
+    }
     VSCodeObject *program = gencode(astree);
     fprint_code(fopen((char *)"test/hello.vss", "w"), program);
     execute(program);
