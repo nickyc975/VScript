@@ -2,27 +2,27 @@
 
 static int indent = 0;
 
-static void print_const_node(ASTNode *node);
-static void print_ident_node(ASTNode *node);
-static void print_b_expr_node(ASTNode *node);
-static void print_u_expr_node(ASTNode *node);
-static void print_expr_lst_node(ASTNode *node);
-static void print_decl_node(ASTNode *node);
-static void print_decl_lst_node(ASTNode *node);
-static void print_assign_node(ASTNode *node);
-static void print_lst_val_node(ASTNode *node);
-static void print_lst_idx_node(ASTNode *node);
-static void print_func_call_node(ASTNode *node);
-static void print_func_decl_node(ASTNode *node);
-static void print_if_stmt_node(ASTNode *node);
-static void print_elif_lst_node(ASTNode *node);
-static void print_while_stmt_node(ASTNode *node);
-static void print_for_stmt_node(ASTNode *node);
-static void print_io_stmt_node(ASTNode *node);
-static void print_continue_node(ASTNode *node);
-static void print_break_node(ASTNode *node);
-static void print_cpd_stmt_node(ASTNode *node);
-static void print_return_node(ASTNode *node);
+static void fprint_const_node(FILE *file, ASTNode *node);
+static void fprint_ident_node(FILE *file, ASTNode *node);
+static void fprint_b_expr_node(FILE *file, ASTNode *node);
+static void fprint_u_expr_node(FILE *file, ASTNode *node);
+static void fprint_expr_lst_node(FILE *file, ASTNode *node);
+static void fprint_decl_node(FILE *file, ASTNode *node);
+static void fprint_decl_lst_node(FILE *file, ASTNode *node);
+static void fprint_assign_node(FILE *file, ASTNode *node);
+static void fprint_lst_val_node(FILE *file, ASTNode *node);
+static void fprint_lst_idx_node(FILE *file, ASTNode *node);
+static void fprint_func_call_node(FILE *file, ASTNode *node);
+static void fprint_func_decl_node(FILE *file, ASTNode *node);
+static void fprint_if_stmt_node(FILE *file, ASTNode *node);
+static void fprint_elif_lst_node(FILE *file, ASTNode *node);
+static void fprint_while_stmt_node(FILE *file, ASTNode *node);
+static void fprint_for_stmt_node(FILE *file, ASTNode *node);
+static void fprint_io_stmt_node(FILE *file, ASTNode *node);
+static void fprint_continue_node(FILE *file, ASTNode *node);
+static void fprint_break_node(FILE *file, ASTNode *node);
+static void fprint_cpd_stmt_node(FILE *file, ASTNode *node);
+static void fprint_return_node(FILE *file, ASTNode *node);
 
 static void fprint_indent(FILE *file)
 {
@@ -33,361 +33,407 @@ static void fprint_indent(FILE *file)
     }
 }
 
-static void print_indent()
-{
-    fprint_indent(stdout);
-}
-
 void init_printer()
 {
     indent = 0;
 }
 
-void print_ast(ASTNode *root)
+static void fprint_const_node(FILE *file, ASTNode *node)
 {
-    switch (root->node_type)
-    {
-    case AST_CONST:
-        print_const_node(root);
-        break;
-    case AST_IDENT:
-        print_ident_node(root);
-        break;
-    case AST_B_EXPR:
-        print_b_expr_node(root);
-        break;
-    case AST_U_EXPR:
-        print_u_expr_node(root);
-        break;
-    case AST_EXPR_LST:
-        print_expr_lst_node(root);
-        break;
-    case AST_DECL:
-        print_decl_node(root);
-        break;
-    case AST_DECL_LST:
-        print_decl_lst_node(root);
-        break;
-    case AST_ASSIGN:
-        print_assign_node(root);
-        break;
-    case AST_LST_VAL:
-        print_lst_val_node(root);
-        break;
-    case AST_LST_IDX:
-        print_lst_idx_node(root);
-        break;
-    case AST_FUNC_CALL:
-        print_func_call_node(root);
-        break;
-    case AST_FUNC_DECL:
-        print_func_decl_node(root);
-        break;
-    case AST_IF_STMT:
-        print_if_stmt_node(root);
-        break;
-    case AST_ELIF_LST:
-        print_elif_lst_node(root);
-        break;
-    case AST_WHILE_STMT:
-        print_while_stmt_node(root);
-        break;
-    case AST_FOR_STMT:
-        print_for_stmt_node(root);
-        break;
-    case AST_CONTINUE:
-        print_continue_node(root);
-        break;
-    case AST_BREAK:
-        print_break_node(root);
-        break;
-    case AST_PROGRAM:
-    case AST_CPD_STMT:
-        print_cpd_stmt_node(root);
-        break;
-    case AST_RETURN:
-        print_return_node(root);
-        break;
-    case AST_INPUT_STMT:
-    case AST_PRINT_STMT:
-        print_io_stmt_node(root);
-        break;
-    default:
-        break;
-    }
-}
-
-static void print_const_node(ASTNode *node)
-{
-    print_indent();
-    printf("const: ");
+    fprint_indent(file);
+    fprintf(file, "const: ");
     switch (node->value->type)
     {
     case NONE:
-        printf("none\n");
+        fprintf(file, "none\n");
         break;
     case BOOL:
-        printf("%s\n", node->value->bool_val ? "true" : "false");
+        fprintf(file, "%s\n", node->value->bool_val ? "true" : "false");
         break;
     case CHAR:
-        printf("%c\n", node->value->char_val);
+        fprintf(file, "%c\n", node->value->char_val);
         break;
     case INT:
-        printf("%lld\n", node->value->int_val);
+        fprintf(file, "%lld\n", node->value->int_val);
         break;
     case FLOAT:
-        printf("%lf\n", node->value->float_val);
+        fprintf(file, "%lf\n", node->value->float_val);
         break;
     case STRING:
-        printf("%s\n", node->value->str_val->c_str());
+        fprintf(file, "%s\n", node->value->str_val->c_str());
         break;
     default:
-        printf("\n");
+        fprintf(file, "\n");
         break;
     }
 }
 
-static void print_ident_node(ASTNode *node)
+static void fprint_ident_node(FILE *file, ASTNode *node)
 {
-    print_indent();
-    printf("ident: %s\n", node->name->c_str());
+    fprint_indent(file);
+    fprintf(file, "ident: %s\n", node->name->c_str());
 }
 
-static void print_b_expr_node(ASTNode *node)
+static void fprint_b_expr_node(FILE *file, ASTNode *node)
 {
-    print_indent();
-    printf("b_expr: \n");
+    fprint_indent(file);
+    fprintf(file, "b_expr: \n");
     indent++;
-    print_ast(node->l_operand);
-    print_indent();
-    printf("b_opcode: %s\n", TOKEN_STR[node->b_opcode]);
-    print_ast(node->r_operand);
+    fprint_astree(file, node->l_operand);
+    fprint_indent(file);
+    fprintf(file, "b_opcode: %s\n", TOKEN_STR[node->b_opcode]);
+    fprint_astree(file, node->r_operand);
     indent--;
 }
 
-static void print_u_expr_node(ASTNode *node)
+static void fprint_u_expr_node(FILE *file, ASTNode *node)
 {
-    print_indent();
-    printf("u_expr: \n");
+    fprint_indent(file);
+    fprintf(file, "u_expr: \n");
     indent++;
-    print_indent();
-    printf("u_opcode: %s\n", TOKEN_STR[node->u_opcode]);
-    print_ast(node->operand);
+    fprint_indent(file);
+    fprintf(file, "u_opcode: %s\n", TOKEN_STR[node->u_opcode]);
+    fprint_astree(file, node->operand);
     indent--;
 }
 
-static void print_expr_lst_node(ASTNode *node)
+static void fprint_expr_lst_node(FILE *file, ASTNode *node)
 {
-    print_indent();
-    printf("expr_lst: \n");
+    fprint_indent(file);
+    fprintf(file, "expr_lst: \n");
     indent++;
     for (ASTNode *child : *node->expr_list)
     {
 
-        print_ast(child);
+        fprint_astree(file, child);
     }
     indent--;
 }
 
-static void print_decl_node(ASTNode *node)
+static void fprint_decl_node(FILE *file, ASTNode *node)
 {
-    print_indent();
-    printf("decl: \n");
+    fprint_indent(file);
+    fprintf(file, "decl: \n");
     indent++;
-    print_ast(node->var_name);
+    fprint_astree(file, node->var_name);
     if (node->init_val)
     {
-        print_ast(node->init_val);
+        fprint_astree(file, node->init_val);
     }
     indent--;
 }
 
-static void print_decl_lst_node(ASTNode *node)
+static void fprint_decl_lst_node(FILE *file, ASTNode *node)
 {
-    print_indent();
-    printf("decl_lst: \n");
+    fprint_indent(file);
+    fprintf(file, "decl_lst: \n");
     indent++;
     for (ASTNode *child : *node->decl_list)
     {
 
-        print_ast(child);
+        fprint_astree(file, child);
     }
     indent--;
 }
 
-static void print_assign_node(ASTNode *node)
+static void fprint_assign_node(FILE *file, ASTNode *node)
 {
-    print_indent();
-    printf("assign: \n");
+    fprint_indent(file);
+    fprintf(file, "assign: \n");
     indent++;
-    print_ast(node->assign_var);
-    print_indent();
-    printf("assign_opcode: %s\n", TOKEN_STR[node->assign_opcode]);
-    print_ast(node->assign_val);
+    fprint_astree(file, node->assign_var);
+    fprint_indent(file);
+    fprintf(file, "assign_opcode: %s\n", TOKEN_STR[node->assign_opcode]);
+    fprint_astree(file, node->assign_val);
     indent--;
 }
 
-static void print_lst_val_node(ASTNode *node)
+static void fprint_lst_val_node(FILE *file, ASTNode *node)
 {
-    print_indent();
-    printf("lst_val: \n");
+    fprint_indent(file);
+    fprintf(file, "lst_val: \n");
     indent++;
     for (ASTNode *child : *node->list_vals)
     {
-        print_ast(child);
+        fprint_astree(file, child);
     }
     indent--;
 }
 
-static void print_lst_idx_node(ASTNode *node)
+static void fprint_lst_idx_node(FILE *file, ASTNode *node)
 {
-    print_indent();
-    printf("lst_idx: \n");
+    fprint_indent(file);
+    fprintf(file, "lst_idx: \n");
     indent++;
-    print_indent();
-    printf("list name: \n");
+    fprint_indent(file);
+    fprintf(file, "list name: \n");
     indent++;
-    print_ast(node->list_name);
+    fprint_astree(file, node->list_name);
     indent--;
-    print_indent();
-    printf("list index: \n");
+    fprint_indent(file);
+    fprintf(file, "list index: \n");
     indent++;
-    print_ast(node->list_index);
+    fprint_astree(file, node->list_index);
     indent--;
     indent--;
 }
 
-static void print_func_call_node(ASTNode *node)
+static void fprint_func_call_node(FILE *file, ASTNode *node)
 {
-    print_indent();
-    printf("func_call: \n");
+    fprint_indent(file);
+    fprintf(file, "func_call: \n");
     indent++;
-    print_indent();
-    printf("func name: \n");
+    fprint_indent(file);
+    fprintf(file, "func name: \n");
     indent++;
-    print_ast(node->func_name);
+    fprint_astree(file, node->func_name);
     indent--;
-    print_indent();
-    printf("func args: \n");
+    fprint_indent(file);
+    fprintf(file, "func args: \n");
     indent++;
-    print_ast(node->arg_node);
+    fprint_astree(file, node->arg_node);
     indent--;
     indent--;
 }
 
-static void print_func_decl_node(ASTNode *node)
+static void fprint_func_decl_node(FILE *file, ASTNode *node)
 {
-    print_indent();
-    printf("func_decl: \n");
+    fprint_indent(file);
+    fprintf(file, "func_decl: \n");
     indent++;
-    print_ast(node->func_name);
-    print_ast(node->arg_node);
-    print_ast(node->func_body);
+    fprint_astree(file, node->func_name);
+    fprint_astree(file, node->arg_node);
+    fprint_astree(file, node->func_body);
     indent--;
 }
 
-static void print_if_stmt_node(ASTNode *node)
+static void fprint_if_stmt_node(FILE *file, ASTNode *node)
 {
-    print_indent();
-    printf("if_stmt: \n");
+    fprint_indent(file);
+    fprintf(file, "if_stmt: \n");
     indent++;
-    print_ast(node->if_cond);
+    fprint_astree(file, node->if_cond);
     if (node->true_smt != NULL)
     {
-        print_ast(node->true_smt);
+        fprint_astree(file, node->true_smt);
     }
     if (node->false_smt != NULL)
     {
-        print_ast(node->false_smt);
+        fprint_astree(file, node->false_smt);
     }
     indent--;
 }
 
-static void print_elif_lst_node(ASTNode *node)
+static void fprint_elif_lst_node(FILE *file, ASTNode *node)
 {
-    print_indent();
-    printf("elif_lst: \n");
+    fprint_indent(file);
+    fprintf(file, "elif_lst: \n");
     indent++;
     for (ASTNode *child : *node->elif_list)
     {
-        print_ast(child);
-        // printf("%d\n", child->node_type);
-        // printf("%d\n", child->stmts_num);
+        fprint_astree(file, child);
+        // fprintf(file, "%d\n", child->node_type);
+        // fprintf(file, "%d\n", child->stmts_num);
     }
     indent--;
     if (node->else_node != NULL)
     {
-        print_ast(node->else_node);
+        fprint_astree(file, node->else_node);
     }
 }
 
-static void print_while_stmt_node(ASTNode *node)
+static void fprint_while_stmt_node(FILE *file, ASTNode *node)
 {
-    print_indent();
-    printf("while_stmt: \n");
+    fprint_indent(file);
+    fprintf(file, "while_stmt: \n");
     indent++;
-    print_ast(node->while_cond);
-    print_ast(node->while_body);
+    fprint_astree(file, node->while_cond);
+    fprint_astree(file, node->while_body);
     indent--;
 }
 
-static void print_for_stmt_node(ASTNode *node)
+static void fprint_for_stmt_node(FILE *file, ASTNode *node)
 {
-    print_indent();
-    printf("for_stmt: \n");
+    fprint_indent(file);
+    fprintf(file, "for_stmt: \n");
     indent++;
-    print_ast(node->for_init);
-    print_ast(node->for_cond);
-    print_ast(node->for_incr);
-    print_ast(node->for_body);
+    fprint_astree(file, node->for_init);
+    fprint_astree(file, node->for_cond);
+    fprint_astree(file, node->for_incr);
+    fprint_astree(file, node->for_body);
     indent--;
 }
 
-static void print_io_stmt_node(ASTNode *node)
+static void fprint_io_stmt_node(FILE *file, ASTNode *node)
 {
-    print_indent();
-    printf("%s: \n", node->node_type == AST_INPUT_STMT ? "input" : "print");
+    fprint_indent(file);
+    fprintf(file, "%s: \n", node->node_type == AST_INPUT_STMT ? "input" : "print");
     indent++;
     for (ASTNode *child : *node->list_vals)
     {
-        print_ast(child);
+        fprint_astree(file, child);
     }
     indent--;
 }
 
-static void print_continue_node(ASTNode *node)
+static void fprint_continue_node(FILE *file, ASTNode *node)
 {
-    print_indent();
-    printf("continue\n");
+    fprint_indent(file);
+    fprintf(file, "continue\n");
 }
 
-static void print_break_node(ASTNode *node)
+static void fprint_break_node(FILE *file, ASTNode *node)
 {
-    print_indent();
-    printf("break\n");
+    fprint_indent(file);
+    fprintf(file, "break\n");
 }
 
-static void print_cpd_stmt_node(ASTNode *node)
+static void fprint_cpd_stmt_node(FILE *file, ASTNode *node)
 {
-    print_indent();
-    printf("stmts: \n");
+    fprint_indent(file);
+    fprintf(file, "stmts: \n");
     indent++;
     for (ASTNode *child : *node->statements)
     {
-        print_ast(child);
-        // printf("%d\n", child->node_type);
-        // printf("%d\n", child->stmts_num);
+        fprint_astree(file, child);
+        // fprintf(file, "%d\n", child->node_type);
+        // fprintf(file, "%d\n", child->stmts_num);
     }
     indent--;
 }
 
-static void print_return_node(ASTNode *node)
+static void fprint_return_node(FILE *file, ASTNode *node)
 {
-    print_indent();
-    printf("return: \n");
+    fprint_indent(file);
+    fprintf(file, "return: \n");
     indent++;
-    print_ast(node->ret_val);
+    fprint_astree(file, node->ret_val);
     indent--;
+}
+
+void fprint_tokens(FILE *file, std::vector<Token *> tokens)
+{
+    for (Token *token : tokens)
+    {
+        fprintf(file, "%s\t%lld\t%lld\t", TOKEN_STR[token->type], token->ln, token->col);
+        switch (token->type)
+        {
+            case TK_IDENTIFIER:
+                fprintf(file, "%s\n", token->identifier->c_str());
+                break;
+            case TK_CONSTANT:
+                fprintf(file, "%s\t", TYPE_STR[token->value->type]);
+                switch (token->value->type)
+                {
+                    case NONE:
+                        fprintf(file, "none\n");
+                        break;
+                    case BOOL:
+                        fprintf(file, "%s\n",token->value->bool_val ? "true" : "false");
+                        break;
+                    case CHAR:
+                        fprintf(file, "%c\n", token->value->char_val);
+                        break;
+                    case INT:
+                        fprintf(file, "%lld\n", token->value->int_val);
+                        break;
+                    case FLOAT:
+                        fprintf(file, "%lf\n", token->value->float_val);
+                        break;
+                    case STRING:
+                        fprintf(file, "%s\n", token->value->str_val->c_str());
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            case TK_SEMICOLON:
+            case TK_COMMA:
+            case TK_L_PAREN:
+            case TK_R_PAREN:
+            case TK_L_BRACK:
+            case TK_R_BRACK:
+            case TK_L_CURLY:
+            case TK_R_CURLY:
+            default:
+                fprintf(file, "\n");
+                break;
+        }
+    }
+}
+
+void fprint_astree(FILE *file, ASTNode *astree)
+{
+    switch (astree->node_type)
+    {
+    case AST_CONST:
+        fprint_const_node(file, astree);
+        break;
+    case AST_IDENT:
+        fprint_ident_node(file, astree);
+        break;
+    case AST_B_EXPR:
+        fprint_b_expr_node(file, astree);
+        break;
+    case AST_U_EXPR:
+        fprint_u_expr_node(file, astree);
+        break;
+    case AST_EXPR_LST:
+        fprint_expr_lst_node(file, astree);
+        break;
+    case AST_DECL:
+        fprint_decl_node(file, astree);
+        break;
+    case AST_DECL_LST:
+        fprint_decl_lst_node(file, astree);
+        break;
+    case AST_ASSIGN:
+        fprint_assign_node(file, astree);
+        break;
+    case AST_LST_VAL:
+        fprint_lst_val_node(file, astree);
+        break;
+    case AST_LST_IDX:
+        fprint_lst_idx_node(file, astree);
+        break;
+    case AST_FUNC_CALL:
+        fprint_func_call_node(file, astree);
+        break;
+    case AST_FUNC_DECL:
+        fprint_func_decl_node(file, astree);
+        break;
+    case AST_IF_STMT:
+        fprint_if_stmt_node(file, astree);
+        break;
+    case AST_ELIF_LST:
+        fprint_elif_lst_node(file, astree);
+        break;
+    case AST_WHILE_STMT:
+        fprint_while_stmt_node(file, astree);
+        break;
+    case AST_FOR_STMT:
+        fprint_for_stmt_node(file, astree);
+        break;
+    case AST_CONTINUE:
+        fprint_continue_node(file, astree);
+        break;
+    case AST_BREAK:
+        fprint_break_node(file, astree);
+        break;
+    case AST_PROGRAM:
+    case AST_CPD_STMT:
+        fprint_cpd_stmt_node(file, astree);
+        break;
+    case AST_RETURN:
+        fprint_return_node(file, astree);
+        break;
+    case AST_INPUT_STMT:
+    case AST_PRINT_STMT:
+        fprint_io_stmt_node(file, astree);
+        break;
+    default:
+        break;
+    }
 }
 
 void fprint_code(FILE *file, VSCodeObject *code)
