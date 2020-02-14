@@ -40,7 +40,7 @@ static ASTNode *read_func_decl();
 static ASTNode *read_elif_stmt();
 static ASTNode *read_elif_list();
 static ASTNode *read_if_stmt();
-static ASTNode *read_io_stmt();
+static ASTNode *read_print_stmt();
 static ASTNode *read_initializer_list();
 static ASTNode *read_initializer();
 static ASTNode *read_init_decl(bool is_mutable);
@@ -539,10 +539,25 @@ static ASTNode *print_stmt_node(std::vector<ASTNode *> *arg_list)
     return node;
 }
 
-static ASTNode *input_stmt_node(std::vector<ASTNode *> *arg_list)
+static ASTNode *input_stmt_node(ASTNode *msg)
 {
     ASTNode *node = new ASTNode(AST_INPUT_STMT, AST_UNKNOW);
-    node->list_vals = arg_list;
+    node->message = msg;
+    return node;
+}
+
+static ASTNode *type_cast_node(TOKEN_TYPE to_type, ASTNode *src_value)
+{
+    ASTNode *node = new ASTNode(AST_TYPE_CAST, AST_UNKNOW);
+    node->to_type = to_type;
+    node->src_value = src_value;
+    return node;
+}
+
+static ASTNode *eval_node(ASTNode *source)
+{
+    ASTNode *node = new ASTNode(AST_EVAL, AST_UNKNOW);
+    node->source = source;
     return node;
 }
 
@@ -591,6 +606,27 @@ static ASTNode *read_primary_expr()
     case TK_L_PAREN:
         expect(TK_L_PAREN);
         node = read_expr();
+        expect(TK_R_PAREN);
+        break;
+    case TK_INPUT:
+        expect(TK_INPUT);
+        expect(TK_L_PAREN);
+        node = input_stmt_node(read_assign_expr());
+        expect(TK_R_PAREN);
+        break;
+    case TK_EVAL:
+        expect(TK_EVAL);
+        expect(TK_L_PAREN);
+        node = eval_node(read_assign_expr());
+        expect(TK_R_PAREN);
+        break;
+    case TK_CHAR:
+    case TK_INT:
+    case TK_FLOAT:
+    case TK_STR:
+        token = get_token();
+        expect(TK_L_PAREN);
+        node = type_cast_node(token->type, read_assign_expr());
         expect(TK_R_PAREN);
         break;
     default:
@@ -880,9 +916,8 @@ static ASTNode *read_stmt()
             return read_func_decl();
         case TK_IF:
             return read_if_stmt();
-        case TK_INPUT:
         case TK_PRINT:
-            return read_io_stmt();
+            return read_print_stmt();
         case TK_VAL:
         case TK_VAR:
             return read_decl_stmt();
@@ -1115,7 +1150,7 @@ static ASTNode *read_if_stmt()
     return if_stmt_node(cond, true_stmt, false_stmt);
 }
 
-static ASTNode *read_io_stmt()
+static ASTNode *read_print_stmt()
 {
     Token *token = expect2(TK_INPUT, TK_PRINT);
     expect(TK_L_PAREN);
@@ -1123,18 +1158,7 @@ static ASTNode *read_io_stmt()
     expect(TK_R_PAREN);
     expect(TK_SEMICOLON);
     ASTNode *node;
-    if (token->type == TK_INPUT)
-    {
-        for (auto arg : *arg_list->list_vals)
-        {
-            ensure_lval(arg);
-        }
-        node = input_stmt_node(arg_list->list_vals);
-    }
-    else
-    {
-        node = print_stmt_node(arg_list->list_vals);
-    }
+    node = print_stmt_node(arg_list->list_vals);
     return node;
 }
 
@@ -1267,9 +1291,8 @@ static ASTNode *read_program()
         case TK_IF:
             stmt = read_if_stmt();
             break;
-        case TK_INPUT:
         case TK_PRINT:
-            stmt = read_io_stmt();
+            stmt = read_print_stmt();
             break;
         case TK_VAL:
         case TK_VAR:

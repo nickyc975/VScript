@@ -46,6 +46,11 @@ static void do_and();
 static void do_or();
 static void do_not();
 static void do_neg();
+static void do_eval();
+static void do_to_char();
+static void do_to_int();
+static void do_to_float();
+static void do_to_str();
 static void do_build_list(vs_size_t size);
 static void do_index_load();
 static void do_index_store();
@@ -428,6 +433,32 @@ static void do_neg()
     push(result);
 }
 
+static void do_eval()
+{
+    // TODO: implement eval
+    push(VSObject(VSValue::None()));
+}
+
+static void do_to_char()
+{
+
+}
+
+static void do_to_int()
+{
+
+}
+
+static void do_to_float()
+{
+
+}
+
+static void do_to_str()
+{
+
+}
+
 static void do_build_list(vs_size_t size)
 {
     VSObject object = VSObject(new VSObjectList());
@@ -692,7 +723,23 @@ static void do_ret()
 
 static void do_input()
 {
-    push(VSObject(VSValue::None()));
+    std::string str = std::string();
+    char c = getchar();
+    while (c != '\n' && c != '\r')
+    {
+        str.append(1, c);
+        c = getchar();
+    }
+    if (c == '\r')
+    {
+        c = getchar();
+        if (c != '\n')
+        {
+            ungetc(c, stdin);
+        }
+    }
+    VSValue *value = new VSValue(str);
+    push(VSObject(value));
 }
 
 static void do_print()

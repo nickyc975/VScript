@@ -51,6 +51,7 @@ typedef enum
     TK_FLOAT,
     TK_STR,
     TK_LIST,
+    TK_EVAL,
 
     // if statement keywords
     TK_IF,
@@ -130,6 +131,7 @@ static char *TOKEN_STR[] =
     "FLOAT",
     "STR",
     "LIST",
+    "EVAL",
     "IF",
     "ELIF",
     "ELSE",
@@ -157,6 +159,8 @@ typedef enum
     AST_IDENT,
     AST_B_EXPR,
     AST_U_EXPR,
+    AST_TYPE_CAST,
+    AST_EVAL,
     AST_EXPR,
     AST_EXPR_LST,
     AST_DECL,
@@ -254,7 +258,15 @@ public:
             ASTNode *assign_val;
         };
 
-        // list values, function/io args
+        // type cast statements
+        struct
+        {
+            TOKEN_TYPE to_type;
+            ASTNode *src_value;
+        };
+        
+
+        // list values, function/print args
         std::vector<ASTNode *> *list_vals;
 
         // list index
@@ -309,6 +321,12 @@ public:
             SymTable<ASTNode *> *symtable;
             std::vector<ASTNode *> *statements;
         };
+
+        // input message for input statement
+        ASTNode *message;
+
+        // source code for eval statement
+        ASTNode *source;
 
         // return statements
         ASTNode *ret_val;

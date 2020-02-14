@@ -1,6 +1,12 @@
 primary_expression:CONSTANT
 primary_expression:IDENTIFIER
 primary_expression:L_PAREN expression R_PAREN
+primary_expression:INPUT L_PAREN expression R_PAREN
+primary_expression:CHAR L_PAREN expression R_PAREN
+primary_expression:INT L_PAREN expression R_PAREN
+primary_expression:FLOAT L_PAREN expression R_PAREN
+primary_expression:STR L_PAREN expression R_PAREN
+primary_expression:EVAL L_PAREN expression R_PAREN
 
 postfix_expression:primary_expression
 postfix_expression:postfix_expression L_BRACK expression R_BRACK

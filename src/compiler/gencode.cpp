@@ -23,6 +23,8 @@ static std::stack<std::unordered_map<std::string, vs_addr_t> *> nonlocalstack;
 
 static void gen_const(ASTNode *node);
 static void gen_ident(ASTNode *node);
+static void gen_eval(ASTNode *node);
+static void gen_type_cast(ASTNode *node);
 static void gen_b_expr(ASTNode *node);
 static void gen_u_expr(ASTNode *node);
 static void gen_list_idx(ASTNode *node);
@@ -173,6 +175,37 @@ static void gen_ident(ASTNode *node)
     }
 }
 
+static void gen_eval(ASTNode *node)
+{
+    VSCodeObject *cur = codestack.top();
+    gen_expr_list(node->source);
+    cur->add_inst(VSInst(OP_EVAL));
+}
+
+static void gen_type_cast(ASTNode *node)
+{
+    VSCodeObject *cur = codestack.top();
+    gen_expr_list(node->source);
+    switch (node->to_type)
+    {
+    case TK_CHAR:
+        cur->add_inst(VSInst(OP_CHAR));
+        break;
+    case TK_INT:
+        cur->add_inst(VSInst(OP_INT));
+        break;
+    case TK_FLOAT:
+        cur->add_inst(VSInst(OP_FLOAT));
+        break;
+    case TK_STR:
+        cur->add_inst(VSInst(OP_STR));
+        break;
+    default:
+        err("Can not cast to type: \"%s\"\n", TOKEN_STR[node->to_type]);
+        break;
+    }
+}
+
 static void gen_b_expr(ASTNode *node)
 {
     VSCodeObject *cur = codestack.top();
@@ -275,6 +308,15 @@ static void gen_expr(ASTNode *node)
     case AST_FUNC_CALL:
         gen_func_call(node);
         break;
+    case AST_INPUT_STMT:
+        gen_input_stmt(node);
+        break;
+    case AST_EVAL:
+        gen_eval(node);
+        break;
+    case AST_TYPE_CAST:
+        gen_type_cast(node);
+        break;
     default:
         break;
     }
@@ -331,11 +373,12 @@ static void gen_assign_expr(ASTNode *node)
 static void gen_input_stmt(ASTNode *node)
 {
     VSCodeObject *cur = codestack.top();
-    for (auto arg : *node->list_vals)
+    if (node->message != NULL)
     {
-        cur->add_inst(VSInst(OP_INPUT));
-        do_store(OP_NOP, arg);
+        gen_expr(node->message);
+        cur->add_inst(VSInst(OP_PRINT));
     }
+    cur->add_inst(VSInst(OP_INPUT));
 }
 
 static void gen_print_stmt(ASTNode *node)

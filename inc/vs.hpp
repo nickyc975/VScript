@@ -40,6 +40,15 @@ typedef enum
     OP_NOT,
     OP_NEG,
 
+    // no arg, eval stack top
+    OP_EVAL,
+
+    // no arg, cast stack top to given type
+    OP_CHAR,
+    OP_INT,
+    OP_FLOAT,
+    OP_STR,
+
     // 1 arg, list length, create a list of objects in the stack
     OP_BUILD_LIST,
 
@@ -113,6 +122,11 @@ static char *OPCODE_STR[] =
         "OR",
         "NOT",
         "NEG",
+        "EVAL",
+        "CHAR",
+        "INT",
+        "FLOAT",
+        "STR",
         "BUILD_LIST",
         "INDEX_LOAD",
         "INDEX_STORE",
