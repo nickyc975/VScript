@@ -608,6 +608,9 @@ static ASTNode *read_primary_expr()
         node = read_expr();
         expect(TK_R_PAREN);
         break;
+    case TK_L_BRACK:
+        node = read_initializer();
+        break;
     case TK_INPUT:
         expect(TK_INPUT);
         expect(TK_L_PAREN);

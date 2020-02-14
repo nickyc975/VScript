@@ -38,19 +38,26 @@ int main(int argc, char **argv)
     }
     file = new File(fopen(*argv, "r"));
     tokenize(file, token_list);
+    delete file;
     if (show_lex)
     {
-        fprint_tokens(fopen("tokens.txt", "w"), token_list);
+        FILE *f = fopen("tokens.txt", "w");
+        fprint_tokens(f, token_list);
+        fclose(f);
     }
     ASTNode *astree = parse(&token_list);
     if (show_parse)
     {
-        fprint_astree(fopen("astree.txt", "w"), astree);
+        FILE *f = fopen("astree.txt", "w");
+        fprint_astree(f, astree);
+        fclose(f);
     }
     VSCodeObject *program = gencode(astree);
     if (show_gen)
     {
-        fprint_code(fopen("instructions.vss", "w"), program);
+        FILE *f = fopen("instructions.txt", "w");
+        fprint_code(f, program);
+        fclose(f);
     }
     execute(program);
     return 0;

@@ -1,5 +1,6 @@
 primary_expression:CONSTANT
 primary_expression:IDENTIFIER
+primary_expression:initializer
 primary_expression:L_PAREN expression R_PAREN
 primary_expression:INPUT L_PAREN expression R_PAREN
 primary_expression:CHAR L_PAREN expression R_PAREN
