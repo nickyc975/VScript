@@ -634,36 +634,35 @@ static ASTNode *read_postfix_expr()
     if (node == NULL || !has_token())
         return node;
 
-    switch (peek_token()->type)
+    Token *token = peek_token();
+    while (token->type == TK_L_BRACK || token->type == TK_L_PAREN)
     {
-    case TK_L_BRACK:
-    {
-        expect(TK_L_BRACK);
-        ASTNode *lst_idx = read_expr();
-        if (lst_idx == NULL)
+        if (token->type == TK_L_BRACK)
         {
-            ensure_token(node);
-            err("line: %ld, invalid list index\n", peek_token()->ln);
+            expect(TK_L_BRACK);
+            ASTNode *lst_idx = read_expr();
+            if (lst_idx == NULL)
+            {
+                ensure_token(node);
+                err("line: %ld, invalid list index\n", peek_token()->ln);
+            }
+            node = lst_idx_node(node, lst_idx);
+            expect(TK_R_BRACK);
         }
-        node = lst_idx_node(node, lst_idx);
-        expect(TK_R_BRACK);
-        break;
-    }
-    case TK_L_PAREN:
-    {
-        expect(TK_L_PAREN);
-        ASTNode *arg_list = read_arg_expr_list();
-        if (arg_list == NULL)
+        else
         {
-            ensure_token(node);
-            err("line: %ld, missing args\n", peek_token()->ln);
+            expect(TK_L_PAREN);
+            ASTNode *arg_list = read_arg_expr_list();
+            if (arg_list == NULL)
+            {
+                ensure_token(node);
+                err("line: %ld, missing args\n", peek_token()->ln);
+            }
+            node = func_call_node(node, arg_list);
+            expect(TK_R_PAREN);
         }
-        node = func_call_node(node, arg_list);
-        expect(TK_R_PAREN);
-        break;
-    }
-    default:
-        break;
+        ensure_token(node);
+        token = peek_token();
     }
     return node;
 }
