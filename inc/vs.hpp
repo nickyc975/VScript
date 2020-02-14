@@ -302,6 +302,7 @@ public:
     std::vector<VSObject> consts;
     std::vector<std::string> local_names;
     std::vector<std::string> non_local_names;
+    std::unordered_map<std::string, vs_addr_t> name_to_addr;
 
     VSCodeObject(std::string name, CODE_BLK_TYPE type);
 

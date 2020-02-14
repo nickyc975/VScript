@@ -82,12 +82,9 @@ static VSObject pop()
 
 static void find_blk_type(CODE_BLK_TYPE type)
 {
-    VSCallStackFrame *temp;
     while (cur_frame != NULL && cur_frame->code->type != type)
     {
-        temp = cur_frame;
-        cur_frame = temp->prev;
-        delete temp;
+        leave_blk();
     }
 
     if (cur_frame == NULL)
@@ -497,8 +494,8 @@ static void do_load_name(vs_addr_t addr)
     std::string name = cur_frame->code->non_local_names[addr];
     while (temp != NULL)
     {
-        auto iter = temp->localnames.find(name);
-        if (iter != temp->localnames.end())
+        auto iter = temp->code->name_to_addr.find(name);
+        if (iter != temp->code->name_to_addr.end())
         {
             push(temp->locals[iter->second]);
             return;
@@ -521,8 +518,8 @@ static void do_store_name(vs_addr_t addr)
     std::string name = cur_frame->code->non_local_names[addr];
     while (temp != NULL)
     {
-        auto iter = temp->localnames.find(name);
-        if (iter != temp->localnames.end())
+        auto iter = temp->code->name_to_addr.find(name);
+        if (iter != temp->code->name_to_addr.end())
         {
             VSObject obj = pop();
             VSObject orig = temp->locals[iter->second];
@@ -649,6 +646,11 @@ static void do_call()
 
 static void do_ret()
 {
+    // Increase ref count of the return value.
+    VSObject object = pop();
+    object.incref();
+    push(object);
+
     find_blk_type(FUNC_BLK);
     leave_blk();
 

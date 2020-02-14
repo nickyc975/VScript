@@ -25,6 +25,13 @@ VSCodeObject::VSCodeObject(std::string name, CODE_BLK_TYPE type) : name(name), t
     this->arg_num = 0;
     this->lvar_num = 0;
     this->nlvar_num = 0;
+    this->loop_start = 0;
+
+    this->code = std::vector<VSInst>();
+    this->consts = std::vector<VSObject>();
+    this->local_names = std::vector<std::string>();
+    this->non_local_names = std::vector<std::string>();
+    this->name_to_addr = std::unordered_map<std::string, vs_addr_t>();
 
     // set constants
     this->add_const(new VSObject(VSValue::None()));
@@ -52,6 +59,7 @@ void VSCodeObject::add_arg(std::string name)
 
 void VSCodeObject::add_local(std::string name)
 {
+    this->name_to_addr[name] = this->lvar_num;
     this->local_names.push_back(name);
     this->lvar_num++;
 }

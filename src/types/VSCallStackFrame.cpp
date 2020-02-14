@@ -12,11 +12,17 @@ VSCallStackFrame::VSCallStackFrame(VSCallStackFrame *prev, VSCodeObject *code)
     this->prev = prev;
 
     this->locals = std::vector<VSObject>();
-    this->localnames = std::unordered_map<std::string, vs_addr_t>();
 
     for (vs_size_t i = 0; i < this->lvar_num; i++)
     {
         this->locals.push_back(VSObject());
-        this->localnames[code->local_names[i]] = i;
+    }
+}
+
+VSCallStackFrame::~VSCallStackFrame()
+{
+    for (auto local : this->locals)
+    {
+        local.decref();
     }
 }

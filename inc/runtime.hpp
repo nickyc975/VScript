@@ -26,9 +26,9 @@ public:
     VSCodeObject *code;
     VSCallStackFrame *prev;
     std::vector<VSObject> locals;
-    std::unordered_map<std::string, vs_addr_t> localnames;
 
     VSCallStackFrame(VSCallStackFrame *prev, VSCodeObject *code);
+    ~VSCallStackFrame();
 };
 
 int execute(VSCodeObject *code);
