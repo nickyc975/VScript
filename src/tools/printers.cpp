@@ -439,7 +439,7 @@ void fprint_astree(FILE *file, ASTNode *astree)
 void fprint_code(FILE *file, VSCodeObject *code)
 {
     int count = 0;
-    VSObject *object;
+    VSObject object;
     fprint_indent(file);
     fprintf(file, "%s: \n", code->name.c_str());
     for (auto inst : code->code)
@@ -457,14 +457,14 @@ void fprint_code(FILE *file, VSCodeObject *code)
             fprintf(file, "%s\n", code->non_local_names[inst.operand].c_str());
             break;
         case OP_LOAD_CONST:
-            object = &(code->consts[inst.operand]);
-            if (object->type == OBJ_DATA)
+            object = code->consts.get(inst.operand);
+            if (object.type == OBJ_DATA)
             {
-                fprintf(file, "%s\n", object->value->to_string().c_str());
+                fprintf(file, "%s\n", object.value->to_string().c_str());
             }
-            else if (object->type == OBJ_CODE)
+            else if (object.type == OBJ_CODE)
             {
-                fprintf(file, "%s\n", object->codeblock->name.c_str());
+                fprintf(file, "%s\n", object.codeblock->name.c_str());
             }
             else
             {
@@ -484,7 +484,7 @@ void fprint_code(FILE *file, VSCodeObject *code)
     }
 
     indent++;
-    for (auto obj : code->consts)
+    for (auto obj : code->consts.data)
     {
         if (obj.type == OBJ_CODE)
         {

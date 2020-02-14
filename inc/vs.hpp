@@ -256,17 +256,21 @@ public:
     std::vector<VSObject> data;
 
     VSObjectList();
+    ~VSObjectList();
 
     VSObjectList &operator=(const VSObjectList &that);
-    VSObject &operator[](vs_addr_t pos);
 
-    void add(VSObject object);
+    void push(VSObject object);
+    VSObject back();
+    void pop();
+
     void put(vs_addr_t pos, VSObject object);
     VSObject get(vs_addr_t pos);
-    VSObject remove();
-    void clear();
+    void remove(vs_addr_t pos);
+
     vs_size_t length();
     vs_bool_t empty();
+    void clear();
 };
 
 class VSInst : public VSMemItem
@@ -298,8 +302,8 @@ public:
     // For loop block, this indicates the start point of the loop body.
     vs_addr_t loop_start;
 
+    VSObjectList consts;
     std::vector<VSInst> code;
-    std::vector<VSObject> consts;
     std::vector<std::string> local_names;
     std::vector<std::string> non_local_names;
     std::unordered_map<std::string, vs_addr_t> name_to_addr;

@@ -70,6 +70,7 @@ static void terminate(TERM_STATUS status);
 
 static void push(VSObject object)
 {
+    object.incref();
     cmptstack.push(object);
 }
 
@@ -134,11 +135,11 @@ static void do_add()
         result.objlist = new VSObjectList();
         for (auto o : left.objlist->data)
         {
-            result.objlist->add(o);
+            result.objlist->push(o);
         }
         for (auto o : right.objlist->data)
         {
-            result.objlist->add(o);
+            result.objlist->push(o);
         }
     }
     else
@@ -146,6 +147,8 @@ static void do_add()
         err("Runtime error: can not apply \"+\" on objects.\n");
         terminate(TERM_ERROR);
     }
+    left.decref();
+    right.decref();
     push(result);
 }
 
@@ -164,6 +167,8 @@ static void do_sub()
         err("Runtime error: can not apply \"-\" on objects.\n");
         terminate(TERM_ERROR);
     }
+    left.decref();
+    right.decref();
     push(result);
 }
 
@@ -182,6 +187,8 @@ static void do_mul()
         err("Runtime error: can not apply \"*\" on objects.\n");
         terminate(TERM_ERROR);
     }
+    left.decref();
+    right.decref();
     push(result);
 }
 
@@ -200,6 +207,8 @@ static void do_div()
         err("Runtime error: can not apply \"/\" on objects.\n");
         terminate(TERM_ERROR);
     }
+    left.decref();
+    right.decref();
     push(result);
 }
 
@@ -218,6 +227,8 @@ static void do_mod()
         err("Runtime error: can not apply \"%\" on objects.\n");
         terminate(TERM_ERROR);
     }
+    left.decref();
+    right.decref();
     push(result);
 }
 
@@ -236,6 +247,8 @@ static void do_lt()
         err("Runtime error: can not apply \"<\" on objects.\n");
         terminate(TERM_ERROR);
     }
+    left.decref();
+    right.decref();
     push(result);
 }
 
@@ -254,6 +267,8 @@ static void do_gt()
         err("Runtime error: can not apply \">\" on objects.\n");
         terminate(TERM_ERROR);
     }
+    left.decref();
+    right.decref();
     push(result);
 }
 
@@ -272,6 +287,8 @@ static void do_le()
         err("Runtime error: can not apply \"<=\" on objects.\n");
         terminate(TERM_ERROR);
     }
+    left.decref();
+    right.decref();
     push(result);
 }
 
@@ -290,6 +307,8 @@ static void do_ge()
         err("Runtime error: can not apply \">=\" on objects.\n");
         terminate(TERM_ERROR);
     }
+    left.decref();
+    right.decref();
     push(result);
 }
 
@@ -308,6 +327,8 @@ static void do_eq()
         err("Runtime error: can not apply \"==\" on objects.\n");
         terminate(TERM_ERROR);
     }
+    left.decref();
+    right.decref();
     push(result);
 }
 
@@ -326,6 +347,8 @@ static void do_neq()
         err("Runtime error: can not apply \"!=\" on objects.\n");
         terminate(TERM_ERROR);
     }
+    left.decref();
+    right.decref();
     push(result);
 }
 
@@ -344,6 +367,8 @@ static void do_and()
         err("Runtime error: can not apply \"&\" on objects.\n");
         terminate(TERM_ERROR);
     }
+    left.decref();
+    right.decref();
     push(result);
 }
 
@@ -362,6 +387,8 @@ static void do_or()
         err("Runtime error: can not apply \"|\" on objects.\n");
         terminate(TERM_ERROR);
     }
+    left.decref();
+    right.decref();
     push(result);
 }
 
@@ -379,6 +406,7 @@ static void do_not()
         err("Runtime error: can not apply \"!\" on objects.\n");
         terminate(TERM_ERROR);
     }
+    value.decref();
     push(result);
 }
 
@@ -396,6 +424,7 @@ static void do_neg()
         err("Runtime error: can not apply \"-\" on objects.\n");
         terminate(TERM_ERROR);
     }
+    value.decref();
     push(result);
 }
 
@@ -404,7 +433,9 @@ static void do_build_list(vs_size_t size)
     VSObject object = VSObject(new VSObjectList());
     for (vs_size_t i = 0; i < size && !cmptstack.empty(); i++)
     {
-        object.objlist->add(pop());
+        VSObject obj = pop();
+        object.objlist->push(obj);
+        obj.decref();
     }
     push(object);
 }
@@ -420,8 +451,9 @@ static void do_index_load()
     }
 
     check_list_index(index);
-
-    push((*list.objlist)[index.value->int_val]);
+    push(list.objlist->get(index.value->int_val));
+    index.decref();
+    list.decref();
 }
 
 static void do_index_store()
@@ -437,10 +469,10 @@ static void do_index_store()
 
     check_list_index(index);
 
-    VSObject orig = (*list.objlist)[index.value->int_val];
-    value.incref();
-    orig.decref();
-    (*list.objlist)[index.value->int_val] = value;
+    list.objlist->put(index.value->int_val, value);
+    value.decref();
+    index.decref();
+    list.decref();
 }
 
 static void do_append()
@@ -453,7 +485,9 @@ static void do_append()
         terminate(TERM_ERROR);
     }
 
-    list.objlist->add(value);
+    list.objlist->push(value);
+    value.decref();
+    list.decref();
 }
 
 static void do_load_local(vs_addr_t addr)
@@ -463,7 +497,7 @@ static void do_load_local(vs_addr_t addr)
         err("invalid local var addr: %u, number of names: %u\n", addr, cur_frame->lvar_num);
         terminate(TERM_ERROR);
     }
-    VSObject object = cur_frame->locals[addr];
+    VSObject object = cur_frame->locals.get(addr);
     push(object);
 }
 
@@ -476,10 +510,7 @@ static void do_store_local(vs_addr_t addr)
         terminate(TERM_ERROR);
     }
 
-    VSObject orig = cur_frame->locals[addr];
-    object.incref();
-    orig.decref();
-    cur_frame->locals[addr] = object;
+    cur_frame->locals.put(addr, object);
 }
 
 static void do_load_name(vs_addr_t addr)
@@ -497,7 +528,7 @@ static void do_load_name(vs_addr_t addr)
         auto iter = temp->code->name_to_addr.find(name);
         if (iter != temp->code->name_to_addr.end())
         {
-            push(temp->locals[iter->second]);
+            push(temp->locals.get(iter->second));
             return;
         }
         temp = temp->prev;
@@ -522,10 +553,8 @@ static void do_store_name(vs_addr_t addr)
         if (iter != temp->code->name_to_addr.end())
         {
             VSObject obj = pop();
-            VSObject orig = temp->locals[iter->second];
-            obj.incref();
-            orig.decref();
-            temp->locals[iter->second] = obj;
+            temp->locals.put(iter->second, obj);
+            obj.decref();
             return;
         }
         temp = temp->prev;
@@ -541,7 +570,7 @@ static void do_load_const(vs_addr_t addr)
         err("invalid const addr: %u, number of consts: %u\n", addr, cur_frame->const_num);
         terminate(TERM_ERROR);
     }
-    VSObject object = cur_frame->code->consts[addr];
+    VSObject object = cur_frame->code->consts.get(addr);
     push(object);
 }
 
@@ -554,6 +583,7 @@ static void do_goto()
         terminate(TERM_ERROR);
     }
     cur_frame = new VSCallStackFrame(cur_frame, object.codeblock);
+    object.decref();
 }
 
 static void do_jmp(vs_addr_t addr)
@@ -588,6 +618,7 @@ static void do_jif(vs_addr_t addr)
     {
         cur_frame->pc = addr;
     }
+    cond.decref();
 }
 
 static void do_break()
@@ -640,17 +671,15 @@ static void do_call()
     cur_frame = new VSCallStackFrame(cur_frame, func.codeblock);
     for (vs_size_t i = 0; i < args.objlist->length(); i++)
     {
-        cur_frame->locals[i] = (*args.objlist)[i];
+        VSObject obj = args.objlist->get(i);
+        cur_frame->locals.put(i, obj);
     }
+    args.decref();
+    func.decref();
 }
 
 static void do_ret()
 {
-    // Increase ref count of the return value.
-    VSObject object = pop();
-    object.incref();
-    push(object);
-
     find_blk_type(FUNC_BLK);
     leave_blk();
 
@@ -670,6 +699,7 @@ static void do_print()
 {
     VSObject object = pop();
     print_obj(object, 0);
+    object.decref();
 }
 
 static void eval()

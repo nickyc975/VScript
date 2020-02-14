@@ -57,10 +57,6 @@ void VSObject::incref()
     }
     else if (this->type == OBJ_LIST)
     {
-        for (auto object : this->objlist->data)
-        {
-            object.incref();
-        }
         this->objlist->refcnt++;
     }
 }
@@ -82,10 +78,6 @@ void VSObject::decref()
     }
     else if (this->type == OBJ_LIST)
     {
-        for (auto object : this->objlist->data)
-        {
-            object.decref();
-        }
         this->objlist->refcnt--;
         if (this->objlist->refcnt == 0)
         {

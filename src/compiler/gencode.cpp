@@ -146,7 +146,6 @@ static void gen_const(ASTNode *node)
     {
         VSObject *object = new VSObject(value);
         cur->add_const(object);
-        object->incref();
         (*consts)[const_key] = cur->const_num - 1;
     }
     vs_addr_t index = (*consts)[const_key];

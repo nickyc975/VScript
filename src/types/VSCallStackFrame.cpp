@@ -11,18 +11,15 @@ VSCallStackFrame::VSCallStackFrame(VSCallStackFrame *prev, VSCodeObject *code)
     this->code = code;
     this->prev = prev;
 
-    this->locals = std::vector<VSObject>();
+    this->locals = VSObjectList();
 
     for (vs_size_t i = 0; i < this->lvar_num; i++)
     {
-        this->locals.push_back(VSObject());
+        this->locals.push(VSObject());
     }
 }
 
 VSCallStackFrame::~VSCallStackFrame()
 {
-    for (auto local : this->locals)
-    {
-        local.decref();
-    }
+    
 }

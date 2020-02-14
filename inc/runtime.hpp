@@ -25,7 +25,8 @@ public:
 
     VSCodeObject *code;
     VSCallStackFrame *prev;
-    std::vector<VSObject> locals;
+
+    VSObjectList locals;
 
     VSCallStackFrame(VSCallStackFrame *prev, VSCodeObject *code);
     ~VSCallStackFrame();
