@@ -185,7 +185,7 @@ static void gen_eval(ASTNode *node)
 static void gen_type_cast(ASTNode *node)
 {
     VSCodeObject *cur = codestack.top();
-    gen_expr_list(node->source);
+    gen_expr_list(node->src_value);
     switch (node->to_type)
     {
     case TK_CHAR:

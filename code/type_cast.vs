@@ -1,4 +1,4 @@
 // test input
 
 var a = input("a = ");
-print(a, "\n");
+print(int(a) + 1, "\n");

@@ -43,6 +43,83 @@ VSValue::~VSValue()
     }
 }
 
+VSValue *VSValue::to_char()
+{
+    switch (this->type)
+    {
+    case CHAR:
+        return new VSValue(this->char_val);
+    case INT:
+        return new VSValue((vs_char_t)this->int_val);
+    default:
+        err("Can not cast type: \"%s\" to CHAR\n", TYPE_STR[this->type]);
+        return VSValue::None();
+    }
+}
+
+VSValue *VSValue::to_int()
+{
+    switch (this->type)
+    {
+    case BOOL:
+        return new VSValue((vs_int_t)this->bool_val);
+    case CHAR:
+        return new VSValue((vs_int_t)this->char_val);
+    case INT:
+        return new VSValue(this->int_val);
+    case FLOAT:
+        return new VSValue((vs_int_t)this->float_val);
+    case STRING:
+    {
+        char *end;
+        vs_int_t val = strtoll(this->str_val->c_str(), &end, 0);
+        if (end - 1 != &(this->str_val->back()))
+        {
+            err("Can not cast string: \"%s\" to INT\n", this->str_val->c_str());
+            return VSValue::None();
+        }
+        return new VSValue(val);
+    }
+    default:
+        err("Can not cast type: \"%s\" to INT\n", TYPE_STR[this->type]);
+        return VSValue::None();
+    }
+}
+
+VSValue *VSValue::to_float()
+{
+    switch (this->type)
+    {
+    case BOOL:
+        return new VSValue((vs_float_t)this->bool_val);
+    case CHAR:
+        return new VSValue((vs_float_t)this->char_val);
+    case INT:
+        return new VSValue((vs_float_t)this->int_val);
+    case FLOAT:
+        return new VSValue(this->float_val);
+    case STRING:
+    {
+        char *end;
+        vs_float_t val = strtold(this->str_val->c_str(), &end);
+        if (end - 1 != &(this->str_val->back()))
+        {
+            err("Can not cast string: \"%s\" to FLOAT\n", this->str_val->c_str());
+            return VSValue::None();
+        }
+        return new VSValue(val);
+    }
+    default:
+        err("Can not cast type: \"%s\" to FLOAT\n", TYPE_STR[this->type]);
+        return VSValue::None();
+    }
+}
+
+VSValue *VSValue::to_str()
+{
+    return new VSValue(this->to_string());
+}
+
 VSValue *VSValue::None()
 {
     static VSValue NONE_VAL = VSValue();

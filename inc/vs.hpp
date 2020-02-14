@@ -240,6 +240,11 @@ public:
     VSValue(std::string val);
     ~VSValue();
 
+    VSValue *to_char();
+    VSValue *to_int();
+    VSValue *to_float();
+    VSValue *to_str();
+
     const char *to_bytes();
     const std::string to_string();
 

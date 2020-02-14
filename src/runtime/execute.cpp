@@ -441,22 +441,74 @@ static void do_eval()
 
 static void do_to_char()
 {
-
+    VSObject value = pop();
+    VSObject result = VSObject();
+    if (value.type == OBJ_DATA)
+    {
+        result.type = OBJ_DATA;
+        result.value =value.value->to_char();
+    }
+    else
+    {
+        err("Runtime error: can not cast object type \"%s\" to CHAR.\n", OBJ_STR[value.type]);
+        terminate(TERM_ERROR);
+    }
+    value.decref();
+    push(result);
 }
 
 static void do_to_int()
 {
-
+    VSObject value = pop();
+    VSObject result = VSObject();
+    if (value.type == OBJ_DATA)
+    {
+        result.type = OBJ_DATA;
+        result.value =value.value->to_int();
+    }
+    else
+    {
+        err("Runtime error: can not cast object type \"%s\" to INT.\n", OBJ_STR[value.type]);
+        terminate(TERM_ERROR);
+    }
+    value.decref();
+    push(result);
 }
 
 static void do_to_float()
 {
-
+    VSObject value = pop();
+    VSObject result = VSObject();
+    if (value.type == OBJ_DATA)
+    {
+        result.type = OBJ_DATA;
+        result.value =value.value->to_float();
+    }
+    else
+    {
+        err("Runtime error: can not cast object type \"%s\" to FLOAT.\n", OBJ_STR[value.type]);
+        terminate(TERM_ERROR);
+    }
+    value.decref();
+    push(result);
 }
 
 static void do_to_str()
 {
-
+    VSObject value = pop();
+    VSObject result = VSObject();
+    if (value.type == OBJ_DATA)
+    {
+        result.type = OBJ_DATA;
+        result.value =value.value->to_str();
+    }
+    else
+    {
+        err("Runtime error: can not cast object type \"%s\" to STRING.\n", OBJ_STR[value.type]);
+        terminate(TERM_ERROR);
+    }
+    value.decref();
+    push(result);
 }
 
 static void do_build_list(vs_size_t size)
@@ -802,6 +854,21 @@ static void eval()
             break;
         case OP_NEG:
             do_neg();
+            break;
+        case OP_EVAL:
+            do_eval();
+            break;
+        case OP_CHAR:
+            do_to_char();
+            break;
+        case OP_INT:    
+            do_to_int();
+            break;
+        case OP_FLOAT:
+            do_to_float();
+            break;
+        case OP_STR:
+            do_to_str();
             break;
         case OP_BUILD_LIST:
             do_build_list(inst.operand);
