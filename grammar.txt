@@ -1,18 +1,13 @@
 primary_expression:CONSTANT
 primary_expression:IDENTIFIER
-primary_expression:initializer
-primary_expression:L_PAREN expression R_PAREN
-primary_expression:INPUT L_PAREN expression R_PAREN
-primary_expression:CHAR L_PAREN expression R_PAREN
-primary_expression:INT L_PAREN expression R_PAREN
-primary_expression:FLOAT L_PAREN expression R_PAREN
-primary_expression:STR L_PAREN expression R_PAREN
-primary_expression:EVAL L_PAREN expression R_PAREN
+primary_expression:L_BRACK R_BRACK
+primary_expression:L_BRACK value_list_expression L_BRACK
+primary_expression:L_PAREN logical_or_expression R_PAREN
 
 postfix_expression:primary_expression
-postfix_expression:postfix_expression L_BRACK expression R_BRACK
 postfix_expression:postfix_expression L_PAREN R_PAREN
-postfix_expression:postfix_expression L_PAREN argument_expression_list R_PAREN
+postfix_expression:postfix_expression L_PAREN value_list_expression R_PAREN
+postfix_expression:postfix_expression L_BRACK logical_or_expression R_BRACK
 
 unary_expression:postfix_expression
 unary_expression:NOT postfix_expression
@@ -43,11 +38,8 @@ logical_and_expression:logical_and_expression AND equality_expression
 logical_or_expression:logical_and_expression
 logical_or_expression:logical_or_expression OR logical_and_expression
 
-assignment_expression:logical_or_expression
-assignment_expression:postfix_expression assignment_operator logical_or_expression
-
-argument_expression_list:logical_or_expression
-argument_expression_list:argument_expression_list COMMA logical_or_expression
+value_list_expression:logical_or_expression
+value_list_expression:value_list_expression COMMA logical_or_expression
 
 assignment_operator:ASSIGN
 assignment_operator:MUL_ASSIGN
@@ -58,41 +50,50 @@ assignment_operator:SUB_ASSIGN
 assignment_operator:AND_ASSIGN
 assignment_operator:OR_ASSIGN
 
-expression:assignment_expression
-expression:expression COMMA assignment_expression
+assignment_expression:logical_or_expression
+assignment_expression:postfix_expression assignment_operator logical_or_expression
 
-declaration:VAR init_declarator_list SEMICOLON
-declaration:VAL init_declarator_list SEMICOLON
+expression_list:assignment_expression
+expression_list:expression_list COMMA assignment_expression
 
-function_declaration:FUNC IDENTIFIER L_PAREN R_PAREN compound_statement
-function_declaration:FUNC IDENTIFIER L_PAREN identifier_list R_PAREN compound_statement
+expression_statement:SEMICOLON
+expression_statement:expression_list SEMICOLON
+
+init_declarator:IDENTIFIER
+init_declarator:IDENTIFIER ASSIGN logical_or_expression
 
 init_declarator_list:init_declarator
 init_declarator_list:init_declarator_list COMMA init_declarator
 
-init_declarator:IDENTIFIER
-init_declarator:IDENTIFIER ASSIGN initializer
+declaration:VAR init_declarator_list SEMICOLON
+declaration:VAL init_declarator_list SEMICOLON
 
-identifier_list:IDENTIFIER
-identifier_list:identifier_list COMMA IDENTIFIER
+parameter_list:IDENTIFIER
+parameter_list:parameter_list COMMA IDENTIFIER
 
-initializer:logical_or_expression
-initializer:L_BRACK R_BRACK
-initializer:L_BRACK initializer_list R_BRACK
-initializer:L_BRACK initializer_list COMMA R_BRACK
+function_declaration:FUNC IDENTIFIER L_PAREN R_PAREN compound_statement
+function_declaration:FUNC IDENTIFIER L_PAREN parameter_list R_PAREN compound_statement
 
-initializer_list:initializer
-initializer_list:initializer_list COMMA initializer
+elif_statement:ELIF L_PAREN logical_or_expression R_PAREN compound_statement
+elif_statement:elif_statement ELIF L_PAREN logical_or_expression R_PAREN compound_statement
 
-logic_or_expression_list:logic_or_expression
-logic_or_expression_list:logic_or_expression_list COMMA logic_or_expression
+selection_statement:IF L_PAREN logical_or_expression R_PAREN compound_statement
+selection_statement:IF L_PAREN logical_or_expression R_PAREN compound_statement elif_statement
+selection_statement:IF L_PAREN logical_or_expression R_PAREN compound_statement ELSE compound_statement
+selection_statement:IF L_PAREN logical_or_expression R_PAREN compound_statement elif_statement ELSE compound_statement
 
-io_statement:INPUT L_PAREN R_PAREN SEMICOLON
-io_statement:INPUT L_PAREN logic_or_expression_list R_PAREN SEMICOLON
-io_statement:PRINT L_PAREN R_PAREN SEMICOLON
-io_statement:PRINT L_PAREN logic_or_expression_list R_PAREN SEMICOLON
+iteration_statement:WHILE L_PAREN logical_or_expression R_PAREN compound_statement
+iteration_statement:FOR L_PAREN declaration expression_statement R_PAREN compound_statement
+iteration_statement:FOR L_PAREN declaration expression_statement expression_list R_PAREN compound_statement
+iteration_statement:FOR L_PAREN expression_statement expression_statement R_PAREN compound_statement
+iteration_statement:FOR L_PAREN expression_statement expression_statement expression_list R_PAREN compound_statement
 
-statement:io_statement
+jump_statement:CONTINUE SEMICOLON
+jump_statement:BREAK SEMICOLON
+jump_statement:RETURN SEMICOLON
+jump_statement:RETURN logical_or_expression SEMICOLON
+
+statement:declaration
 statement:function_declaration
 statement:expression_statement
 statement:selection_statement
@@ -100,41 +101,16 @@ statement:iteration_statement
 statement:jump_statement
 
 statement_block:statement
-statement_block:declaration
 statement_block:statement_block statement
-statement_block:statement_block declaration
 
 compound_statement:L_CURLY R_CURLY
 compound_statement:L_CURLY statement_block R_CURLY
 
-expression_statement:SEMICOLON
-expression_statement:expression SEMICOLON
-
-elif_statement:ELIF L_PAREN expression R_PAREN compound_statement
-elif_statement:elif_statement ELIF L_PAREN expression R_PAREN compound_statement
-
-selection_statement:IF L_PAREN expression R_PAREN compound_statement
-selection_statement:IF L_PAREN expression R_PAREN compound_statement elif_statement
-selection_statement:IF L_PAREN expression R_PAREN compound_statement ELSE compound_statement
-selection_statement:IF L_PAREN expression R_PAREN compound_statement elif_statement ELSE compound_statement
-
-iteration_statement:WHILE L_PAREN expression R_PAREN compound_statement
-iteration_statement:FOR L_PAREN declaration expression_statement R_PAREN compound_statement
-iteration_statement:FOR L_PAREN declaration expression_statement expression R_PAREN compound_statement
-iteration_statement:FOR L_PAREN expression_statement expression_statement R_PAREN compound_statement
-iteration_statement:FOR L_PAREN expression_statement expression_statement expression R_PAREN compound_statement
-
-jump_statement:CONTINUE SEMICOLON
-jump_statement:BREAK SEMICOLON
-jump_statement:RETURN SEMICOLON
-jump_statement:RETURN expression SEMICOLON
-
-external_declaration:io_statement
-external_declaration:function_declaration
-external_declaration:declaration
-external_declaration:expression_statement
-external_declaration:selection_statement
-external_declaration:iteration_statement
+external_statement:declaration
+external_statement:function_declaration
+external_statement:expression_statement
+external_statement:selection_statement
+external_statement:iteration_statement
 
 translation_unit:external_declaration
 translation_unit:translation_unit external_declaration

@@ -166,10 +166,6 @@ int recognize_keyword(File *file, Token *token)
             {
                 token->type = TK_CONTINUE;
             }
-            else if (!strcmp(buffer, "char"))
-            {
-                token->type = TK_CHAR;
-            }
             else
             {
                 offset = len;
@@ -179,14 +175,6 @@ int recognize_keyword(File *file, Token *token)
             if (!strcmp(buffer, "if"))
             {
                 token->type = TK_IF;
-            }
-            else if (!strcmp(buffer, "input"))
-            {
-                token->type = TK_INPUT;
-            }
-            else if (!strcmp(buffer, "int"))
-            {
-                token->type = TK_INT;
             }
             else
             {
@@ -201,10 +189,6 @@ int recognize_keyword(File *file, Token *token)
             else if (!strcmp(buffer, "elif"))
             {
                 token->type = TK_ELIF;
-            }
-            else if (!strcmp(buffer, "eval"))
-            {
-                token->type = TK_EVAL;
             }
             else
             {
@@ -229,10 +213,6 @@ int recognize_keyword(File *file, Token *token)
             else if (!strcmp(buffer, "func"))
             {
                 token->type = TK_FUNC;
-            }
-            else if (!strcmp(buffer, "float"))
-            {
-                token->type = TK_FLOAT;
             }
             else
             {
@@ -273,25 +253,6 @@ int recognize_keyword(File *file, Token *token)
                 offset = len;
             }
             break;
-        case 'p':
-            if (!strcmp(buffer, "print"))
-            {
-                token->type = TK_PRINT;
-            }
-            else
-            {
-                offset = len;
-            }
-            break;
-        case 's':
-            if (!strcmp(buffer, "str"))
-            {
-                token->type = TK_STR;
-            }
-            else
-            {
-                offset = len;
-            }
         default:
             offset = len;
             break;

@@ -18,7 +18,6 @@ static void fprint_if_stmt_node(FILE *file, ASTNode *node);
 static void fprint_elif_lst_node(FILE *file, ASTNode *node);
 static void fprint_while_stmt_node(FILE *file, ASTNode *node);
 static void fprint_for_stmt_node(FILE *file, ASTNode *node);
-static void fprint_io_stmt_node(FILE *file, ASTNode *node);
 static void fprint_continue_node(FILE *file, ASTNode *node);
 static void fprint_break_node(FILE *file, ASTNode *node);
 static void fprint_cpd_stmt_node(FILE *file, ASTNode *node);
@@ -153,7 +152,7 @@ static void fprint_lst_val_node(FILE *file, ASTNode *node)
     fprint_indent(file);
     fprintf(file, "lst_val: \n");
     indent++;
-    for (ASTNode *child : *node->list_vals)
+    for (ASTNode *child : *node->list_val)
     {
         fprint_astree(file, child);
     }
@@ -191,7 +190,7 @@ static void fprint_func_call_node(FILE *file, ASTNode *node)
     fprint_indent(file);
     fprintf(file, "func args: \n");
     indent++;
-    fprint_astree(file, node->arg_node);
+    fprint_astree(file, node->arg_list);
     indent--;
     indent--;
 }
@@ -202,7 +201,10 @@ static void fprint_func_decl_node(FILE *file, ASTNode *node)
     fprintf(file, "func_decl: \n");
     indent++;
     fprint_astree(file, node->func_name);
-    fprint_astree(file, node->arg_node);
+    for (auto param : *node->func_params)
+    {
+        fprint_astree(file, param);
+    }
     fprint_astree(file, node->func_body);
     indent--;
 }
@@ -261,18 +263,6 @@ static void fprint_for_stmt_node(FILE *file, ASTNode *node)
     fprint_astree(file, node->for_cond);
     fprint_astree(file, node->for_incr);
     fprint_astree(file, node->for_body);
-    indent--;
-}
-
-static void fprint_io_stmt_node(FILE *file, ASTNode *node)
-{
-    fprint_indent(file);
-    fprintf(file, "%s: \n", node->node_type == AST_INPUT_STMT ? "input" : "print");
-    indent++;
-    for (ASTNode *child : *node->list_vals)
-    {
-        fprint_astree(file, child);
-    }
     indent--;
 }
 
@@ -364,7 +354,7 @@ void fprint_tokens(FILE *file, std::vector<Token *> tokens)
 
 void fprint_astree(FILE *file, ASTNode *astree)
 {
-    switch (astree->node_type)
+    switch (astree->type)
     {
     case AST_CONST:
         fprint_const_node(file, astree);
@@ -381,19 +371,19 @@ void fprint_astree(FILE *file, ASTNode *astree)
     case AST_EXPR_LST:
         fprint_expr_lst_node(file, astree);
         break;
-    case AST_DECL:
+    case AST_INIT_DECL:
         fprint_decl_node(file, astree);
         break;
-    case AST_DECL_LST:
+    case AST_INIT_DECL_LIST:
         fprint_decl_lst_node(file, astree);
         break;
-    case AST_ASSIGN:
+    case AST_ASSIGN_EXPR:
         fprint_assign_node(file, astree);
         break;
-    case AST_LST_VAL:
+    case AST_LIST_VAL:
         fprint_lst_val_node(file, astree);
         break;
-    case AST_LST_IDX:
+    case AST_LIST_IDX:
         fprint_lst_idx_node(file, astree);
         break;
     case AST_FUNC_CALL:
@@ -405,7 +395,7 @@ void fprint_astree(FILE *file, ASTNode *astree)
     case AST_IF_STMT:
         fprint_if_stmt_node(file, astree);
         break;
-    case AST_ELIF_LST:
+    case AST_ELIF_LIST:
         fprint_elif_lst_node(file, astree);
         break;
     case AST_WHILE_STMT:
@@ -426,10 +416,6 @@ void fprint_astree(FILE *file, ASTNode *astree)
         break;
     case AST_RETURN:
         fprint_return_node(file, astree);
-        break;
-    case AST_INPUT_STMT:
-    case AST_PRINT_STMT:
-        fprint_io_stmt_node(file, astree);
         break;
     default:
         break;

@@ -113,7 +113,7 @@ static void do_store(OPCODE opcode, ASTNode *assign_var)
         cur->add_inst(VSInst(opcode));
     }
 
-    if (assign_var->node_type == AST_IDENT)
+    if (assign_var->type == AST_IDENT)
     {
         std::string *name = assign_var->name;
         if (cur->name_to_addr.find(*name) != cur->name_to_addr.end())
@@ -130,7 +130,7 @@ static void do_store(OPCODE opcode, ASTNode *assign_var)
             cur->add_inst(VSInst(OP_STORE_NAME, (*nonlocals)[*name]));
         }
     }
-    else if (assign_var->node_type == AST_LST_IDX)
+    else if (assign_var->type == AST_LIST_IDX)
     {
         gen_expr_list(assign_var->list_index);
         gen_expr_list(assign_var->list_name);
@@ -175,37 +175,6 @@ static void gen_ident(ASTNode *node)
     }
 }
 
-static void gen_eval(ASTNode *node)
-{
-    VSCodeObject *cur = codestack.top();
-    gen_expr_list(node->source);
-    cur->add_inst(VSInst(OP_EVAL));
-}
-
-static void gen_type_cast(ASTNode *node)
-{
-    VSCodeObject *cur = codestack.top();
-    gen_expr_list(node->src_value);
-    switch (node->to_type)
-    {
-    case TK_CHAR:
-        cur->add_inst(VSInst(OP_CHAR));
-        break;
-    case TK_INT:
-        cur->add_inst(VSInst(OP_INT));
-        break;
-    case TK_FLOAT:
-        cur->add_inst(VSInst(OP_FLOAT));
-        break;
-    case TK_STR:
-        cur->add_inst(VSInst(OP_STR));
-        break;
-    default:
-        err("Can not cast to type: \"%s\"\n", TOKEN_STR[node->to_type]);
-        break;
-    }
-}
-
 static void gen_b_expr(ASTNode *node)
 {
     VSCodeObject *cur = codestack.top();
@@ -243,20 +212,20 @@ static void gen_list_val(ASTNode *node)
 {
     VSCodeObject *cur = codestack.top();
     // tranverse the list from end to start
-    int index = node->list_vals->size() - 1;
+    int index = node->list_val->size() - 1;
     while (index >= 0)
     {
-        gen_expr_list(node->list_vals->at(index));
+        gen_expr(node->list_val->at(index));
         index--;
     }
-    cur->add_inst(VSInst(OP_BUILD_LIST, node->list_vals->size()));
+    cur->add_inst(VSInst(OP_BUILD_LIST, node->list_val->size()));
 }
 
 static void gen_func_call(ASTNode *node)
 {
     VSCodeObject *cur = codestack.top();
-    gen_list_val(node->arg_node);
-    gen_expr_list(node->func_name);
+    gen_list_val(node->arg_list);
+    gen_expr_list(node->func);
     cur->add_inst(VSInst(OP_CALL));
 }
 
@@ -285,7 +254,7 @@ static void gen_continue(ASTNode *node)
 
 static void gen_expr(ASTNode *node)
 {
-    switch (node->node_type)
+    switch (node->type)
     {
     case AST_CONST:
         gen_const(node);
@@ -293,29 +262,20 @@ static void gen_expr(ASTNode *node)
     case AST_IDENT:
         gen_ident(node);
         break;
+    case AST_LIST_VAL:
+        gen_list_val(node);
+        break;
+    case AST_LIST_IDX:
+        gen_list_idx(node);
+        break;
+    case AST_FUNC_CALL:
+        gen_func_call(node);
+        break;
     case AST_B_EXPR:
         gen_b_expr(node);
         break;
     case AST_U_EXPR:
         gen_u_expr(node);
-        break;
-    case AST_LST_IDX:
-        gen_list_idx(node);
-        break;
-    case AST_LST_VAL:
-        gen_list_val(node);
-        break;
-    case AST_FUNC_CALL:
-        gen_func_call(node);
-        break;
-    case AST_INPUT_STMT:
-        gen_input_stmt(node);
-        break;
-    case AST_EVAL:
-        gen_eval(node);
-        break;
-    case AST_TYPE_CAST:
-        gen_type_cast(node);
         break;
     default:
         break;
@@ -324,7 +284,7 @@ static void gen_expr(ASTNode *node)
 
 static void gen_expr_list(ASTNode *node)
 {
-    if (node->node_type == AST_EXPR_LST)
+    if (node->type == AST_EXPR_LST)
     {
         for (auto expr : *node->expr_list)
         {
@@ -359,7 +319,7 @@ static void gen_decl_stmt(ASTNode *node)
 
 static void gen_assign_expr(ASTNode *node)
 {
-    if (node->node_type == AST_ASSIGN)
+    if (node->type == AST_ASSIGN_EXPR)
     {
         gen_expr(node->assign_val);
         do_store(get_b_op(node->assign_opcode), node->assign_var);
@@ -367,27 +327,6 @@ static void gen_assign_expr(ASTNode *node)
     else
     {
         gen_expr(node);
-    }
-}
-
-static void gen_input_stmt(ASTNode *node)
-{
-    VSCodeObject *cur = codestack.top();
-    if (node->message != NULL)
-    {
-        gen_expr(node->message);
-        cur->add_inst(VSInst(OP_PRINT));
-    }
-    cur->add_inst(VSInst(OP_INPUT));
-}
-
-static void gen_print_stmt(ASTNode *node)
-{
-    VSCodeObject *cur = codestack.top();
-    for (auto arg : *node->list_vals)
-    {
-        gen_expr_list(arg);
-        cur->add_inst(VSInst(OP_PRINT));
     }
 }
 
@@ -404,7 +343,7 @@ static void gen_for_stmt(ASTNode *node)
 
     if (node->for_init != NULL)
     {
-        if (node->for_init->node_type == AST_DECL_LST)
+        if (node->for_init->type == AST_INIT_DECL_LIST)
         {
             gen_decl_stmt(node->for_init);
         }
@@ -418,7 +357,7 @@ static void gen_for_stmt(ASTNode *node)
 
     if (node->for_cond != NULL)
     {
-        gen_expr_list(node->for_cond);
+        gen_expr(node->for_cond);
     }
     else
     {
@@ -463,7 +402,7 @@ static void gen_func_decl(ASTNode *node)
     parent->add_const(new VSObject(cur));
 
     // Add function arg names to function locals.
-    for (auto arg : *node->arg_node->list_vals)
+    for (auto arg : *node->func_params)
     {
         cur->add_arg(*arg->name);
     }
@@ -486,7 +425,7 @@ static void gen_elif_list(ASTNode *node)
     {
         if (child->if_cond != NULL)
         {
-            gen_expr_list(child->if_cond);
+            gen_expr(child->if_cond);
         }
         else
         {
@@ -537,7 +476,7 @@ static void gen_if_stmt(ASTNode *node)
     VSCodeObject *cur, *parent = codestack.top();
     if (node->if_cond != NULL)
     {
-        gen_expr_list(node->if_cond);
+        gen_expr(node->if_cond);
     }
     else
     {
@@ -584,7 +523,7 @@ static void gen_while_stmt(ASTNode *node)
     cur->loop_start = 0;
     if (node->while_cond != NULL)
     {
-        gen_expr_list(node->for_init);
+        gen_expr(node->for_init);
     }
     else
     {
@@ -608,9 +547,9 @@ static void gen_cpd_stmt(ASTNode *node)
 {
     for (auto stmt : *node->statements)
     {
-        switch (stmt->node_type)
+        switch (stmt->type)
         {
-        case AST_DECL_LST:
+        case AST_INIT_DECL_LIST:
             gen_decl_stmt(stmt);
             break;
         case AST_FUNC_DECL:
@@ -625,13 +564,7 @@ static void gen_cpd_stmt(ASTNode *node)
         case AST_WHILE_STMT:
             gen_while_stmt(stmt);
             break;
-        case AST_INPUT_STMT:
-            gen_input_stmt(stmt);
-            break;
-        case AST_PRINT_STMT:
-            gen_print_stmt(stmt);
-            break;
-        case AST_ASSIGN:
+        case AST_ASSIGN_EXPR:
             gen_assign_expr(stmt);
             break;
         case AST_RETURN:

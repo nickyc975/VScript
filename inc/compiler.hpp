@@ -44,15 +44,6 @@ typedef enum
     TK_FUNC,
     TK_RETURN,
 
-    // type conversion keywords
-    TK_BOOL,
-    TK_CHAR,
-    TK_INT,
-    TK_FLOAT,
-    TK_STR,
-    TK_LIST,
-    TK_EVAL,
-
     // if statement keywords
     TK_IF,
     TK_ELIF,
@@ -67,10 +58,6 @@ typedef enum
     // jump keywords
     TK_BREAK,
     TK_CONTINUE,
-
-    // input keywords
-    TK_INPUT,
-    TK_PRINT,
     
     // ,
     TK_COMMA,
@@ -125,13 +112,6 @@ static char *TOKEN_STR[] =
     "VAR",
     "FUNC",
     "RETURN",
-    "BOOL",
-    "CHAR",
-    "INT",
-    "FLOAT",
-    "STR",
-    "LIST",
-    "EVAL",
     "IF",
     "ELIF",
     "ELSE",
@@ -139,8 +119,6 @@ static char *TOKEN_STR[] =
     "WHILE",
     "BREAK",
     "CONTINUE",
-    "INPUT",
-    "PRINT",
     "COMMA",
     "SEMICOLON",
     "L_PAREN",
@@ -157,31 +135,26 @@ typedef enum
 {
     AST_CONST,
     AST_IDENT,
+    AST_LIST_VAL,
+    AST_LIST_IDX,
+    AST_FUNC_CALL,
     AST_B_EXPR,
     AST_U_EXPR,
-    AST_TYPE_CAST,
-    AST_EVAL,
-    AST_EXPR,
+    AST_ASSIGN_EXPR,
     AST_EXPR_LST,
-    AST_DECL,
-    AST_DECL_LST,
-    AST_ASSIGN,
-    AST_LST_VAL,
-    AST_LST_IDX,
-    AST_FUNC_CALL,
+    AST_INIT_DECL,
+    AST_INIT_DECL_LIST,
     AST_FUNC_DECL,
+    AST_ELIF_LIST,
     AST_IF_STMT,
     AST_WHILE_STMT,
     AST_FOR_STMT,
     AST_CONTINUE,
     AST_BREAK,
-    AST_CPD_STMT,
-    AST_PROGRAM,
-    AST_ELIF_LST,
     AST_RETURN,
-    AST_PRINT_STMT,
-    AST_INPUT_STMT,
-    AST_UNKNOW
+    AST_STMT,
+    AST_CPD_STMT,
+    AST_PROGRAM
 } AST_NODE_TYPE;
 
 class Token
@@ -208,8 +181,7 @@ class ASTNode
 {
 public:
     // AST node type
-    AST_NODE_TYPE node_type;
-    AST_NODE_TYPE ext_node_type;
+    AST_NODE_TYPE type;
 
     union {
         // identifiers
@@ -222,12 +194,21 @@ public:
         // constants
         VSValue *value;
 
-        // binary operate
+        // value list
+        std::vector<ASTNode *> *list_val;
+
+        // list index
         struct
         {
-            TOKEN_TYPE b_opcode;
-            ASTNode *l_operand;
-            ASTNode *r_operand;
+            ASTNode *list_name;
+            ASTNode *list_index;
+        };
+
+        // function call
+        struct
+        {
+            ASTNode *func;
+            ASTNode *arg_list;
         };
 
         // unary operate
@@ -237,20 +218,15 @@ public:
             ASTNode *operand;
         };
 
-        // expressions
-        std::vector<ASTNode *> *expr_list;
-
-        // declarations
+        // binary operate
         struct
         {
-            ASTNode *var_name;
-            ASTNode *init_val;
+            TOKEN_TYPE b_opcode;
+            ASTNode *l_operand;
+            ASTNode *r_operand;
         };
 
-        // declaration list
-        std::vector<ASTNode *> *decl_list; // list of declarations
-
-        // assignments
+        // assignment expressions
         struct
         {
             TOKEN_TYPE assign_opcode;
@@ -258,29 +234,24 @@ public:
             ASTNode *assign_val;
         };
 
-        // type cast statements
+        // expressions
+        std::vector<ASTNode *> *expr_list;
+
+        // init declarations
         struct
         {
-            TOKEN_TYPE to_type;
-            ASTNode *src_value;
-        };
-        
-
-        // list values, function/print args
-        std::vector<ASTNode *> *list_vals;
-
-        // list index
-        struct
-        {
-            ASTNode *list_name;
-            ASTNode *list_index;
+            ASTNode *var_name;
+            ASTNode *init_val;
         };
 
-        // function declaration or function call
+        // init declaration list
+        std::vector<ASTNode *> *decl_list;
+
+        // function decalaretion
         struct
         {
             ASTNode *func_name;
-            ASTNode *arg_node;
+            std::vector<ASTNode *> *func_params;
             ASTNode *func_body;
         };
 
@@ -322,18 +293,11 @@ public:
             std::vector<ASTNode *> *statements;
         };
 
-        // input message for input statement
-        ASTNode *message;
-
-        // source code for eval statement
-        ASTNode *source;
-
         // return statements
         ASTNode *ret_val;
     };
 
-    ASTNode(AST_NODE_TYPE node_type, AST_NODE_TYPE ext_node_type):
-        node_type(node_type), ext_node_type(ext_node_type)
+    ASTNode(AST_NODE_TYPE type): type(type)
     {
     }
     ~ASTNode()
