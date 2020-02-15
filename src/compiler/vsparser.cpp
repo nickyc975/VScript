@@ -18,7 +18,7 @@
 
 static unsigned int tk_idx;
 static std::vector<Token *> *tks;
-static SymTable<ASTNode *> *cur_table;
+static SymTable<ASTNode *> *cur_table, *global_table;
 
 static ASTNode *read_list_val();
 static ASTNode *read_primary_expr();
@@ -350,7 +350,7 @@ static ASTNode *cal_b_expr(TOKEN_TYPE op, ASTNode *left, ASTNode *right)
     }
 }
 
-static ASTNode *ident_node(std::string *name, bool is_mutable)
+static ASTNode *ident_node(const std::string *name, bool is_mutable)
 {
     ASTNode *node = new ASTNode(AST_IDENT);
     node->name = new std::string(*name);
@@ -583,12 +583,18 @@ static ASTNode *read_primary_expr()
         break;
     case TK_IDENTIFIER:
         token = get_token();
-        if (!cur_table->contains_recur(*token->identifier))
+        if (global_table->contains(*token->identifier))
+        {
+            node = global_table->get(*token->identifier);
+        }
+        else if (cur_table->contains_recur(*token->identifier))
+        {
+            node = cur_table->get_recur(*token->identifier);
+        }
+        else
         {
             err("line %ld, \"%s\" not defined\n", token->ln, token->identifier->c_str());
-            break;
         }
-        node = cur_table->get_recur(*token->identifier);
         break;
     case TK_L_PAREN:
         expect(TK_L_PAREN);
@@ -961,9 +967,9 @@ static ASTNode *read_func_decl()
     Token *token = expect(TK_IDENTIFIER);
     expect(TK_L_PAREN);
 
-    if (cur_table->contains(*token->identifier))
+    if (cur_table->contains(*token->identifier) || global_table->contains(*token->identifier))
     {
-        err("line: %ld, duplicated definition of \"%s\"\n", token->ln, token->identifier);
+        err("line: %ld, duplicated definition of \"%s\"\n", token->ln, token->identifier->c_str());
     }
 
     // In case of recursive function, we must put the id in the table
@@ -1095,9 +1101,9 @@ static ASTNode *read_init_decl(bool is_mutable)
 {
     ASTNode *init = NULL;
     Token *token = expect(TK_IDENTIFIER);
-    if (cur_table->contains(*token->identifier))
+    if (cur_table->contains(*token->identifier) || global_table->contains(*token->identifier))
     {
-        err("line: %ld, duplicated definition of \"%s\"\n", token->ln, token->identifier);
+        err("line: %ld, duplicated definition of \"%s\"\n", token->ln, token->identifier->c_str());
     }
 
     ASTNode *ident = ident_node(token->identifier, is_mutable);
@@ -1210,9 +1216,14 @@ static ASTNode *read_program()
     return program;
 }
 
-ASTNode *parse(std::vector<Token *> *tokens)
+ASTNode *parse(std::vector<Token *> *tokens, std::unordered_map<std::string, vs_addr_t> *globals)
 {
     tk_idx = 0;
     tks = tokens;
+    global_table = new SymTable<ASTNode *>(NULL);
+    for (auto entry : *globals)
+    {
+        global_table->put(entry.first, ident_node(&(entry.first), false));
+    }
     return read_program();
 }

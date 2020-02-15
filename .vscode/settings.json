@@ -41,7 +41,9 @@
         "typeinfo": "cpp",
         "cstring": "cpp",
         "cinttypes": "cpp",
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "stack": "cpp",
+        "unordered_set": "cpp"
     },
 
     "line-counter.includes": [

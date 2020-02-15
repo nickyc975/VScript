@@ -40,15 +40,6 @@ typedef enum
     OP_NOT,
     OP_NEG,
 
-    // no arg, eval stack top
-    OP_EVAL,
-
-    // no arg, cast stack top to given type
-    OP_CHAR,
-    OP_INT,
-    OP_FLOAT,
-    OP_STR,
-
     // 1 arg, list length, create a list of objects in the stack
     OP_BUILD_LIST,
 
@@ -57,9 +48,6 @@ typedef enum
 
     // no arg, store the value at index of the list
     OP_INDEX_STORE,
-
-    // no arg append a value at the end of the list
-    OP_APPEND,
 
     // 1 arg, load the local object indicated by the arg
     OP_LOAD_LOCAL,
@@ -75,6 +63,9 @@ typedef enum
 
     // 1 arg, load the object at index in the const vector
     OP_LOAD_CONST,
+
+    // 1 arg, load the global object indicated by the arg
+    OP_LOAD_GLOBAL,
 
     // no arg, go to stack top
     OP_GOTO,
@@ -97,11 +88,10 @@ typedef enum
     // no arg, end current block
     OP_RET,
 
-    // no arg, read a value from cmd and push it into stack
-    OP_INPUT,
+    // 1 arg, call the native function indicated by the arg.
+    // this opcode could only appear in builtin functions
+    OP_CALL_NATIVE,
 
-    // no arg, print stack stop
-    OP_PRINT,
     OP_NOP
 } OPCODE;
 
@@ -122,20 +112,15 @@ static char *OPCODE_STR[] =
         "OR",
         "NOT",
         "NEG",
-        "EVAL",
-        "CHAR",
-        "INT",
-        "FLOAT",
-        "STR",
         "BUILD_LIST",
         "INDEX_LOAD",
         "INDEX_STORE",
-        "APPEND",
         "LOAD_LOCAL",
         "LOAD_NAME",
         "STORE_LOCAL",
         "STORE_NAME",
         "LOAD_CONST",
+        "LOAD_GLOBAL",
         "GOTO",
         "JMP",
         "JIF",
@@ -143,8 +128,7 @@ static char *OPCODE_STR[] =
         "CONTINUE",
         "CALL",
         "RET",
-        "INPUT",
-        "PRINT",
+        "CALL_NATIVE",
         "NOP"};
 
 typedef enum
@@ -204,6 +188,8 @@ public:
     void incref();
     void decref();
 };
+
+typedef VSObject (* vs_native_func)(VSObject);
 
 class VSMemItem
 {

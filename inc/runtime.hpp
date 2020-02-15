@@ -6,13 +6,6 @@
 #include "vs.hpp"
 #include "error.hpp"
 
-typedef enum
-{
-    TERM_NORM,
-    TERM_WARN,
-    TERM_ERROR
-} TERM_STATUS;
-
 class VSCallStackFrame
 {
 public:
@@ -32,6 +25,6 @@ public:
     ~VSCallStackFrame();
 };
 
-int execute(VSCodeObject *code);
+int execute(VSCodeObject *code, VSObjectList *objects, std::vector<vs_native_func> *func_addrs);
 
 #endif

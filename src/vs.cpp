@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "vs.hpp"
+#include "global.hpp"
 #include "compiler.hpp"
 #include "runtime.hpp"
 #include "printers.hpp"
@@ -45,20 +46,25 @@ int main(int argc, char **argv)
         fprint_tokens(f, token_list);
         fclose(f);
     }
-    ASTNode *astree = parse(&token_list);
+
+    auto globals = global_symbols();
+    auto objects = global_objects();
+    auto func_addrs = native_func_addrs();
+
+    ASTNode *astree = parse(&token_list, globals);
     if (show_parse)
     {
         FILE *f = fopen("astree.txt", "w");
         fprint_astree(f, astree);
         fclose(f);
     }
-    VSCodeObject *program = gencode(astree);
+    VSCodeObject *program = gencode(astree, globals);
     if (show_gen)
     {
         FILE *f = fopen("instructions.txt", "w");
         fprint_code(f, program);
         fclose(f);
     }
-    execute(program);
+    execute(program, objects, func_addrs);
     return 0;
 }

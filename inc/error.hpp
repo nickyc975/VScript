@@ -24,6 +24,15 @@ typedef enum
     NOTE
 } RE_TAG;
 
+typedef enum
+{
+    TERM_ERROR,
+    TERM_WARN,
+    TERM_NORM
+} TERM_STATUS;
+
 void __vs_report__(RE_TAG tag, char *fmt, ...);
+
+void terminate(TERM_STATUS status);
 
 #endif

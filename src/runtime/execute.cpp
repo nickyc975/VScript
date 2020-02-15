@@ -1,11 +1,5 @@
 #include "runtime.hpp"
 
-#define print_indent(indent)         \
-    for (int i = 0; i < indent; i++) \
-    {                                \
-        printf(" ");                 \
-    }
-
 #define check_list_index(index)                                                    \
     if (index.type != OBJ_DATA)                                                    \
     {                                                                              \
@@ -30,6 +24,8 @@
 
 static VSCallStackFrame *cur_frame;
 static std::stack<VSObject> cmptstack;
+static VSObjectList *globals;
+static std::vector<vs_native_func> *native_addrs;
 
 static void do_add();
 static void do_sub();
@@ -46,32 +42,25 @@ static void do_and();
 static void do_or();
 static void do_not();
 static void do_neg();
-static void do_eval();
-static void do_to_char();
-static void do_to_int();
-static void do_to_float();
-static void do_to_str();
 static void do_build_list(vs_size_t size);
 static void do_index_load();
 static void do_index_store();
-static void do_append();
 static void do_load_local(vs_addr_t addr);
 static void do_store_local(vs_addr_t addr);
 static void do_load_name(vs_addr_t addr);
 static void do_store_name(vs_addr_t addr);
 static void do_load_const(vs_addr_t addr);
+static void do_load_global(vs_addr_t addr);
 static void do_goto();
 static void do_jmp(vs_addr_t addr);
 static void do_jif(vs_addr_t addr);
 static void do_break();
 static void do_continue();
 static void do_call();
+static void do_call_native(vs_addr_t addr);
 static void do_ret();
-static void do_input();
-static void do_print();
 
 static void eval();
-static void terminate(TERM_STATUS status);
 
 static void push(VSObject object)
 {
@@ -97,30 +86,6 @@ static void find_blk_type(CODE_BLK_TYPE type)
     {
         warn("missing code block type: \"%s\"\n", CODE_BLK_STR[type]);
         terminate(TERM_WARN);
-    }
-}
-
-static void print_obj(VSObject object, int indent)
-{
-    print_indent(indent);
-    if (object.type == OBJ_DATA)
-    {
-        printf("%s", object.value->to_string().c_str());
-    }
-    else if (object.type == OBJ_CODE)
-    {
-        printf("%s %s", CODE_BLK_STR[object.codeblock->type], object.codeblock->name.c_str());
-    }
-    else
-    {
-        printf("[\n");
-        for (auto o : object.objlist->data)
-        {
-            print_obj(o, indent + 1);
-            printf(",\n");
-        }
-        print_indent(indent);
-        printf("]\n");
     }
 }
 
@@ -433,84 +398,6 @@ static void do_neg()
     push(result);
 }
 
-static void do_eval()
-{
-    // TODO: implement eval
-    push(VSObject(VSValue::None()));
-}
-
-static void do_to_char()
-{
-    VSObject value = pop();
-    VSObject result = VSObject();
-    if (value.type == OBJ_DATA)
-    {
-        result.type = OBJ_DATA;
-        result.value =value.value->to_char();
-    }
-    else
-    {
-        err("Runtime error: can not cast object type \"%s\" to CHAR.\n", OBJ_STR[value.type]);
-        terminate(TERM_ERROR);
-    }
-    value.decref();
-    push(result);
-}
-
-static void do_to_int()
-{
-    VSObject value = pop();
-    VSObject result = VSObject();
-    if (value.type == OBJ_DATA)
-    {
-        result.type = OBJ_DATA;
-        result.value =value.value->to_int();
-    }
-    else
-    {
-        err("Runtime error: can not cast object type \"%s\" to INT.\n", OBJ_STR[value.type]);
-        terminate(TERM_ERROR);
-    }
-    value.decref();
-    push(result);
-}
-
-static void do_to_float()
-{
-    VSObject value = pop();
-    VSObject result = VSObject();
-    if (value.type == OBJ_DATA)
-    {
-        result.type = OBJ_DATA;
-        result.value =value.value->to_float();
-    }
-    else
-    {
-        err("Runtime error: can not cast object type \"%s\" to FLOAT.\n", OBJ_STR[value.type]);
-        terminate(TERM_ERROR);
-    }
-    value.decref();
-    push(result);
-}
-
-static void do_to_str()
-{
-    VSObject value = pop();
-    VSObject result = VSObject();
-    if (value.type == OBJ_DATA)
-    {
-        result.type = OBJ_DATA;
-        result.value =value.value->to_str();
-    }
-    else
-    {
-        err("Runtime error: can not cast object type \"%s\" to STRING.\n", OBJ_STR[value.type]);
-        terminate(TERM_ERROR);
-    }
-    value.decref();
-    push(result);
-}
-
 static void do_build_list(vs_size_t size)
 {
     VSObject object = VSObject(new VSObjectList());
@@ -555,21 +442,6 @@ static void do_index_store()
     list.objlist->put(index.value->int_val, value);
     value.decref();
     index.decref();
-    list.decref();
-}
-
-static void do_append()
-{
-    VSObject list = pop();
-    VSObject value = pop();
-    if (list.type != OBJ_LIST)
-    {
-        err("object type \"%s\" can not be indexed\n", OBJ_STR[list.type]);
-        terminate(TERM_ERROR);
-    }
-
-    list.objlist->push(value);
-    value.decref();
     list.decref();
 }
 
@@ -654,6 +526,17 @@ static void do_load_const(vs_addr_t addr)
         terminate(TERM_ERROR);
     }
     VSObject object = cur_frame->code->consts.get(addr);
+    push(object);
+}
+
+static void do_load_global(vs_addr_t addr)
+{
+    if (addr >= globals->length())
+    {
+        err("invalid global addr: %u, number of globals: %u\n", addr, globals->length());
+        terminate(TERM_ERROR);
+    }
+    VSObject object = globals->get(addr);
     push(object);
 }
 
@@ -744,21 +627,44 @@ static void do_call()
         terminate(TERM_ERROR);
     }
 
-    if (args.objlist->length() != func.codeblock->arg_num)
+    if (args.objlist->length() < func.codeblock->arg_num)
     {
         err("function \"%s\" expects %u args but got only %u args\n",
             func.codeblock->name.c_str(), func.codeblock->arg_num, args.objlist->length());
         terminate(TERM_ERROR);
     }
 
+    vs_size_t i = 0;
+    VSObject arg_list = VSObject(new VSObjectList());
     cur_frame = new VSCallStackFrame(cur_frame, func.codeblock);
-    for (vs_size_t i = 0; i < args.objlist->length(); i++)
+    for (; i < cur_frame->arg_num; i++)
     {
         VSObject obj = args.objlist->get(i);
         cur_frame->locals.put(i, obj);
     }
+
+    // save overflowed args.
+    for (; i < args.objlist->length(); i++)
+    {
+        arg_list.objlist->push(args.objlist->get(i));
+    }
+    cur_frame->locals.put(cur_frame->arg_num, arg_list);
+
     args.decref();
     func.decref();
+}
+
+static void do_call_native(vs_addr_t addr)
+{
+    if (addr >= native_addrs->size())
+    {
+        err("invalid native func addr: %u, number of native funcs: %u\n", addr, native_addrs->size());
+        terminate(TERM_ERROR);
+    }
+
+    VSObject arg_list = cur_frame->locals.get(cur_frame->arg_num);
+    VSObject ret_val = (*(*native_addrs)[addr])(arg_list);
+    push(ret_val);
 }
 
 static void do_ret()
@@ -771,34 +677,6 @@ static void do_ret()
         warn("directly ending with return\n");
         terminate(TERM_WARN);
     }
-}
-
-static void do_input()
-{
-    std::string str = std::string();
-    char c = getchar();
-    while (c != '\n' && c != '\r')
-    {
-        str.append(1, c);
-        c = getchar();
-    }
-    if (c == '\r')
-    {
-        c = getchar();
-        if (c != '\n')
-        {
-            ungetc(c, stdin);
-        }
-    }
-    VSValue *value = new VSValue(str);
-    push(VSObject(value));
-}
-
-static void do_print()
-{
-    VSObject object = pop();
-    print_obj(object, 0);
-    object.decref();
 }
 
 static void eval()
@@ -855,20 +733,6 @@ static void eval()
         case OP_NEG:
             do_neg();
             break;
-        case OP_EVAL:
-            do_eval();
-            break;
-        case OP_CHAR:
-            do_to_char();
-            break;
-        case OP_INT:    
-            do_to_int();
-            break;
-        case OP_FLOAT:
-            do_to_float();
-            break;
-        case OP_STR:
-            do_to_str();
             break;
         case OP_BUILD_LIST:
             do_build_list(inst.operand);
@@ -878,9 +742,6 @@ static void eval()
             break;
         case OP_INDEX_STORE:
             do_index_store();
-            break;
-        case OP_APPEND:
-            do_append();
             break;
         case OP_LOAD_LOCAL:
             do_load_local(inst.operand);
@@ -896,6 +757,9 @@ static void eval()
             break;
         case OP_LOAD_CONST:
             do_load_const(inst.operand);
+            break;
+        case OP_LOAD_GLOBAL:
+            do_load_global(inst.operand);
             break;
         case OP_GOTO:
             do_goto();
@@ -918,11 +782,8 @@ static void eval()
         case OP_RET:
             do_ret();
             break;
-        case OP_INPUT:
-            do_input();
-            break;
-        case OP_PRINT:
-            do_print();
+        case OP_CALL_NATIVE:
+            do_call_native(inst.operand);
             break;
         case OP_NOP:
         default:
@@ -931,15 +792,13 @@ static void eval()
     }
 }
 
-static void terminate(TERM_STATUS status)
-{
-    exit(status);
-}
-
-int execute(VSCodeObject *code)
+int execute(VSCodeObject *code, VSObjectList *objects, std::vector<vs_native_func> *func_addrs)
 {
     cmptstack = std::stack<VSObject>();
     cur_frame = new VSCallStackFrame(NULL, code);
+
+    globals = objects;
+    native_addrs = func_addrs;
 
     while (cur_frame != NULL)
     {

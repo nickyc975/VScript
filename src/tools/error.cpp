@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <cstdlib>
 #include <cstdarg>
 
 #include "error.hpp"
@@ -21,4 +22,9 @@ void __vs_report__(RE_TAG tag, char *fmt, ...)
         break;
     }
     va_end(args);
+}
+
+void terminate(TERM_STATUS status)
+{
+    exit(status);
 }

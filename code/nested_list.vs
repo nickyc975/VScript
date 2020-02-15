@@ -13,4 +13,4 @@ print(a[1][2], "\n");
 
 a[1] = 3;
 
-print(a);
+print(a, "\n");

@@ -20,11 +20,10 @@
 static std::stack<VSCodeObject *> codestack;
 static std::stack<std::unordered_map<std::string, vs_addr_t> *> conststack;
 static std::stack<std::unordered_map<std::string, vs_addr_t> *> nonlocalstack;
+static std::unordered_map<std::string, vs_addr_t> *globalsyms;
 
 static void gen_const(ASTNode *node);
 static void gen_ident(ASTNode *node);
-static void gen_eval(ASTNode *node);
-static void gen_type_cast(ASTNode *node);
 static void gen_b_expr(ASTNode *node);
 static void gen_u_expr(ASTNode *node);
 static void gen_list_idx(ASTNode *node);
@@ -37,8 +36,6 @@ static void gen_expr(ASTNode *node);
 static void gen_expr_list(ASTNode *node);
 static void gen_decl_stmt(ASTNode *node);
 static void gen_assign_expr(ASTNode *node);
-static void gen_input_stmt(ASTNode *node);
-static void gen_print_stmt(ASTNode *node);
 static void gen_cpd_stmt(ASTNode *node);
 static void gen_for_stmt(ASTNode *node);
 static void gen_func_decl(ASTNode *node);
@@ -160,7 +157,11 @@ static void gen_ident(ASTNode *node)
     auto nonlocals = nonlocalstack.top();
 
     std::string *name = node->name;
-    if (cur->name_to_addr.find(*name) != cur->name_to_addr.end())
+    if (globalsyms->find(*name) != globalsyms->end())
+    {
+        cur->add_inst(VSInst(OP_LOAD_GLOBAL, (*globalsyms)[*name]));
+    }
+    else if (cur->name_to_addr.find(*name) != cur->name_to_addr.end())
     {
         cur->add_inst(VSInst(OP_LOAD_LOCAL, cur->name_to_addr[*name]));
     }
@@ -407,6 +408,9 @@ static void gen_func_decl(ASTNode *node)
         cur->add_arg(*arg->name);
     }
 
+    // for overflowed args
+    cur->add_local("...");
+
     // Gen function body.
     gen_cpd_stmt(node->func_body);
 
@@ -584,8 +588,9 @@ static void gen_cpd_stmt(ASTNode *node)
     }
 }
 
-VSCodeObject *gencode(ASTNode *astree)
+VSCodeObject *gencode(ASTNode *astree, std::unordered_map<std::string, vs_addr_t> *globals)
 {
+    globalsyms = globals;
     codestack = std::stack<VSCodeObject *>();
     conststack = std::stack<std::unordered_map<std::string, vs_addr_t> *>();
     nonlocalstack = std::stack<std::unordered_map<std::string, vs_addr_t> *>();

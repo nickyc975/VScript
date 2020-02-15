@@ -306,7 +306,7 @@ public:
 };
 
 void tokenize(File *file, std::vector<Token *> &tokens);
-ASTNode *parse(std::vector<Token *> *tokens);
-VSCodeObject *gencode(ASTNode *astree);
+ASTNode *parse(std::vector<Token *> *tokens, std::unordered_map<std::string, vs_addr_t> *globals);
+VSCodeObject *gencode(ASTNode *astree, std::unordered_map<std::string, vs_addr_t> *globals);
 
 #endif
