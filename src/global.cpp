@@ -168,11 +168,11 @@ static VSObject __vs_append__(VSObject object)
     expect_nargs("append()", 2, object);
 
     VSObject list = object.objlist->get(0);
-    VSObject value = object.objlist->get(0);
+    VSObject value = object.objlist->get(1);
 
     if (list.type != OBJ_LIST)
     {
-        err("object type \"%s\" can not be indexed\n", OBJ_STR[list.type]);
+        err("object type \"%s\" can not be appended\n", OBJ_STR[list.type]);
         terminate(TERM_ERROR);
     }
 
@@ -183,7 +183,31 @@ static VSObject __vs_append__(VSObject object)
 static VSObject __vs_len__(VSObject object)
 {
     expect_nargs("len()", 1, object);
-    return VSObject(VSValue::None());
+
+    vs_int_t len = 0;
+    VSObject arg = object.objlist->get(0);
+    if (arg.type == OBJ_DATA)
+    {
+        if (arg.value->type == STRING)
+        {
+            len = arg.value->str_val->size();
+        }
+        else
+        {
+            err("Runtime error: can not calculate length of value type \"%s\".\n", TYPE_STR[arg.value->type]);
+            terminate(TERM_ERROR);
+        }
+    }
+    else if (arg.type == OBJ_LIST)
+    {
+        len = arg.objlist->length();
+    }
+    else
+    {
+        err("Runtime error: can not calculate length of object type \"%s\".\n", OBJ_STR[object.type]);
+        terminate(TERM_ERROR);
+    }
+    return VSObject(new VSValue(len));
 }
 
 static VSObject __vs_eval__(VSObject object)
@@ -198,6 +222,10 @@ VSObjectList *global_objects()
     for (vs_size_t i = 0; i < native_funcs.size(); i++)
     {
         VSCodeObject *codeblock = new VSCodeObject(symbols[i], FUNC_BLK);
+        if (symbols[i] == "input")
+        {
+            codeblock->add_inst(VSInst(OP_CALL_NATIVE, 1));
+        }
         codeblock->add_inst(VSInst(OP_CALL_NATIVE, i));
         codeblock->add_local("...");
         objlist->push(VSObject(codeblock));
