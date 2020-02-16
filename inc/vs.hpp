@@ -67,6 +67,9 @@ typedef enum
     // 1 arg, load the global object indicated by the arg
     OP_LOAD_GLOBAL,
 
+    // no arg, remove stack top
+    OP_POP,
+
     // no arg, go to stack top
     OP_GOTO,
 
@@ -97,6 +100,7 @@ typedef enum
 
 static char *OPCODE_STR[] =
     {
+        ""
         "ADD",
         "SUB",
         "MUL",
@@ -121,6 +125,7 @@ static char *OPCODE_STR[] =
         "STORE_NAME",
         "LOAD_CONST",
         "LOAD_GLOBAL",
+        "POP",
         "GOTO",
         "JMP",
         "JIF",

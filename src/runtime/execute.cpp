@@ -51,6 +51,7 @@ static void do_load_name(vs_addr_t addr);
 static void do_store_name(vs_addr_t addr);
 static void do_load_const(vs_addr_t addr);
 static void do_load_global(vs_addr_t addr);
+static void do_pop();
 static void do_goto();
 static void do_jmp(vs_addr_t addr);
 static void do_jif(vs_addr_t addr);
@@ -540,6 +541,12 @@ static void do_load_global(vs_addr_t addr)
     push(object);
 }
 
+static void do_pop()
+{
+    VSObject object = pop();
+    object.decref();
+}
+
 static void do_goto()
 {
     VSObject object = pop();
@@ -760,6 +767,9 @@ static void eval()
             break;
         case OP_LOAD_GLOBAL:
             do_load_global(inst.operand);
+            break;
+        case OP_POP:
+            do_pop();
             break;
         case OP_GOTO:
             do_goto();

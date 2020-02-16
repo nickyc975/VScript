@@ -106,7 +106,7 @@ static void do_store(OPCODE opcode, ASTNode *assign_var)
 
     if (opcode != OP_NOP)
     {
-        gen_expr_list(assign_var);
+        gen_expr(assign_var);
         cur->add_inst(VSInst(opcode));
     }
 
@@ -129,8 +129,8 @@ static void do_store(OPCODE opcode, ASTNode *assign_var)
     }
     else if (assign_var->type == AST_LIST_IDX)
     {
-        gen_expr_list(assign_var->list_index);
-        gen_expr_list(assign_var->list_name);
+        gen_expr(assign_var->list_index);
+        gen_expr(assign_var->list_name);
         cur->add_inst(VSInst(OP_INDEX_STORE));
     }
 }
@@ -179,15 +179,15 @@ static void gen_ident(ASTNode *node)
 static void gen_b_expr(ASTNode *node)
 {
     VSCodeObject *cur = codestack.top();
-    gen_expr_list(node->r_operand);
-    gen_expr_list(node->l_operand);
+    gen_expr(node->r_operand);
+    gen_expr(node->l_operand);
     cur->add_inst(VSInst(get_b_op(node->b_opcode)));
 }
 
 static void gen_u_expr(ASTNode *node)
 {
     VSCodeObject *cur = codestack.top();
-    gen_expr_list(node->operand);
+    gen_expr(node->operand);
     switch (node->u_opcode)
     {
     case TK_SUB:
@@ -204,8 +204,8 @@ static void gen_u_expr(ASTNode *node)
 static void gen_list_idx(ASTNode *node)
 {
     VSCodeObject *cur = codestack.top();
-    gen_expr_list(node->list_index);
-    gen_expr_list(node->list_name);
+    gen_expr(node->list_index);
+    gen_expr(node->list_name);
     cur->add_inst(VSInst(OP_INDEX_LOAD));
 }
 
@@ -226,7 +226,7 @@ static void gen_func_call(ASTNode *node)
 {
     VSCodeObject *cur = codestack.top();
     gen_list_val(node->arg_list);
-    gen_expr_list(node->func);
+    gen_expr(node->func);
     cur->add_inst(VSInst(OP_CALL));
 }
 
@@ -237,7 +237,7 @@ static void gen_return(ASTNode *node)
     if (node->ret_val == NULL)
         cur->add_inst(VSInst(OP_LOAD_CONST, CONST_NONE_ADDR));
     else
-        gen_expr_list(node->ret_val);
+        gen_expr(node->ret_val);
     cur->add_inst(VSInst(OP_RET));
 }
 
@@ -312,7 +312,7 @@ static void gen_decl_stmt(ASTNode *node)
         // Assign value.
         if (child->init_val != NULL)
         {
-            gen_expr_list(child->init_val);
+            gen_expr(child->init_val);
             cur->add_inst(VSInst(OP_STORE_LOCAL, cur->name_to_addr[*name]));
         }
     }
@@ -328,6 +328,8 @@ static void gen_assign_expr(ASTNode *node)
     else
     {
         gen_expr(node);
+        VSCodeObject *cur = codestack.top();
+        cur->add_inst(VSInst(OP_POP));
     }
 }
 
