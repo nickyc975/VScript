@@ -771,7 +771,7 @@ static void eval()
         case OP_POP:
             do_pop();
             break;
-        case OP_GOTO:
+        case OP_EVAL:
             do_goto();
             break;
         case OP_JMP:

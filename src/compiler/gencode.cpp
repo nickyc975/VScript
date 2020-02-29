@@ -337,7 +337,7 @@ static void gen_for_stmt(ASTNode *node)
 {
     VSCodeObject *cur, *parent = codestack.top();
     parent->add_inst(VSInst(OP_LOAD_CONST, parent->const_num));
-    parent->add_inst(VSInst(OP_GOTO));
+    parent->add_inst(VSInst(OP_EVAL));
 
     enter_blk("__vs_for__", LOOP_BLK);
 
@@ -441,7 +441,7 @@ static void gen_elif_list(ASTNode *node)
         parent->add_inst(VSInst(OP_NOT));
         parent->add_inst(VSInst(OP_JIF, parent->inst_num + 4));
         parent->add_inst(VSInst(OP_LOAD_CONST, parent->const_num));
-        parent->add_inst(VSInst(OP_GOTO));
+        parent->add_inst(VSInst(OP_EVAL));
 
         jmp_pos.push_back(parent->inst_num);
         parent->add_inst(VSInst(OP_JMP, 0));
@@ -459,7 +459,7 @@ static void gen_elif_list(ASTNode *node)
     if (node->else_node != NULL)
     {
         parent->add_inst(VSInst(OP_LOAD_CONST, parent->const_num));
-        parent->add_inst(VSInst(OP_GOTO));
+        parent->add_inst(VSInst(OP_EVAL));
 
         enter_blk("__vs_else__", NORM_BLK);
 
@@ -492,7 +492,7 @@ static void gen_if_stmt(ASTNode *node)
     parent->add_inst(VSInst(OP_NOT));
     parent->add_inst(VSInst(OP_JIF, parent->inst_num + 4));
     parent->add_inst(VSInst(OP_LOAD_CONST, parent->const_num));
-    parent->add_inst(VSInst(OP_GOTO));
+    parent->add_inst(VSInst(OP_EVAL));
 
     vs_size_t jmp_pos = parent->inst_num;
     parent->add_inst(VSInst(OP_JMP, 0));
@@ -519,7 +519,7 @@ static void gen_while_stmt(ASTNode *node)
 {
     VSCodeObject *cur, *parent = codestack.top();
     parent->add_inst(VSInst(OP_LOAD_CONST, parent->const_num));
-    parent->add_inst(VSInst(OP_GOTO));
+    parent->add_inst(VSInst(OP_EVAL));
 
     enter_blk("__vs_while__", LOOP_BLK);
 
