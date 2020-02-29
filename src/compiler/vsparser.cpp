@@ -1,12 +1,56 @@
+#include <stack>
+
 #include "compiler.hpp"
 
+static SymTable<ASTNode *> *cur_table, *global_table;
+
 // Create new table for compound statements.
-#define new_table() \
-    cur_table = new SymTable<ASTNode *>(cur_table); \
-    cur_table->top = NULL;
+#define new_table() cur_table = new SymTable<ASTNode *>(cur_table)
 
 // Restore parent table.
 #define restore_table() cur_table = cur_table->get_parent()
+
+static unsigned int inloop = 0, infunc = 0;
+static std::stack<unsigned int> inloop_stack;
+
+// Enter loop body
+#define enter_loop() inloop++
+
+// Check if in loop
+#define ensure_in_loop()                                                                         \
+    if (!inloop)                                                                                 \
+    {                                                                                            \
+        err("line %ld, continue or break must be in while or for statement\n", get_token()->ln); \
+    }
+
+// Leave loop body
+#define leave_loop() \
+    if (inloop > 0)  \
+    {                \
+        inloop--;    \
+    }
+
+// Enter func decl
+#define enter_func()           \
+    inloop_stack.push(inloop); \
+    inloop = 0;                \
+    infunc++;
+
+// Check if in func decl
+#define ensure_in_func()                                                            \
+    if (!infunc)                                                                    \
+    {                                                                               \
+        err("line %ld, return must be in function declaration\n", get_token()->ln); \
+    }
+
+// Leave func decl
+#define leave_func()             \
+    inloop = inloop_stack.top(); \
+    inloop_stack.pop();          \
+    if (infunc > 0)              \
+    {                            \
+        infunc--;                \
+    }
 
 // Ensure that there are tokens.
 #define ensure_token(ret_val)            \
@@ -18,7 +62,6 @@
 
 static unsigned int tk_idx;
 static std::vector<Token *> *tks;
-static SymTable<ASTNode *> *cur_table, *global_table;
 
 static ASTNode *read_list_val();
 static ASTNode *read_primary_expr();
@@ -146,38 +189,6 @@ static bool ensure_lval(ASTNode *node)
         return false;
     }
     return true;
-}
-
-static bool ensure_in_loop()
-{
-    SymTable<ASTNode *> *temp = cur_table;
-    while (temp != NULL)
-    {
-        if (temp->top != NULL && (temp->top->type == AST_WHILE_STMT || temp->top->type == AST_FOR_STMT))
-        {
-            return true;
-        }
-        temp = temp->get_parent();
-    }
-    ensure_token(false);
-    err("line %ld, continue or break must be in while or for statement\n", peek_token()->ln);
-    return false;
-}
-
-static bool ensure_in_func_decl()
-{
-    SymTable<ASTNode *> *temp = cur_table;
-    while (temp != NULL)
-    {
-        if (temp->top != NULL && temp->top->type == AST_FUNC_DECL)
-        {
-            return true;
-        }
-        temp = temp->get_parent();
-    }
-    ensure_token(false);
-    err("line %ld, return must be in function declaration\n", peek_token()->ln);
-    return false;
 }
 
 static ASTNode *cal_u_expr(TOKEN_TYPE op, ASTNode *value)
@@ -476,21 +487,21 @@ static ASTNode *elif_lst_node(std::vector<ASTNode *> *elif_list, ASTNode *else_n
     return node;
 }
 
-static ASTNode *while_stmt_node(ASTNode *while_cond)
+static ASTNode *while_stmt_node(ASTNode *while_cond, ASTNode *while_body)
 {
     ASTNode *node = new ASTNode(AST_WHILE_STMT);
     node->while_cond = while_cond;
-    node->while_body = NULL;
+    node->while_body = while_body;
     return node;
 }
 
-static ASTNode *for_stmt_node(ASTNode *for_init, ASTNode *for_cond, ASTNode *for_incr)
+static ASTNode *for_stmt_node(ASTNode *for_init, ASTNode *for_cond, ASTNode *for_incr, ASTNode *for_body)
 {
     ASTNode *node = new ASTNode(AST_FOR_STMT);
     node->for_init = for_init;
     node->for_cond = for_cond;
     node->for_incr = for_incr;
-    node->for_body = NULL;
+    node->for_body = for_body;
     return node;
 }
 
@@ -883,7 +894,7 @@ static ASTNode *read_stmt()
             expect(TK_RETURN);
             node = return_node(read_log_or_expr());
             expect(TK_SEMICOLON);
-            ensure_in_func_decl();
+            ensure_in_func();
             return node;
         default:
             return read_expr_stmt();
@@ -926,6 +937,7 @@ static ASTNode *read_for_stmt()
     expect(TK_FOR);
     expect(TK_L_PAREN);
 
+    enter_loop();
     // create new symbal table for "for" loop
     new_table();
 
@@ -938,7 +950,7 @@ static ASTNode *read_for_stmt()
         init = read_init_decl_stmt();
     else
         init = read_expr_stmt();
-    
+
     // read for cond
     cond = read_log_or_expr();
     expect(TK_SEMICOLON);
@@ -951,14 +963,13 @@ static ASTNode *read_for_stmt()
     }
     expect(TK_R_PAREN);
 
-    ASTNode **for_stmt = &(cur_table->top);
-    *for_stmt = for_stmt_node(init, cond, incr);
-    (*for_stmt)->for_body = read_cpd_stmt();
+    ASTNode *for_stmt = for_stmt_node(init, cond, incr, read_cpd_stmt());
 
     // restore parent table
     restore_table();
+    leave_loop();
 
-    return *for_stmt;
+    return for_stmt;
 }
 
 static ASTNode *read_func_decl()
@@ -977,6 +988,7 @@ static ASTNode *read_func_decl()
     ASTNode *ident = ident_node(token->identifier, false);
     cur_table->put(*ident->name, ident);
 
+    enter_func();
     // create symbol table for function
     new_table();
 
@@ -1004,9 +1016,7 @@ static ASTNode *read_func_decl()
     }
     expect(TK_R_PAREN);
 
-    ASTNode **func = &(cur_table->top);
-    // set cur_table->top for ensure_in_func_decl().
-    *func = func_decl_node(ident, func_params);
+    ASTNode *func = func_decl_node(ident, func_params);
 
     // read func body
     ASTNode *func_body = read_cpd_stmt();
@@ -1015,12 +1025,13 @@ static ASTNode *read_func_decl()
         ensure_token(NULL);
         err("line: %ld, missing function body\n", peek_token()->ln);
     }
-    (*func)->func_body = func_body;
+    func->func_body = func_body;
 
     // restore parent table
     restore_table();
+    leave_func();
 
-    return *func;
+    return func;
 }
 
 static ASTNode *read_elif_stmt()
@@ -1151,28 +1162,29 @@ static ASTNode *read_while_stmt()
 {
     expect(TK_WHILE);
     expect(TK_L_PAREN);
+
+    enter_loop();
     new_table();
+
     ASTNode *cond = read_log_or_expr();
+
     expect(TK_R_PAREN);
 
     if (cond == NULL)
         return NULL;
 
-    ASTNode **while_stmt = &(cur_table->top);
-    *while_stmt = while_stmt_node(cond);
-
-    // read while body
-    (*while_stmt)->while_body = read_cpd_stmt();
+    ASTNode *while_stmt = while_stmt_node(cond, read_cpd_stmt());
 
     restore_table();
-    return *while_stmt;
+    leave_loop();
+
+    return while_stmt;
 }
 
 static ASTNode *read_program()
 {
     cur_table = new SymTable<ASTNode *>(NULL);
     ASTNode *program = program_node(new std::vector<ASTNode *>(), cur_table);
-    cur_table->top = program;
     while (has_token())
     {
         ASTNode *stmt = NULL;
@@ -1196,12 +1208,10 @@ static ASTNode *read_program()
             break;
         case TK_BREAK:
         case TK_CONTINUE:
-            get_token();
             ensure_in_loop();
             break;
         case TK_RETURN:
-            get_token();
-            ensure_in_func_decl();
+            ensure_in_func();
             break;
         default:
             stmt = read_expr_stmt();

@@ -14,8 +14,6 @@ private:
     std::unordered_map<std::string, V> table;
 
 public:
-    V top;
-
     SymTable(SymTable *parent);
     ~SymTable();
 
