@@ -1,0 +1,48 @@
+CONSTANT    
+IDENTITY    
+L_CURLY     {
+R_CURLY     }
+L_BRACK     [
+R_BRACK     ]
+L_PAREN     (
+R_PAREN     )
+ADD         +
+SUB         -
+MUL         *
+DIV         /
+MOD         %
+LT          <
+GT          >
+LE          <=
+GE          >=
+EQ          ==
+NEQ         !=
+AND         &
+OR          |
+XOR         ^ # not implemented
+NOT         !
+ASSIGN      =
+MUL_ASSIGN  *=
+DIV_ASSIGN  /=
+MOD_ASSIGN  %=
+ADD_ASSIGN  +=
+SUB_ASSIGN  -=
+AND_ASSIGN  &=
+OR_ASSIGN   |=
+XOR_ASSIGN  ^= # not implemented
+COMMA       ,
+SEMICOLON   ;
+COLON       : # not used
+DOT         . # not used
+IF          if
+ELIF        elif
+ELSE        else
+FOR         for
+WHILE       while
+CLASS       class # not used
+FUNC        func
+VAR         var
+VAL         val
+CONTINUE    continue
+BREAK       break
+RETURN      return
