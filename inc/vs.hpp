@@ -17,8 +17,8 @@ typedef bool vs_bool_t;
 typedef char vs_char_t;
 typedef long long vs_int_t;
 typedef long double vs_float_t;
-typedef unsigned int vs_id_t;
-typedef unsigned int vs_size_t;
-typedef unsigned int vs_addr_t;
+typedef unsigned long long vs_id_t;
+typedef unsigned long long vs_size_t;
+typedef unsigned long long vs_addr_t;
 
 #endif

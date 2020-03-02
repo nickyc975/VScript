@@ -1,6 +1,6 @@
 #include "vs.hpp"
 
-VSObjectList::VSObjectList()
+VSObjectList::VSListObject()
 {
     this->data = std::vector<VSObject>();
     this->size = 0;
