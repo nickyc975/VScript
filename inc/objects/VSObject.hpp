@@ -7,8 +7,8 @@
 
 #define vs_as_object(obj) ((VSObject *)obj)
 
-#define vs_ensure_type(type, ttype, op)                                         \
-    if (type->t_type != ttype)                                                  \
+#define vs_ensure_type(type, ttype, op)                                          \
+    if (type->t_type != ttype)                                                   \
     {                                                                            \
         err("Can not apply \"" op "\" on type \"%s\".", type->__name__.c_str()); \
         terminate(TERM_ERROR);                                                   \
@@ -16,7 +16,18 @@
 
 #define incref(obj) obj->refcnt++;
 
-#define decref(obj)                            \
+#define decref(obj) \
+    obj->refcnt--;                             \
+    if (obj->refcnt == 0)                      \
+    {                                          \
+        if (vs_typeof(obj)->__clear__ != NULL) \
+        {                                      \
+            vs_typeof(obj)->__clear__(obj);    \
+        }                                      \
+        delete obj;                            \
+    }
+
+#define decref_ex(obj)                         \
     obj->refcnt--;                             \
     if (obj->refcnt == 0)                      \
     {                                          \
@@ -55,10 +66,18 @@ public:
 
     VSObject() { refcnt = 0; }
 
+    // wrappers for container functions
     static VSObject *getlen(VSObject *obj);
-    static vs_size_t _getlen(VSObject *obj);
-    static VSObject *getitem(VSObject *container, VSObject *key);
-    static VSObject *setitem(VSObject *container, VSObject *key, VSObject *value);
+    static vs_size_t c_getlen(VSObject *obj);
+
+    static VSObject *getitem_at(VSObject *container, VSObject *key);
+    static void setitem_at(VSObject *container, VSObject *key, VSObject *value);
+    static VSObject *hasitem_at(VSObject *container, VSObject *key);
+    static void removeitem_at(VSObject *container, VSObject *key);
+
+    static void appenditem(VSObject *container, VSObject *item);
+    static VSObject *hasitem(VSObject *container, VSObject *item);
+    static void removeitem(VSObject *container, VSObject *item);
 };
 
 typedef VSObject *(*noargfunc)();
@@ -148,19 +167,30 @@ class ContainerFuncs
 public:
     unaryfunc __len__;
     binaryfunc __get__;
-    void_ternaryfunc __put__;
-    binaryfunc __contains__;
+    void_ternaryfunc __set__;
+    void_binaryfunc __append__;
+    binaryfunc __has__;
+    binaryfunc __has_at__;
     void_binaryfunc __remove__;
+    void_binaryfunc __remove_at__;
 
     ContainerFuncs(
+        unaryfunc __len__,
         binaryfunc __get__,
-        void_ternaryfunc __put__,
-        binaryfunc __contains__,
-        void_binaryfunc __remove__
-    ) : __get__(__get__),
-        __put__(__put__),
-        __contains__(__contains__),
-        __remove__(__remove__)
+        void_ternaryfunc __set__,
+        void_binaryfunc __append__,
+        binaryfunc __has__,
+        binaryfunc __has_at__,
+        void_binaryfunc __remove__,
+        void_binaryfunc __remove_at__
+    ) : __len__(__len__),
+        __get__(__get__),
+        __set__(__set__),
+        __append__(__append__),
+        __has__(__has__),
+        __has_at__(__has_at__),
+        __remove__(__remove__),
+        __remove_at__(__remove_at__)
     {
     }
 };
@@ -239,5 +269,8 @@ public:
         this->type = NULL;
     }
 };
+
+VSObject *vs_hash_not_implemented(const VSObject *obj);
+VSObject *vs_default_eq(const VSObject *a, const VSObject *b);
 
 #endif

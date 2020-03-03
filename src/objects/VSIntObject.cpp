@@ -18,7 +18,7 @@ VSObject *vs_int_new()
 
 void vs_int_init(VSObject *obj, VSObject *args, VSObject *)
 {
-    vs_size_t len = VSObject::_getlen(args);
+    vs_size_t len = VSObject::c_getlen(args);
     if (len > 1)
     {
         err("int.__init__() expected 0 or 1 arg but got %llu.", len);
@@ -28,7 +28,7 @@ void vs_int_init(VSObject *obj, VSObject *args, VSObject *)
     if (len == 0)
         return;
     
-    VSObject *init_val = VSObject::getitem(args, VS_INT_ZERO);
+    VSObject *init_val = VSObject::getitem_at(args, VS_INT_ZERO);
     VSTypeObject *init_type = vs_typeof(init_val);
     if (init_type->_number_funcs == NULL 
         || init_type->_number_funcs->__int__ == NULL)
@@ -45,7 +45,7 @@ void vs_int_init(VSObject *obj, VSObject *args, VSObject *)
     }
 
     ((VSIntObject *)obj)->_value = ((VSIntObject *)val)->_value;
-    decref(val);
+    decref_ex(val);
 }
 
 VSObject *vs_int_copy(const VSObject *that)

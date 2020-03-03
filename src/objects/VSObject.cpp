@@ -1,89 +1,60 @@
-#include "vs.hpp"
 #include "error.hpp"
+#include "objects/VSBoolObject.hpp"
+#include "objects/VSObject.hpp"
 
-vs_id_t VSObject::id = 0;
-
-VSObject::VSObject() : objid(++id)
+VSObject *VSObject::getlen(VSObject *obj)
 {
-    this->type = OBJ_DATA;
-    this->value = VSValue::None();
+    
 }
 
-VSObject::VSObject(VSValue *value) : type(OBJ_DATA), objid(++id), value(value)
+vs_size_t VSObject::c_getlen(VSObject *obj)
 {
+
 }
 
-VSObject::VSObject(VSCodeObject *codeblock) : type(OBJ_CODE), objid(++id), codeblock(codeblock)
+VSObject *VSObject::getitem_at(VSObject *container, VSObject *key)
 {
+
 }
 
-VSObject::VSObject(VSObjectList *objlist) : type(OBJ_LIST), objid(++id), objlist(objlist)
+void VSObject::setitem_at(VSObject *container, VSObject *key, VSObject *value)
 {
+
 }
 
-VSObject &VSObject::operator=(const VSObject &that)
+VSObject *VSObject::hasitem_at(VSObject *container, VSObject *key)
 {
-    if (this != &that)
-    {
-        this->type = that.type;
-        switch (that.type)
-        {
-        case OBJ_DATA:
-            this->value = that.value;
-            break;
-        case OBJ_CODE:
-            this->codeblock = that.codeblock;
-            break;
-        case OBJ_LIST:
-            this->objlist = that.objlist;
-            break;
-        default:
-            err("unknown object type");
-            break;
-        }
-    }
-    return *this;
+
 }
 
-void VSObject::incref()
+void VSObject::removeitem_at(VSObject *container, VSObject *key)
 {
-    if (this->type == OBJ_DATA)
-    {
-        if (this->value->type == NONE || this->value->type == BOOL)
-        {
-            return;
-        }
-        this->value->refcnt++;
-    }
-    else if (this->type == OBJ_LIST)
-    {
-        this->objlist->refcnt++;
-    }
+
 }
 
-void VSObject::decref()
+void VSObject::appenditem(VSObject *container, VSObject *item)
 {
-    if (this->type == OBJ_DATA)
-    {
-        if (this->value->type == NONE || this->value->type == BOOL)
-        {
-            return;
-        }
-        this->value->refcnt--;
-        if (this->value->refcnt == 0)
-        {
-            delete this->value;
-            this->value = VSValue::None();
-        }
-    }
-    else if (this->type == OBJ_LIST)
-    {
-        this->objlist->refcnt--;
-        if (this->objlist->refcnt == 0)
-        {
-            delete this->objlist;
-            this->type = OBJ_DATA;
-            this->value = VSValue::None();
-        }
-    }
+
+}
+
+VSObject *VSObject::hasitem(VSObject *container, VSObject *item)
+{
+
+}
+
+void VSObject::removeitem(VSObject *container, VSObject *item)
+{
+
+}
+
+VSObject *vs_hash_not_implemented(const VSObject *obj)
+{
+    err("%s.__hash__() not implemented.", vs_typeof(obj)->__name__.c_str());
+    terminate(TERM_ERROR);
+    return NULL;
+}
+
+VSObject *vs_default_eq(const VSObject *a, const VSObject *b)
+{
+    return vs_bool_from_cbool(a == b);
 }

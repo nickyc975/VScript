@@ -104,7 +104,7 @@ VSObject *vs_map_get(VSObject *obj, VSObject *key)
     return NULL;
 }
 
-void vs_map_put(VSObject *obj, VSObject *key, VSObject *value)
+void vs_map_set(VSObject *obj, VSObject *key, VSObject *value)
 {
     VSTypeObject *type = vs_typeof(obj);
 
@@ -125,7 +125,7 @@ void vs_map_put(VSObject *obj, VSObject *key, VSObject *value)
     }
 }
 
-VSObject *vs_map_contains(VSObject *obj, VSObject *key)
+VSObject *vs_map_has_at(VSObject *obj, VSObject *key)
 {
     VSTypeObject *type = vs_typeof(obj);
 
@@ -136,7 +136,7 @@ VSObject *vs_map_contains(VSObject *obj, VSObject *key)
     return vs_bool_from_cbool(iter != map->_map.end());
 }
 
-void vs_map_remove(VSObject *obj, VSObject *key)
+void vs_map_remove_at(VSObject *obj, VSObject *key)
 {
     VSTypeObject *type = vs_typeof(obj);
 
@@ -173,9 +173,12 @@ VSObject *vs_map_bytes(VSObject *obj)
 ContainerFuncs *map_funcs = new ContainerFuncs(
     vs_map_len,
     vs_map_get,
-    vs_map_put,
-    vs_map_contains,
-    vs_map_remove
+    vs_map_set,
+    NULL,
+    NULL,
+    vs_map_has_at,
+    NULL,
+    vs_map_remove_at
 );
 
 VSTypeObject *VSMapType = new VSTypeObject(
