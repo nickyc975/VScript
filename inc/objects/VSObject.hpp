@@ -3,8 +3,49 @@
 
 #include "vs.hpp"
 
-#define vs_typeof(obj) (VSTypeObject *)(obj->type)
-#define vs_as_object(obj) (VSObject *)obj
+#define vs_typeof(obj) ((VSTypeObject *)obj->type)
+
+#define vs_as_object(obj) ((VSObject *)obj)
+
+#define vs_ensure_type(type, ttype, op)                                         \
+    if (type->t_type != ttype)                                                  \
+    {                                                                            \
+        err("Can not apply \"" op "\" on type \"%s\".", type->__name__.c_str()); \
+        terminate(TERM_ERROR);                                                   \
+    }
+
+#define incref(obj) obj->refcnt++;
+
+#define decref(obj)                            \
+    obj->refcnt--;                             \
+    if (obj->refcnt == 0)                      \
+    {                                          \
+        if (vs_typeof(obj)->__clear__ != NULL) \
+        {                                      \
+            vs_typeof(obj)->__clear__(obj);    \
+        }                                      \
+        delete obj;                            \
+        obj = NULL;                            \
+    }
+
+typedef enum
+{
+    T_TYPE,
+    T_CLASS,
+    T_NONE,
+    T_BOOL,
+    T_CHAR,
+    T_INT,
+    T_FLOAT,
+    T_STR,
+    T_LIST,
+    T_MAP,
+    T_SET,
+    T_CODE,
+    T_FRAME,
+    T_FUNC,
+    T_METH
+} TYPE_TYPE;
 
 class VSObject
 {
@@ -12,7 +53,7 @@ public:
     VSObject *type;
     vs_size_t refcnt;
 
-    VSObject(){refcnt = 0;}
+    VSObject() { refcnt = 0; }
 };
 
 typedef VSObject *(*noargfunc)();
@@ -84,7 +125,8 @@ public:
         __char__(__bool__),
         __int__(__int__),
         __float__(__float__)
-    {}
+    {
+    }
 };
 
 class ContainerFuncs
@@ -105,20 +147,27 @@ public:
         __put__(__put__),
         __contains__(__contains__),
         __remove__(__remove__)
-    {}
+    {
+    }
 };
 
 class VSTypeObject : public VSObject
 {
 public:
+    TYPE_TYPE t_type;
     std::string __name__;
 
     VSObject *__attrs__;
 
     noargfunc __new__;
-    ternaryfunc __init__;
+    void_ternaryfunc __init__;
     unaryfunc __copy__;
     void_unaryfunc __clear__;
+
+    binaryfunc __getattr__;
+    binaryfunc __hasattr__;
+    void_ternaryfunc __setattr__;
+    void_binaryfunc __removeattr__;
 
     unaryfunc __hash__;
     binaryfunc __eq__;
@@ -137,12 +186,17 @@ public:
     ContainerFuncs *_container_funcs;
 
     VSTypeObject(
+        TYPE_TYPE t_type,
         std::string __name__,
         VSObject *__attrs__,
         noargfunc __new__,
-        ternaryfunc __init__,
+        void_ternaryfunc __init__,
         unaryfunc __copy__,
         void_unaryfunc __clear__,
+        binaryfunc __getattr__,
+        binaryfunc __hasattr__,
+        void_ternaryfunc __setattr__,
+        void_binaryfunc __removeattr__,
         unaryfunc __hash__,
         binaryfunc __eq__,
         binaryfunc __neq__,
@@ -151,21 +205,27 @@ public:
         ternaryfunc __call__,
         NumberFuncs *_number_funcs,
         ContainerFuncs *_container_funcs
-    ) : __name__(__name__),
-        __attrs__(__attrs__),
-        __new__(__new__),
-        __init__(__init__),
-        __copy__(__copy__),
-        __clear__(__clear__),
-        __hash__(__hash__),
-        __eq__(__eq__),
-        __neq__(__neq__),
-        __str__(__str__),
-        __bytes__(__bytes__),
-        __call__(__call__),
-        _number_funcs(_number_funcs),
-        _container_funcs(_container_funcs)
-    {}
+    ) : t_type(t_type),
+    __name__(__name__),
+    __attrs__(__attrs__),
+    __new__(__new__),
+    __init__(__init__),
+    __copy__(__copy__),
+    __clear__(__clear__),
+    __getattr__(__getattr__),
+    __hasattr__(__hasattr__),
+    __setattr__(__setattr__),
+    __removeattr__(__removeattr__),
+    __hash__(__hash__),
+    __eq__(__eq__),
+    __neq__(__neq__),
+    __str__(__str__),
+    __bytes__(__bytes__),
+    __call__(__call__),
+    _number_funcs(_number_funcs),
+    _container_funcs(_container_funcs)
+    {
+    }
 };
 
 #endif

@@ -3,6 +3,7 @@
 
 #include "VSObject.hpp"
 
+class VSMapObject;
 extern VSTypeObject *VSMapType;
 
 #define vs_map_len(map) vs_typeof(map)->_container_funcs->__len__(map)
