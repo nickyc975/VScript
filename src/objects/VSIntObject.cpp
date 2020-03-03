@@ -1,442 +1,157 @@
-#include <cstring>
-#include <string>
-#include <vector>
-
-#include "vs.hpp"
 #include "error.hpp"
+#include "objects/VSBoolObject.hpp"
+#include "objects/VSIntObject.hpp"
 
-VSValue::VSValue() : type(NONE)
+class VSIntObject : public VSObject
 {
+public:
+    int64_t _value;
+
+    VSIntObject() : _value(0) {this->type = VSIntType;}
+    VSIntObject(int64_t val) : _value(val) {this->type = VSIntType;}
+};
+
+VSObject *vs_int_new()
+{
+    return vs_as_object(new VSIntObject());
 }
 
-VSValue::VSValue(vs_bool_t val) : type(BOOL), bool_val(val)
+void vs_int_init(VSObject *obj, VSObject *args, VSObject *)
 {
-    this->size = sizeof(*this);
-}
-
-VSValue::VSValue(vs_char_t val) : type(CHAR), char_val(val)
-{
-    this->size = sizeof(*this);
-}
-
-VSValue::VSValue(vs_int_t val) : type(INT), int_val(val)
-{
-    this->size = sizeof(*this);
-}
-
-VSValue::VSValue(vs_float_t val) : type(FLOAT), float_val(val)
-{
-    this->size = sizeof(*this);
-}
-
-VSValue::VSValue(std::string val) : type(STRING)
-{
-    this->str_val = new std::string(val);
-    this->size = sizeof(*this) + sizeof(*this->str_val);
-}
-
-VSValue::~VSValue()
-{
-    if (this->type == STRING)
+    vs_size_t len = VSObject::_getlen(args);
+    if (len > 1)
     {
-        delete this->str_val;
+        err("int.__init__() expected 0 or 1 arg but got %llu.", len);
+        terminate(TERM_ERROR);
     }
-}
 
-VSValue *VSValue::to_char()
-{
-    switch (this->type)
-    {
-    case CHAR:
-        return new VSValue(this->char_val);
-    case INT:
-        return new VSValue((vs_char_t)this->int_val);
-    default:
-        err("Can not cast type: \"%s\" to CHAR\n", TYPE_STR[this->type]);
-        return VSValue::None();
-    }
-}
-
-VSValue *VSValue::to_int()
-{
-    switch (this->type)
-    {
-    case BOOL:
-        return new VSValue((vs_int_t)this->bool_val);
-    case CHAR:
-        return new VSValue((vs_int_t)this->char_val);
-    case INT:
-        return new VSValue(this->int_val);
-    case FLOAT:
-        return new VSValue((vs_int_t)this->float_val);
-    case STRING:
-    {
-        char *end;
-        vs_int_t val = strtoll(this->str_val->c_str(), &end, 0);
-        if (end - 1 != &(this->str_val->back()))
-        {
-            err("Can not cast string: \"%s\" to INT\n", this->str_val->c_str());
-            return VSValue::None();
-        }
-        return new VSValue(val);
-    }
-    default:
-        err("Can not cast type: \"%s\" to INT\n", TYPE_STR[this->type]);
-        return VSValue::None();
-    }
-}
-
-VSValue *VSValue::to_float()
-{
-    switch (this->type)
-    {
-    case BOOL:
-        return new VSValue((vs_float_t)this->bool_val);
-    case CHAR:
-        return new VSValue((vs_float_t)this->char_val);
-    case INT:
-        return new VSValue((vs_float_t)this->int_val);
-    case FLOAT:
-        return new VSValue(this->float_val);
-    case STRING:
-    {
-        char *end;
-        vs_float_t val = strtold(this->str_val->c_str(), &end);
-        if (end - 1 != &(this->str_val->back()))
-        {
-            err("Can not cast string: \"%s\" to FLOAT\n", this->str_val->c_str());
-            return VSValue::None();
-        }
-        return new VSValue(val);
-    }
-    default:
-        err("Can not cast type: \"%s\" to FLOAT\n", TYPE_STR[this->type]);
-        return VSValue::None();
-    }
-}
-
-VSValue *VSValue::to_str()
-{
-    return new VSValue(this->to_string());
-}
-
-VSValue *VSValue::None()
-{
-    static VSValue NONE_VAL = VSValue();
-    return &NONE_VAL;
-}
-
-VSValue *VSValue::True()
-{
-    static VSValue TRUE_VAL = VSValue(true);
-    return &TRUE_VAL;
-}
-
-VSValue *VSValue::False()
-{
-    static VSValue FALSE_VAL = VSValue(false);
-    return &FALSE_VAL;
-}
-
-VSValue *VSValue::copy(VSValue *old)
-{
-    switch (old->type)
-    {
-    case CHAR:
-        return new VSValue(old->char_val);
-    case INT:
-        return new VSValue(old->int_val);
-    case FLOAT:
-        return new VSValue(old->float_val);
-    case STRING:
-        return new VSValue(old->str_val);
-    default:
-        return old;
-    }
-}
-
-VSValue *VSValue::i_add(VSValue *left, VSValue *right)
-{
-    if (left->type != right->type || !is_num_str(left->type))
-        b_op_err("+", TYPE_STR[left->type], TYPE_STR[right->type]);
-
-    switch (left->type)
-    {
-    case CHAR:
-        return new VSValue((vs_char_t)(left->char_val + right->char_val));
-    case INT:
-        return new VSValue((vs_int_t)(left->int_val + right->int_val));
-    case FLOAT:
-        return new VSValue((vs_float_t)(left->float_val + right->float_val));
-    case STRING:
-    {
-        return new VSValue(*left->str_val + *right->str_val);
-    }
-    default:
-        return VSValue::None();
-    }
-}
-
-VSValue *VSValue::i_sub(VSValue *left, VSValue *right)
-{
-    if (left->type != right->type || !is_num(left->type))
-        b_op_err("-", TYPE_STR[left->type], TYPE_STR[right->type]);
-
-    switch (left->type)
-    {
-    case CHAR:
-        return new VSValue((vs_char_t)(left->char_val - right->char_val));
-    case INT:
-        return new VSValue((vs_int_t)(left->int_val - right->int_val));
-    case FLOAT:
-        return new VSValue((vs_float_t)(left->float_val - right->float_val));
-    default:
-        return VSValue::None();
-    }
-}
-
-VSValue *VSValue::i_mul(VSValue *left, VSValue *right)
-{
-    if (left->type != right->type || !is_num(left->type))
-        b_op_err("*", TYPE_STR[left->type], TYPE_STR[right->type]);
-
-    switch (left->type)
-    {
-    case CHAR:
-        return new VSValue((vs_char_t)(left->char_val * right->char_val));
-    case INT:
-        return new VSValue((vs_int_t)(left->int_val * right->int_val));
-    case FLOAT:
-        return new VSValue((vs_float_t)(left->float_val * right->float_val));
-    default:
-        return VSValue::None();
-    }
-}
-
-VSValue *VSValue::i_div(VSValue *left, VSValue *right)
-{
-    if (left->type != right->type || !is_num(left->type))
-        b_op_err("/", TYPE_STR[left->type], TYPE_STR[right->type]);
-
-    switch (left->type)
-    {
-    case CHAR:
-        return new VSValue((vs_char_t)(left->char_val / right->char_val));
-    case INT:
-        return new VSValue((vs_int_t)(left->int_val / right->int_val));
-    case FLOAT:
-        return new VSValue((vs_float_t)(left->float_val / right->float_val));
-    default:
-        return VSValue::None();
-    }
-}
-
-VSValue *VSValue::i_mod(VSValue *left, VSValue *right)
-{
-    if (left->type != right->type || !is_int(left->type))
-        b_op_err("%", TYPE_STR[left->type], TYPE_STR[right->type]);
-
-    switch (left->type)
-    {
-    case CHAR:
-        return new VSValue((vs_char_t)(left->char_val % right->char_val));
-    case INT:
-        return new VSValue((vs_int_t)(left->int_val % right->int_val));
-    default:
-        return VSValue::None();
-    }
-}
-
-VSValue *VSValue::i_lt(VSValue *left, VSValue *right)
-{
-    if (left->type != right->type || !is_num_str(left->type))
-        b_op_err("<", TYPE_STR[left->type], TYPE_STR[right->type]);
-
-    switch (left->type)
-    {
-    case CHAR:
-        return left->char_val < right->char_val ? VSValue::True() : VSValue::False();
-    case INT:
-        return left->int_val < right->int_val ? VSValue::True() : VSValue::False();
-    case FLOAT:
-        return left->float_val < right->float_val ? VSValue::True() : VSValue::False();
-    case STRING:
-        return *left->str_val < *right->str_val ? VSValue::True() : VSValue::False();
-    default:
-        return VSValue::None();
-    }
-}
-
-VSValue *VSValue::i_gt(VSValue *left, VSValue *right)
-{
-    if (left->type != right->type || !is_num_str(left->type))
-        b_op_err(">", TYPE_STR[left->type], TYPE_STR[right->type]);
-
-    switch (left->type)
-    {
-    case CHAR:
-        return left->char_val > right->char_val ? VSValue::True() : VSValue::False();
-    case INT:
-        return left->int_val > right->int_val ? VSValue::True() : VSValue::False();
-    case FLOAT:
-        return left->float_val > right->float_val ? VSValue::True() : VSValue::False();
-    case STRING:
-        return *left->str_val > *right->str_val ? VSValue::True() : VSValue::False();
-    default:
-        return VSValue::None();
-    }
-}
-
-VSValue *VSValue::i_le(VSValue *left, VSValue *right)
-{
-    if (left->type != right->type || !is_num_str(left->type))
-        b_op_err("<=", TYPE_STR[left->type], TYPE_STR[right->type]);
-
-    switch (left->type)
-    {
-    case CHAR:
-        return left->char_val <= right->char_val ? VSValue::True() : VSValue::False();
-    case INT:
-        return left->int_val <= right->int_val ? VSValue::True() : VSValue::False();
-    case FLOAT:
-        return left->float_val <= right->float_val ? VSValue::True() : VSValue::False();
-    case STRING:
-        return *left->str_val <= *right->str_val ? VSValue::True() : VSValue::False();
-    default:
-        return VSValue::None();
-    }
-}
-
-VSValue *VSValue::i_ge(VSValue *left, VSValue *right)
-{
-    if (left->type != right->type || !is_num_str(left->type))
-        b_op_err(">=", TYPE_STR[left->type], TYPE_STR[right->type]);
-
-    switch (left->type)
-    {
-    case CHAR:
-        return left->char_val >= right->char_val ? VSValue::True() : VSValue::False();
-    case INT:
-        return left->int_val >= right->int_val ? VSValue::True() : VSValue::False();
-    case FLOAT:
-        return left->float_val >= right->float_val ? VSValue::True() : VSValue::False();
-    case STRING:
-        return *left->str_val >= *right->str_val ? VSValue::True() : VSValue::False();
-    default:
-        return VSValue::None();
-    }
-}
-
-VSValue *VSValue::i_eq(VSValue *left, VSValue *right)
-{
-    if (left->type != right->type)
-        return VSValue::False();
+    if (len == 0)
+        return;
     
-    switch (left->type)
+    VSObject *init_val = VSObject::getitem(args, VS_INT_ZERO);
+    VSTypeObject *init_type = vs_typeof(init_val);
+    if (init_type->_number_funcs == NULL 
+        || init_type->_number_funcs->__int__ == NULL)
     {
-    case NONE:
-        return VSValue::True();
-    case BOOL:
-        return left->bool_val == right->bool_val ? VSValue::True() : VSValue::False();
-    case CHAR:
-        return left->char_val == right->char_val ? VSValue::True() : VSValue::False();
-    case INT:
-        return left->int_val == right->int_val ? VSValue::True() : VSValue::False();
-    case FLOAT:
-        return left->float_val == right->float_val ? VSValue::True() : VSValue::False();
-    case STRING:
-        return *left->str_val == *right->str_val ? VSValue::True() : VSValue::False();
-    default:
-        return VSValue::None();
+        err("can not cast type \"%s\" to type \"int\".", init_type->__name__.c_str());
+        terminate(TERM_ERROR);
     }
-}
 
-VSValue *VSValue::i_neq(VSValue *left, VSValue *right)
-{
-    if (left->type != right->type)
-        return VSValue::True();
-    
-    switch (left->type)
+    VSObject *val = init_type->_number_funcs->__int__(init_val);
+    if (vs_typeof(val)->t_type != T_INT)
     {
-    case NONE:
-        return VSValue::False();
-    case BOOL:
-        return left->bool_val != right->bool_val ? VSValue::True() : VSValue::False();
-    case CHAR:
-        return left->char_val != right->char_val ? VSValue::True() : VSValue::False();
-    case INT:
-        return left->int_val != right->int_val ? VSValue::True() : VSValue::False();
-    case FLOAT:
-        return left->float_val != right->float_val ? VSValue::True() : VSValue::False();
-    case STRING:
-        return *left->str_val != *right->str_val ? VSValue::True() : VSValue::False();
-    default:
-        return VSValue::None();
+        err("%s.__int__() returned \"%s\" instead of int.", init_type->__name__.c_str(), vs_typeof(val)->__name__.c_str());
+        terminate(TERM_ERROR);
     }
+
+    ((VSIntObject *)obj)->_value = ((VSIntObject *)val)->_value;
+    decref(val);
 }
 
-VSValue *VSValue::i_and(VSValue *left, VSValue *right)
+VSObject *vs_int_copy(const VSObject *that)
 {
-    if (left->type != right->type || left->type != BOOL)
-        b_op_err("&", TYPE_STR[left->type], TYPE_STR[right->type]);
-    return left->bool_val && right->bool_val ? VSValue::True() : VSValue::False();
+    VSTypeObject *type = vs_typeof(that);
+
+    vs_ensure_type(type, T_INT, "int copy");
+
+    VSIntObject *old_int = (VSIntObject *)that;
+    VSIntObject *new_int = (VSIntObject *)type->__new__();
+    new_int->_value = old_int->_value;
+    return vs_as_object(new_int);
 }
 
-VSValue *VSValue::i_or(VSValue *left, VSValue *right)
+VSObject *vs_int_hash(const VSObject *obj)
 {
-    if (left->type != right->type || left->type != BOOL)
-        b_op_err("|", TYPE_STR[left->type], TYPE_STR[right->type]);
-    return left->bool_val || right->bool_val ? VSValue::True() : VSValue::False();
+    VSTypeObject *type = vs_typeof(obj);
+
+    vs_ensure_type(type, T_INT, "int hash");
+
+    return type->__copy__(obj);
 }
 
-VSValue *VSValue::i_not(VSValue *val)
+VSObject *vs_int_eq(const VSObject *a, const VSObject *b)
 {
-    if (val->type != BOOL)
-        u_op_err("!", TYPE_STR[val->type]);
-    return val->bool_val ? VSValue::False() : VSValue::True();
+    VSTypeObject *a_type = vs_typeof(a);
+
+    vs_ensure_type(a_type, T_INT, "int eq");
+
+    VSTypeObject *b_type = vs_typeof(b);
+
+    vs_ensure_type(b_type, T_INT, "int eq");
+
+    bool res = ((VSIntObject *)a)->_value == ((VSIntObject *)b)->_value;
+    return vs_as_object((res ? VS_TRUE : VS_FALSE));
 }
 
-VSValue *VSValue::i_neg(VSValue *val)
+VSObject *vs_int_str(VSObject *obj)
 {
-    if (!is_num(val->type))
-        u_op_err("-", TYPE_STR[val->type]);
+    VSTypeObject *type = vs_typeof(obj);
 
-    switch (val->type)
-    {
-    case CHAR:
-        return new VSValue((vs_char_t)(-val->char_val));
-    case INT:
-        return new VSValue((vs_int_t)(-val->int_val));
-    case FLOAT:
-        return new VSValue((vs_float_t)(-val->float_val));
-    default:
-        return VSValue::None();
-    }
+    vs_ensure_type(type, T_INT, "int to str");
+
+    return NULL;
 }
 
-const char *VSValue::to_bytes()
+VSObject *vs_int_bytes(VSObject *obj)
 {
-    return this->to_string().c_str();
+    VSTypeObject *type = vs_typeof(obj);
+
+    vs_ensure_type(type, T_INT, "int to bytes");
+
+    return NULL;
 }
 
-const std::string VSValue::to_string()
+int64_t vs_int_to_cint(VSObject *intobj)
 {
-    std::string str;
-    switch (this->type)
-    {
-    case NONE:
-        return "none";
-    case BOOL:
-        return this->bool_val ? "true" : "false";
-    case CHAR:
-        return std::string(1, this->char_val);
-    case INT:
-        return std::to_string(this->int_val);
-    case FLOAT:
-        return std::to_string(this->float_val);
-    case STRING:
-        return *this->str_val;
-    default:
-        return "undefined";
-    }
+    vs_ensure_type(vs_typeof(intobj), T_INT, "to c int");
+    return ((VSIntObject *)intobj)->_value;
 }
+
+VSObject *vs_int_from_cint(int64_t intval)
+{
+    return new VSIntObject(intval);
+}
+
+NumberFuncs *number_funcs = new NumberFuncs(
+    NULL, // __not__
+    NULL, // __neg__
+    NULL, // __add__
+    NULL, // __sub__
+    NULL, // __mul__
+    NULL, // __div__
+    NULL, // __mod__
+    NULL, // __lt__
+    NULL, // __gt__
+    NULL, // __le__
+    NULL, // __ge__
+    NULL, // __and__
+    NULL, // __or__
+    NULL, // __bool__
+    NULL, // __char__
+    NULL, // __int__
+    NULL  // __float__
+);
+
+VSTypeObject *VSIntType = new VSTypeObject(
+    T_INT,
+    "int", // __name__
+    NULL,  // __attrs__
+    vs_int_new,  // __new__
+    vs_int_init,  // __init__
+    vs_int_copy,  // __copy__
+    NULL,  // __clear__
+    NULL,  // __getattr__
+    NULL,  // __hasattr__
+    NULL,  // __setattr__
+    NULL,  // __removeattr__
+    vs_int_hash,  // __hash__
+    vs_int_eq,  // __eq__
+    vs_int_str,  // __str__
+    vs_int_bytes,  // __bytes__
+    NULL,  // __call__
+    number_funcs,  // _number_funcs
+    NULL   // _container_funcs
+);
+
+VSIntObject *VS_INT_ZERO = new VSIntObject(0);
+VSIntObject *VS_INT_ONE = new VSIntObject(1);

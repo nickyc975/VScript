@@ -54,6 +54,11 @@ public:
     vs_size_t refcnt;
 
     VSObject() { refcnt = 0; }
+
+    static VSObject *getlen(VSObject *obj);
+    static vs_size_t _getlen(VSObject *obj);
+    static VSObject *getitem(VSObject *container, VSObject *key);
+    static VSObject *setitem(VSObject *container, VSObject *key, VSObject *value);
 };
 
 typedef VSObject *(*noargfunc)();
@@ -61,9 +66,18 @@ typedef VSObject *(*unaryfunc)(VSObject *);
 typedef VSObject *(*binaryfunc)(VSObject *, VSObject *);
 typedef VSObject *(*ternaryfunc)(VSObject *, VSObject *, VSObject *);
 
+typedef VSObject *(*const_unaryfunc)(const VSObject *);
+typedef VSObject *(*const_binaryfunc)(const VSObject *, const VSObject *);
+typedef VSObject *(*const_ternaryfunc)(const VSObject *, const VSObject *, const VSObject *);
+
+typedef void (*void_noargfunc)();
 typedef void (*void_unaryfunc)(VSObject *);
 typedef void (*void_binaryfunc)(VSObject *, VSObject *);
 typedef void (*void_ternaryfunc)(VSObject *, VSObject *, VSObject *);
+
+typedef void (*void_const_unaryfunc)(const VSObject *);
+typedef void (*void_const_binaryfunc)(const VSObject *, const VSObject *);
+typedef void (*void_const_ternaryfunc)(const VSObject *, const VSObject *, const VSObject *);
 
 class NumberFuncs
 {
@@ -161,7 +175,7 @@ public:
 
     noargfunc __new__;
     void_ternaryfunc __init__;
-    unaryfunc __copy__;
+    const_unaryfunc __copy__;
     void_unaryfunc __clear__;
 
     binaryfunc __getattr__;
@@ -169,9 +183,8 @@ public:
     void_ternaryfunc __setattr__;
     void_binaryfunc __removeattr__;
 
-    unaryfunc __hash__;
-    binaryfunc __eq__;
-    binaryfunc __neq__;
+    const_unaryfunc __hash__;
+    const_binaryfunc __eq__;
 
     unaryfunc __str__;
     unaryfunc __bytes__;
@@ -191,40 +204,39 @@ public:
         VSObject *__attrs__,
         noargfunc __new__,
         void_ternaryfunc __init__,
-        unaryfunc __copy__,
+        const_unaryfunc __copy__,
         void_unaryfunc __clear__,
         binaryfunc __getattr__,
         binaryfunc __hasattr__,
         void_ternaryfunc __setattr__,
         void_binaryfunc __removeattr__,
-        unaryfunc __hash__,
-        binaryfunc __eq__,
-        binaryfunc __neq__,
+        const_unaryfunc __hash__,
+        const_binaryfunc __eq__,
         unaryfunc __str__,
         unaryfunc __bytes__,
         ternaryfunc __call__,
         NumberFuncs *_number_funcs,
         ContainerFuncs *_container_funcs
     ) : t_type(t_type),
-    __name__(__name__),
-    __attrs__(__attrs__),
-    __new__(__new__),
-    __init__(__init__),
-    __copy__(__copy__),
-    __clear__(__clear__),
-    __getattr__(__getattr__),
-    __hasattr__(__hasattr__),
-    __setattr__(__setattr__),
-    __removeattr__(__removeattr__),
-    __hash__(__hash__),
-    __eq__(__eq__),
-    __neq__(__neq__),
-    __str__(__str__),
-    __bytes__(__bytes__),
-    __call__(__call__),
-    _number_funcs(_number_funcs),
-    _container_funcs(_container_funcs)
+        __name__(__name__),
+        __attrs__(__attrs__),
+        __new__(__new__),
+        __init__(__init__),
+        __copy__(__copy__),
+        __clear__(__clear__),
+        __getattr__(__getattr__),
+        __hasattr__(__hasattr__),
+        __setattr__(__setattr__),
+        __removeattr__(__removeattr__),
+        __hash__(__hash__),
+        __eq__(__eq__),
+        __str__(__str__),
+        __bytes__(__bytes__),
+        __call__(__call__),
+        _number_funcs(_number_funcs),
+        _container_funcs(_container_funcs)
     {
+        this->type = NULL;
     }
 };
 
