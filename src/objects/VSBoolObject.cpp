@@ -5,10 +5,10 @@
 class VSBoolObject : public VSObject
 {
 public:
-    uint8_t _value;
+    cbool_t _value;
 
     VSBoolObject() : _value(0) {this->type = VSBoolType;}
-    VSBoolObject(uint8_t val) : _value(val ? 1 : 0) {this->type = VSBoolType;}
+    VSBoolObject(cbool_t val) : _value(val ? 1 : 0) {this->type = VSBoolType;}
 };
 
 VSObject *vs_bool_hash(const VSObject *obj)
@@ -52,14 +52,14 @@ VSObject *vs_bool_bytes(VSObject *obj)
     return NULL;
 }
 
-uint8_t vs_bool_to_cbool(VSObject * boolobj)
+cbool_t vs_bool_to_cbool(VSObject * boolobj)
 {
     VSTypeObject *type = vs_typeof(boolobj);
     vs_ensure_type(type, T_BOOL, "to c bool");
     return ((VSBoolObject *)boolobj)->_value;
 }
 
-VSObject *vs_bool_from_cbool(uint8_t boolval)
+VSObject *vs_bool_from_cbool(cbool_t boolval)
 {
     return boolval ? VS_TRUE : VS_FALSE;
 }

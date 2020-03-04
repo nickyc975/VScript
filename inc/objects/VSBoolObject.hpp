@@ -10,8 +10,8 @@ extern VSObject *VS_FALSE;
 
 extern VSTypeObject *VSBoolType;
 
-uint8_t vs_bool_to_cbool(VSObject * boolobj);
+cbool_t vs_bool_to_cbool(VSObject * boolobj);
 
-VSObject *vs_bool_from_cbool(uint8_t boolval);
+VSObject *vs_bool_from_cbool(cbool_t boolval);
 
 #endif

@@ -13,11 +13,10 @@
 #define CONST_TRUE_ADDR 1
 #define CONST_FALSE_ADDR 2
 
-typedef bool vs_bool_t;
-typedef char vs_char_t;
-typedef long long vs_int_t;
-typedef long double vs_float_t;
-typedef unsigned long long vs_id_t;
+typedef uint8_t cbool_t;
+typedef char cchar_t;
+typedef int64_t cint_t;
+typedef long double cfloat_t;
 typedef unsigned long long vs_size_t;
 typedef unsigned long long vs_addr_t;
 

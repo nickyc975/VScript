@@ -10,8 +10,8 @@ extern VSObject *VS_INT_ONE;
 
 extern VSTypeObject *VSIntType;
 
-int64_t vs_int_to_cint(VSObject *intobj);
+cint_t vs_int_to_cint(VSObject *intobj);
 
-VSObject *vs_int_from_cint(int64_t intval);
+VSObject *vs_int_from_cint(cint_t intval);
 
 #endif

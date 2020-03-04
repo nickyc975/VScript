@@ -1,14 +1,15 @@
 #include "error.hpp"
 #include "objects/VSBoolObject.hpp"
 #include "objects/VSIntObject.hpp"
+#include "objects/VSStringObject.hpp"
 
 class VSIntObject : public VSObject
 {
 public:
-    int64_t _value;
+    cint_t _value;
 
     VSIntObject() : _value(0) {this->type = VSIntType;}
-    VSIntObject(int64_t val) : _value(val) {this->type = VSIntType;}
+    VSIntObject(cint_t val) : _value(val) {this->type = VSIntType;}
 };
 
 VSObject *vs_int_new()
@@ -56,7 +57,7 @@ VSObject *vs_int_copy(const VSObject *that)
     vs_ensure_type(type, T_INT, "int copy");
 
     VSIntObject *old_int = (VSIntObject *)that;
-    VSIntObject *new_int = (VSIntObject *)type->__new__();
+    VSIntObject *new_int = (VSIntObject *)vs_int_new();
     new_int->_value = old_int->_value;
     return vs_as_object(new_int);
 }
@@ -87,28 +88,27 @@ VSObject *vs_int_eq(const VSObject *a, const VSObject *b)
 VSObject *vs_int_str(VSObject *obj)
 {
     VSTypeObject *type = vs_typeof(obj);
-
     vs_ensure_type(type, T_INT, "int to str");
 
-    return NULL;
+    cint_t val = ((VSIntObject *)obj)->_value;
+    return vs_string_from_cstring(std::to_string(val));
 }
 
 VSObject *vs_int_bytes(VSObject *obj)
 {
     VSTypeObject *type = vs_typeof(obj);
-
     vs_ensure_type(type, T_INT, "int to bytes");
 
     return NULL;
 }
 
-int64_t vs_int_to_cint(VSObject *intobj)
+cint_t vs_int_to_cint(VSObject *intobj)
 {
     vs_ensure_type(vs_typeof(intobj), T_INT, "to c int");
     return ((VSIntObject *)intobj)->_value;
 }
 
-VSObject *vs_int_from_cint(int64_t intval)
+VSObject *vs_int_from_cint(cint_t intval)
 {
     return new VSIntObject(intval);
 }
