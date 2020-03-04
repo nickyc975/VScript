@@ -4,17 +4,17 @@
 
 VSObject *VSObject::getlen(VSObject *obj)
 {
-    
+    return NULL;
 }
 
 vs_size_t VSObject::c_getlen(VSObject *obj)
 {
-
+    return 0;
 }
 
 VSObject *VSObject::getitem_at(VSObject *container, VSObject *key)
 {
-
+    return NULL;
 }
 
 void VSObject::setitem_at(VSObject *container, VSObject *key, VSObject *value)
@@ -24,7 +24,7 @@ void VSObject::setitem_at(VSObject *container, VSObject *key, VSObject *value)
 
 VSObject *VSObject::hasitem_at(VSObject *container, VSObject *key)
 {
-
+    return NULL;
 }
 
 void VSObject::removeitem_at(VSObject *container, VSObject *key)
@@ -39,7 +39,7 @@ void VSObject::appenditem(VSObject *container, VSObject *item)
 
 VSObject *VSObject::hasitem(VSObject *container, VSObject *item)
 {
-
+    return NULL;
 }
 
 void VSObject::removeitem(VSObject *container, VSObject *item)
