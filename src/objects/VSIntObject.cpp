@@ -38,6 +38,7 @@ void vs_int_init(VSObject *obj, VSObject *args, VSObject *)
     }
 
     VSObject *val = init_type->_number_funcs->__int__(init_val);
+    incref(val);
     if (vs_typeof(val)->t_type != T_INT)
     {
         err("%s.__int__() returned \"%s\" instead of int.", init_type->__name__.c_str(), vs_typeof(val)->__name__.c_str());
@@ -80,7 +81,7 @@ VSObject *vs_int_eq(const VSObject *a, const VSObject *b)
     vs_ensure_type(b_type, T_INT, "int eq");
 
     bool res = ((VSIntObject *)a)->_value == ((VSIntObject *)b)->_value;
-    return vs_as_object((res ? VS_TRUE : VS_FALSE));
+    return res ? VS_TRUE : VS_FALSE;
 }
 
 VSObject *vs_int_str(VSObject *obj)
@@ -153,5 +154,5 @@ VSTypeObject *VSIntType = new VSTypeObject(
     NULL   // _container_funcs
 );
 
-VSIntObject *VS_INT_ZERO = new VSIntObject(0);
-VSIntObject *VS_INT_ONE = new VSIntObject(1);
+VSObject *VS_INT_ZERO = vs_as_object(new VSIntObject(0));
+VSObject *VS_INT_ONE = vs_as_object(new VSIntObject(1));

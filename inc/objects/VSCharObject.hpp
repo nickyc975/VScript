@@ -5,7 +5,7 @@
 
 class VSCharObject;
 
-VSTypeObject *VSCharType;
+extern VSTypeObject *VSCharType;
 
 char vs_char_to_cchar(VSObject * charobj);
 VSObject *vs_char_from_cchar(char charval);

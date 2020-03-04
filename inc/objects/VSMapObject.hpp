@@ -4,6 +4,6 @@
 #include "VSObject.hpp"
 
 class VSMapObject;
-VSTypeObject *VSMapType;
+extern VSTypeObject *VSMapType;
 
 #endif

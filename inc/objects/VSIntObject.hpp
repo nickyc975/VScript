@@ -5,10 +5,10 @@
 
 class VSIntObject;
 
-VSIntObject *VS_INT_ZERO;
-VSIntObject *VS_INT_ONE;
+extern VSObject *VS_INT_ZERO;
+extern VSObject *VS_INT_ONE;
 
-VSTypeObject *VSIntType;
+extern VSTypeObject *VSIntType;
 
 int64_t vs_int_to_cint(VSObject *intobj);
 

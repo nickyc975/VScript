@@ -31,7 +31,7 @@ VSObject *vs_bool_eq(const VSObject *a, const VSObject *b)
     vs_ensure_type(b_type, T_BOOL, "bool eq");
 
     bool res = ((VSBoolObject *)a)->_value == ((VSBoolObject *)b)->_value;
-    return vs_as_object((res ? VS_TRUE : VS_FALSE));
+    return res ? VS_TRUE : VS_FALSE;
 }
 
 VSObject *vs_bool_str(VSObject *obj)
@@ -61,7 +61,7 @@ uint8_t vs_bool_to_cbool(VSObject * boolobj)
 
 VSObject *vs_bool_from_cbool(uint8_t boolval)
 {
-    return vs_as_object((boolval ? VS_TRUE : VS_FALSE));
+    return boolval ? VS_TRUE : VS_FALSE;
 }
 
 NumberFuncs *number_funcs = new NumberFuncs(
@@ -105,5 +105,5 @@ VSTypeObject *VSBoolType = new VSTypeObject(
     NULL   // _container_funcs
 );
 
-VSBoolObject *VS_TRUE = new VSBoolObject(1);
-VSBoolObject *VS_FALSE = new VSBoolObject(0);
+VSObject *VS_TRUE = vs_as_object(new VSBoolObject(1));
+VSObject *VS_FALSE = vs_as_object(new VSBoolObject(0));

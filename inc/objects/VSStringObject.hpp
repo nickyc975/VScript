@@ -6,7 +6,7 @@
 
 class VSStringObject;
 
-VSTypeObject *VSStringType;
+extern VSTypeObject *VSStringType;
 
 std::string vs_string_to_cstring(VSObject *strobj);
 VSObject *vs_string_from_cstring(std::string strval);

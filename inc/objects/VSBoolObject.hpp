@@ -5,10 +5,10 @@
 
 class VSBoolObject;
 
-VSBoolObject *VS_TRUE;
-VSBoolObject *VS_FALSE;
+extern VSObject *VS_TRUE;
+extern VSObject *VS_FALSE;
 
-VSTypeObject *VSBoolType;
+extern VSTypeObject *VSBoolType;
 
 uint8_t vs_bool_to_cbool(VSObject * boolobj);
 
