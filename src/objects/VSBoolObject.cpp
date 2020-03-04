@@ -1,6 +1,7 @@
 #include "error.hpp"
 #include "objects/VSIntObject.hpp"
 #include "objects/VSBoolObject.hpp"
+#include "objects/VSStringObject.hpp"
 
 class VSBoolObject : public VSObject
 {
@@ -37,10 +38,9 @@ VSObject *vs_bool_eq(const VSObject *a, const VSObject *b)
 VSObject *vs_bool_str(VSObject *obj)
 {
     VSTypeObject *type = vs_typeof(obj);
-
     vs_ensure_type(type, T_BOOL, "bool to str");
 
-    return NULL;
+    return vs_string_from_cstring(is_true(obj) ? "true" : "false");
 }
 
 VSObject *vs_bool_bytes(VSObject *obj)
@@ -64,8 +64,58 @@ VSObject *vs_bool_from_cbool(cbool_t boolval)
     return boolval ? VS_TRUE : VS_FALSE;
 }
 
+VSObject *vs_bool_not(VSObject *boolobj)
+{
+    VSTypeObject *type = vs_typeof(boolobj);
+    vs_ensure_type(type, T_BOOL, "not");
+
+    return is_true(boolobj) ? VS_FALSE : VS_TRUE;
+}
+
+VSObject *vs_bool_and(VSObject *a, VSObject *b)
+{
+    VSTypeObject *a_type = vs_typeof(a);
+
+    vs_ensure_type(a_type, T_BOOL, "and");
+
+    VSTypeObject *b_type = vs_typeof(b);
+
+    vs_ensure_type(b_type, T_BOOL, "and");
+
+    return vs_bool_from_cbool(is_true(a) && is_true(b));
+}
+
+VSObject *vs_bool_or(VSObject *a, VSObject *b)
+{
+    VSTypeObject *a_type = vs_typeof(a);
+
+    vs_ensure_type(a_type, T_BOOL, "and");
+
+    VSTypeObject *b_type = vs_typeof(b);
+
+    vs_ensure_type(b_type, T_BOOL, "and");
+
+    return vs_bool_from_cbool(is_true(a) || is_true(b));
+}
+
+VSObject *vs_bool_bool(VSObject *boolobj)
+{
+    VSTypeObject *type = vs_typeof(boolobj);
+    vs_ensure_type(type, T_BOOL, "__bool__()");
+
+    return boolobj;
+}
+
+VSObject *vs_bool_int(VSObject *boolobj)
+{
+    VSTypeObject *type = vs_typeof(boolobj);
+    vs_ensure_type(type, T_BOOL, "int");
+
+    return vs_int_from_cint((cint_t)vs_bool_to_cbool(boolobj));
+}
+
 NumberFuncs *number_funcs = new NumberFuncs(
-    NULL, // __not__
+    vs_bool_not, // __not__
     NULL, // __neg__
     NULL, // __add__
     NULL, // __sub__
@@ -76,11 +126,11 @@ NumberFuncs *number_funcs = new NumberFuncs(
     NULL, // __gt__
     NULL, // __le__
     NULL, // __ge__
-    NULL, // __and__
-    NULL, // __or__
-    NULL, // __bool__
+    vs_bool_and, // __and__
+    vs_bool_or, // __or__
+    vs_bool_bool, // __bool__
     NULL, // __char__
-    NULL, // __int__
+    vs_bool_int, // __int__
     NULL  // __float__
 );
 
