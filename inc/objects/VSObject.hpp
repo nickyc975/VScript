@@ -153,7 +153,7 @@ public:
         __and__(__and__),
         __or__(__or__),
         __bool__(__bool__),
-        __char__(__bool__),
+        __char__(__char__),
         __int__(__int__),
         __float__(__float__)
     {
