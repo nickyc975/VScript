@@ -102,7 +102,7 @@ VSObject *vs_float_bytes(VSObject *floatobj)
     return NULL;
 }
 
-static inline cfloat_t vs_float_to_cfloat(VSObject *floatobj)
+inline cfloat_t vs_float_to_cfloat(VSObject *floatobj)
 {
     VSTypeObject *type = vs_typeof(floatobj);
     vs_ensure_type(type, T_FLOAT, "float to cfloat");
@@ -110,7 +110,7 @@ static inline cfloat_t vs_float_to_cfloat(VSObject *floatobj)
     return ((VSFloatObject *)floatobj)->_value;
 }
 
-static inline VSObject *vs_float_from_cfloat(cfloat_t floatval)
+inline VSObject *vs_float_from_cfloat(cfloat_t floatval)
 {
     return vs_as_object(new VSFloatObject(floatval));
 }

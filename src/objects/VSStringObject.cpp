@@ -241,7 +241,7 @@ void vs_string_remove_at(VSObject *strobj, VSObject *posobj)
     str->_value.erase(pos, 1);
 }
 
-static inline std::string vs_string_to_cstring(VSObject *strobj)
+inline std::string vs_string_to_cstring(VSObject *strobj)
 {
     VSTypeObject *type = vs_typeof(strobj);
     vs_ensure_type(type, T_STR, "str to cstr");
@@ -249,7 +249,7 @@ static inline std::string vs_string_to_cstring(VSObject *strobj)
     return ((VSStringObject *)strobj)->_value;
 }
 
-static inline VSObject *vs_string_from_cstring(std::string strval)
+inline VSObject *vs_string_from_cstring(std::string strval)
 {
     return vs_as_object(new VSStringObject(strval));
 }

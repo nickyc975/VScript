@@ -101,13 +101,13 @@ VSObject *vs_int_bytes(VSObject *obj)
     return NULL;
 }
 
-static inline cint_t vs_int_to_cint(VSObject *intobj)
+inline cint_t vs_int_to_cint(VSObject *intobj)
 {
     vs_ensure_type(vs_typeof(intobj), T_INT, "to c int");
     return ((VSIntObject *)intobj)->_value;
 }
 
-static inline VSObject *vs_int_from_cint(cint_t intval)
+inline VSObject *vs_int_from_cint(cint_t intval)
 {
     return new VSIntObject(intval);
 }

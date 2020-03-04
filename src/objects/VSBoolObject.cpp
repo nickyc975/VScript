@@ -105,19 +105,19 @@ VSObject *vs_bool_int(VSObject *boolobj)
     return vs_int_from_cint((cint_t)vs_bool_to_cbool(boolobj));
 }
 
-static inline cbool_t vs_bool_to_cbool(VSObject * boolobj)
+inline cbool_t vs_bool_to_cbool(VSObject * boolobj)
 {
     VSTypeObject *type = vs_typeof(boolobj);
     vs_ensure_type(type, T_BOOL, "to c bool");
     return ((VSBoolObject *)boolobj)->_value;
 }
 
-static inline VSObject *vs_bool_from_cbool(cbool_t boolval)
+inline VSObject *vs_bool_from_cbool(cbool_t boolval)
 {
     return boolval ? VS_TRUE : VS_FALSE;
 }
 
-static inline cbool_t is_true(VSObject *obj)
+inline cbool_t is_true(VSObject *obj)
 {
     VSTypeObject *type = vs_typeof(obj);
     vs_ensure_type(type, T_BOOL, "is true");

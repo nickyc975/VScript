@@ -11,7 +11,7 @@ extern VSObject *VS_INT_ONE;
 
 extern VSTypeObject *VSIntType;
 
-static inline cint_t vs_int_to_cint(VSObject *intobj);
-static inline VSObject *vs_int_from_cint(cint_t intval);
+extern cint_t vs_int_to_cint(VSObject *intobj);
+extern VSObject *vs_int_from_cint(cint_t intval);
 
 #endif

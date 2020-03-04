@@ -8,7 +8,7 @@ class VSCharObject;
 
 extern VSTypeObject *VSCharType;
 
-static inline cchar_t vs_char_to_cchar(VSObject * charobj);
-static inline VSObject *vs_char_from_cchar(cchar_t charval);
+extern cchar_t vs_char_to_cchar(VSObject * charobj);
+extern VSObject *vs_char_from_cchar(cchar_t charval);
 
 #endif

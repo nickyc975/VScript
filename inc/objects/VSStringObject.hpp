@@ -9,7 +9,7 @@ class VSStringObject;
 
 extern VSTypeObject *VSStringType;
 
-static inline std::string vs_string_to_cstring(VSObject *strobj);
-static inline VSObject *vs_string_from_cstring(std::string strval);
+extern std::string vs_string_to_cstring(VSObject *strobj);
+extern VSObject *vs_string_from_cstring(std::string strval);
 
 #endif

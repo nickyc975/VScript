@@ -1,5 +1,5 @@
 vpath %.hpp inc
-vpath %.cpp src src/compiler src/runtime src/tools src/types
+vpath %.cpp src src/compiler src/runtime src/tools src/objects
 
 CXX=g++
 CXXFLAGS=-I inc -g -Wall -Wextra -Wno-write-strings
