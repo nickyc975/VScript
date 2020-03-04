@@ -13,7 +13,7 @@ public:
     VSFloatObject(cfloat_t val) : _value(val) {this->type = VSFloatType;}
 };
 
-VSObject *vs_float_new()
+VSObject *vs_float_new(VSObject *)
 {
     return vs_as_object(new VSFloatObject());
 }
@@ -32,8 +32,7 @@ void vs_float_init(VSObject *floatobj, VSObject *args, VSObject *)
     
     VSObject *init_val = VSObject::getitem_at(args, VS_INT_ZERO);
     VSTypeObject *init_type = vs_typeof(init_val);
-    if (init_type->_number_funcs == NULL 
-        || init_type->_number_funcs->__float__ == NULL)
+    if (init_type->_number_funcs == NULL || init_type->_number_funcs->__float__ == NULL)
     {
         err("can not cast type \"%s\" to type \"float\".", init_type->__name__.c_str());
         terminate(TERM_ERROR);
@@ -57,7 +56,7 @@ VSObject *vs_float_copy(const VSObject *that)
     vs_ensure_type(type, T_FLOAT, "float copy");
 
     VSFloatObject *old_float = (VSFloatObject *)that;
-    VSFloatObject *new_float = (VSFloatObject *)vs_float_new();
+    VSFloatObject *new_float = (VSFloatObject *)vs_float_new(vs_as_object(VSFloatType));
     new_float->_value = old_float->_value;
     return vs_as_object(new_float);
 }
@@ -103,7 +102,7 @@ VSObject *vs_float_bytes(VSObject *floatobj)
     return NULL;
 }
 
-cfloat_t vs_float_to_cfloat(VSObject *floatobj)
+static inline cfloat_t vs_float_to_cfloat(VSObject *floatobj)
 {
     VSTypeObject *type = vs_typeof(floatobj);
     vs_ensure_type(type, T_FLOAT, "float to cfloat");
@@ -111,7 +110,7 @@ cfloat_t vs_float_to_cfloat(VSObject *floatobj)
     return ((VSFloatObject *)floatobj)->_value;
 }
 
-VSObject *vs_float_from_cfloat(cfloat_t floatval)
+static inline VSObject *vs_float_from_cfloat(cfloat_t floatval)
 {
     return vs_as_object(new VSFloatObject(floatval));
 }

@@ -2,6 +2,7 @@
 #define VS_INT_H
 
 #include "VSObject.hpp"
+#include "VSTypeObject.hpp"
 
 class VSIntObject;
 
@@ -10,8 +11,7 @@ extern VSObject *VS_INT_ONE;
 
 extern VSTypeObject *VSIntType;
 
-cint_t vs_int_to_cint(VSObject *intobj);
-
-VSObject *vs_int_from_cint(cint_t intval);
+static inline cint_t vs_int_to_cint(VSObject *intobj);
+static inline VSObject *vs_int_from_cint(cint_t intval);
 
 #endif

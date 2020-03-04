@@ -12,7 +12,7 @@ public:
     VSIntObject(cint_t val) : _value(val) {this->type = VSIntType;}
 };
 
-VSObject *vs_int_new()
+VSObject *vs_int_new(VSObject *)
 {
     return vs_as_object(new VSIntObject());
 }
@@ -31,8 +31,7 @@ void vs_int_init(VSObject *obj, VSObject *args, VSObject *)
     
     VSObject *init_val = VSObject::getitem_at(args, VS_INT_ZERO);
     VSTypeObject *init_type = vs_typeof(init_val);
-    if (init_type->_number_funcs == NULL 
-        || init_type->_number_funcs->__int__ == NULL)
+    if (init_type->_number_funcs == NULL || init_type->_number_funcs->__int__ == NULL)
     {
         err("can not cast type \"%s\" to type \"int\".", init_type->__name__.c_str());
         terminate(TERM_ERROR);
@@ -57,7 +56,7 @@ VSObject *vs_int_copy(const VSObject *that)
     vs_ensure_type(type, T_INT, "int copy");
 
     VSIntObject *old_int = (VSIntObject *)that;
-    VSIntObject *new_int = (VSIntObject *)vs_int_new();
+    VSIntObject *new_int = (VSIntObject *)vs_int_new(vs_as_object(VSIntType));
     new_int->_value = old_int->_value;
     return vs_as_object(new_int);
 }
@@ -102,13 +101,13 @@ VSObject *vs_int_bytes(VSObject *obj)
     return NULL;
 }
 
-cint_t vs_int_to_cint(VSObject *intobj)
+static inline cint_t vs_int_to_cint(VSObject *intobj)
 {
     vs_ensure_type(vs_typeof(intobj), T_INT, "to c int");
     return ((VSIntObject *)intobj)->_value;
 }
 
-VSObject *vs_int_from_cint(cint_t intval)
+static inline VSObject *vs_int_from_cint(cint_t intval)
 {
     return new VSIntObject(intval);
 }

@@ -12,6 +12,9 @@ public:
     VSBoolObject(cbool_t val) : _value(val ? 1 : 0) {this->type = VSBoolType;}
 };
 
+VSObject *VS_TRUE = vs_as_object(new VSBoolObject(1));
+VSObject *VS_FALSE = vs_as_object(new VSBoolObject(0));
+
 VSObject *vs_bool_hash(const VSObject *obj)
 {
     VSTypeObject *type = vs_typeof(obj);
@@ -50,18 +53,6 @@ VSObject *vs_bool_bytes(VSObject *obj)
     vs_ensure_type(type, T_BOOL, "bool to bytes");
 
     return NULL;
-}
-
-cbool_t vs_bool_to_cbool(VSObject * boolobj)
-{
-    VSTypeObject *type = vs_typeof(boolobj);
-    vs_ensure_type(type, T_BOOL, "to c bool");
-    return ((VSBoolObject *)boolobj)->_value;
-}
-
-VSObject *vs_bool_from_cbool(cbool_t boolval)
-{
-    return boolval ? VS_TRUE : VS_FALSE;
 }
 
 VSObject *vs_bool_not(VSObject *boolobj)
@@ -114,6 +105,25 @@ VSObject *vs_bool_int(VSObject *boolobj)
     return vs_int_from_cint((cint_t)vs_bool_to_cbool(boolobj));
 }
 
+static inline cbool_t vs_bool_to_cbool(VSObject * boolobj)
+{
+    VSTypeObject *type = vs_typeof(boolobj);
+    vs_ensure_type(type, T_BOOL, "to c bool");
+    return ((VSBoolObject *)boolobj)->_value;
+}
+
+static inline VSObject *vs_bool_from_cbool(cbool_t boolval)
+{
+    return boolval ? VS_TRUE : VS_FALSE;
+}
+
+static inline cbool_t is_true(VSObject *obj)
+{
+    VSTypeObject *type = vs_typeof(obj);
+    vs_ensure_type(type, T_BOOL, "is true");
+    return (cbool_t)(obj == VS_TRUE);
+}
+
 NumberFuncs *number_funcs = new NumberFuncs(
     vs_bool_not, // __not__
     NULL, // __neg__
@@ -154,6 +164,3 @@ VSTypeObject *VSBoolType = new VSTypeObject(
     number_funcs,  // _number_funcs
     NULL   // _container_funcs
 );
-
-VSObject *VS_TRUE = vs_as_object(new VSBoolObject(1));
-VSObject *VS_FALSE = vs_as_object(new VSBoolObject(0));

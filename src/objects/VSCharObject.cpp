@@ -80,7 +80,7 @@ VSObject *vs_char_int(VSObject *charobj)
     return vs_int_from_cint((cint_t)vs_char_to_cchar(charobj));
 }
 
-cchar_t vs_char_to_cchar(VSObject * charobj)
+static inline cchar_t vs_char_to_cchar(VSObject * charobj)
 {
     VSTypeObject *type = vs_typeof(charobj);
     vs_ensure_type(type, T_CHAR, "cchar_t to cchar");
@@ -88,7 +88,7 @@ cchar_t vs_char_to_cchar(VSObject * charobj)
     return ((VSCharObject *)charobj)->_value;
 }
 
-VSObject *vs_char_from_cchar(cchar_t charval)
+static inline VSObject *vs_char_from_cchar(cchar_t charval)
 {
     return vs_as_object(new VSCharObject(charval));
 }

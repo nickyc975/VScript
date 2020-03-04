@@ -2,6 +2,7 @@
 #define VS_NONE_H
 
 #include "VSObject.hpp"
+#include "VSTypeObject.hpp"
 
 class VSNoneObject;
 
