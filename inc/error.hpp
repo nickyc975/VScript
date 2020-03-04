@@ -5,6 +5,12 @@
 #define warn(...)   __vs_report__(WARN, __VA_ARGS__)
 #define note(...)   __vs_report__(NOTE, __VA_ARGS__)
 
+#define negative_index(idx) \
+    err("negative index %ld.", idx)
+
+#define index_out_of_bound(idx, size) \
+    err("index %ld out of bound %ld.", idx, size)
+
 #define u_op_err(op, type) \
     err("Can not apply operation \"%s\" on type \"%s\"\n", op, type)
 
