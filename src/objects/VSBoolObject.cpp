@@ -109,7 +109,7 @@ VSObject *vs_bool_bool(VSObject *boolobj)
 VSObject *vs_bool_int(VSObject *boolobj)
 {
     VSTypeObject *type = vs_typeof(boolobj);
-    vs_ensure_type(type, T_BOOL, "int");
+    vs_ensure_type(type, T_BOOL, "__int__()");
 
     return vs_int_from_cint((cint_t)vs_bool_to_cbool(boolobj));
 }
