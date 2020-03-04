@@ -2,7 +2,7 @@
 #include "objects/VSBoolObject.hpp"
 #include "objects/VSIntObject.hpp"
 #include "objects/VSStringObject.hpp"
-#include "objects/VSFlaotObject.hpp"
+#include "objects/VSFloatObject.hpp"
 
 class VSFloatObject : public VSObject
 {
