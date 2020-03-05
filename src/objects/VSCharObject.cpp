@@ -13,6 +13,57 @@ public:
     VSCharObject(cchar_t val) : _value(val) {this->type = VSCharType;}
 };
 
+VSObject *vs_char_new(VSObject *typeobj, VSObject *args, VSObject *)
+{
+    VSTypeObject *ttype = vs_typeof(typeobj);
+    vs_ensure_type(ttype, T_TYPE, "char new");
+
+    VSTypeObject *type = vs_as_type(typeobj);
+    vs_ensure_type(type, T_CHAR, "char new");
+
+    vs_size_t len = VSObject::c_getlen(args);
+    if (len == 0)
+    {
+        return vs_as_object(new VSCharObject());
+    }
+    else if (len > 1)
+    {
+        err("char.__new__() expected 0 or 1 arg but got %llu.", len);
+        terminate(TERM_ERROR);
+    }
+
+    VSObject *init_val = VSObject::getitem_at(args, VS_INT_ZERO);
+    VSTypeObject *init_type = vs_typeof(init_val);
+    if (init_type->_number_funcs == NULL || init_type->_number_funcs->__char__ == NULL)
+    {
+        err("can not cast type \"%s\" to type \"char\".", init_type->__name__.c_str());
+        terminate(TERM_ERROR);
+    }
+
+    VSObject *val = init_type->_number_funcs->__char__(init_val);
+    if (vs_typeof(val)->t_type != T_CHAR)
+    {
+        err("%s.__char__() returned \"%s\" instead of char.", init_type->__name__.c_str(), vs_typeof(val)->__name__.c_str());
+        terminate(TERM_ERROR);
+    }
+
+    return val;
+}
+
+void vs_char_init(VSObject *self, VSObject *args, VSObject *)
+{
+}
+
+VSObject *vs_char_copy(const VSObject *charobj)
+{
+    VSTypeObject *type = vs_typeof(charobj);
+    vs_ensure_type(type, T_CHAR, "char copy");
+
+    VSCharObject *oldchar = (VSCharObject *)charobj;
+    VSCharObject *newchar = new VSCharObject(oldchar->_value);
+    return vs_as_object(newchar);
+}
+
 VSObject *vs_char_hash(const VSObject *charobj)
 {
     VSTypeObject *type = vs_typeof(charobj);
@@ -117,9 +168,9 @@ VSTypeObject *VSCharType = new VSTypeObject(
     T_CHAR,
     "char", // __name__
     NULL,  // __attrs__
-    NULL,  // __new__
-    NULL,  // __init__
-    NULL,  // __copy__
+    vs_char_new,  // __new__
+    vs_char_init,  // __init__
+    vs_char_copy,  // __copy__
     NULL,  // __clear__
     NULL,  // __getattr__
     NULL,  // __hasattr__

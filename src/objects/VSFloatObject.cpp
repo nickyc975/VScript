@@ -13,22 +13,24 @@ public:
     VSFloatObject(cfloat_t val) : _value(val) {this->type = VSFloatType;}
 };
 
-VSObject *vs_float_new(VSObject *)
+VSObject *vs_float_new(VSObject *typeobj, VSObject *args, VSObject *)
 {
-    return vs_as_object(new VSFloatObject());
-}
+    VSTypeObject *ttype = vs_typeof(typeobj);
+    vs_ensure_type(ttype, T_TYPE, "float new");
 
-void vs_float_init(VSObject *floatobj, VSObject *args, VSObject *)
-{
+    VSTypeObject *type = vs_as_type(typeobj);
+    vs_ensure_type(type, T_FLOAT, "float new");
+
     vs_size_t len = VSObject::c_getlen(args);
+    if (len == 0)
+    {
+        return vs_as_object(new VSFloatObject());
+    }
     if (len > 1)
     {
-        err("float.__init__() expected 0 or 1 arg but got %llu.", len);
+        err("float.__new__() expected 0 or 1 arg but got %llu.", len);
         terminate(TERM_ERROR);
     }
-
-    if (len == 0)
-        return;
     
     VSObject *init_val = VSObject::getitem_at(args, VS_INT_ZERO);
     VSTypeObject *init_type = vs_typeof(init_val);
@@ -39,15 +41,17 @@ void vs_float_init(VSObject *floatobj, VSObject *args, VSObject *)
     }
 
     VSObject *val = init_type->_number_funcs->__float__(init_val);
-    incref(val);
     if (vs_typeof(val)->t_type != T_FLOAT)
     {
         err("%s.__float__() returned \"%s\" instead of \"float\".", init_type->__name__.c_str(), vs_typeof(val)->__name__.c_str());
         terminate(TERM_ERROR);
     }
 
-    ((VSFloatObject *)floatobj)->_value = ((VSFloatObject *)val)->_value;
-    decref_ex(val);
+    return val;
+}
+
+void vs_float_init(VSObject *floatobj, VSObject *args, VSObject *)
+{
 }
 
 VSObject *vs_float_copy(const VSObject *that)
@@ -56,8 +60,7 @@ VSObject *vs_float_copy(const VSObject *that)
     vs_ensure_type(type, T_FLOAT, "float copy");
 
     VSFloatObject *old_float = (VSFloatObject *)that;
-    VSFloatObject *new_float = (VSFloatObject *)vs_float_new(vs_as_object(VSFloatType));
-    new_float->_value = old_float->_value;
+    VSFloatObject *new_float = new VSFloatObject(old_float->_value);
     return vs_as_object(new_float);
 }
 

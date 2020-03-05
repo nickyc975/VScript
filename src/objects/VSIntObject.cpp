@@ -12,23 +12,25 @@ public:
     VSIntObject(cint_t val) : _value(val) {this->type = VSIntType;}
 };
 
-VSObject *vs_int_new(VSObject *)
+VSObject *vs_int_new(VSObject *typeobj, VSObject *args, VSObject *)
 {
-    return vs_as_object(new VSIntObject());
-}
+    VSTypeObject *ttype = vs_typeof(typeobj);
+    vs_ensure_type(ttype, T_TYPE, "int new");
 
-void vs_int_init(VSObject *obj, VSObject *args, VSObject *)
-{
+    VSTypeObject *type = vs_as_type(typeobj);
+    vs_ensure_type(type, T_INT, "int new");
+
     vs_size_t len = VSObject::c_getlen(args);
-    if (len > 1)
+    if (len == 0)
     {
-        err("int.__init__() expected 0 or 1 arg but got %llu.", len);
+        return vs_as_object(new VSIntObject());
+    }
+    else if (len > 1)
+    {
+        err("int.__new__() expected 0 or 1 arg but got %llu.", len);
         terminate(TERM_ERROR);
     }
 
-    if (len == 0)
-        return;
-    
     VSObject *init_val = VSObject::getitem_at(args, VS_INT_ZERO);
     VSTypeObject *init_type = vs_typeof(init_val);
     if (init_type->_number_funcs == NULL || init_type->_number_funcs->__int__ == NULL)
@@ -38,26 +40,26 @@ void vs_int_init(VSObject *obj, VSObject *args, VSObject *)
     }
 
     VSObject *val = init_type->_number_funcs->__int__(init_val);
-    incref(val);
     if (vs_typeof(val)->t_type != T_INT)
     {
         err("%s.__int__() returned \"%s\" instead of int.", init_type->__name__.c_str(), vs_typeof(val)->__name__.c_str());
         terminate(TERM_ERROR);
     }
 
-    ((VSIntObject *)obj)->_value = ((VSIntObject *)val)->_value;
-    decref_ex(val);
+    return val;
+}
+
+void vs_int_init(VSObject *, VSObject *, VSObject *)
+{
 }
 
 VSObject *vs_int_copy(const VSObject *that)
 {
     VSTypeObject *type = vs_typeof(that);
-
     vs_ensure_type(type, T_INT, "int copy");
 
     VSIntObject *old_int = (VSIntObject *)that;
-    VSIntObject *new_int = (VSIntObject *)vs_int_new(vs_as_object(VSIntType));
-    new_int->_value = old_int->_value;
+    VSIntObject *new_int = new VSIntObject(old_int->_value);
     return vs_as_object(new_int);
 }
 

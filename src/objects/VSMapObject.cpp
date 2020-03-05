@@ -32,7 +32,7 @@ public:
     VSMapObject() {this->type = VSMapType;}
 };
 
-VSObject *vs_map_new(VSObject *)
+VSObject *vs_map_new(VSObject *typeobj, VSObject *args, VSObject *)
 {
     return vs_as_object(new VSMapObject());
 }
@@ -48,7 +48,7 @@ VSObject *vs_map_copy(const VSObject *that)
     vs_ensure_type(type, T_MAP, "map copy");
 
     VSMapObject *map = (VSMapObject *)that;
-    VSMapObject *new_map = (VSMapObject *)type->__new__(vs_as_object(VSMapType));
+    VSMapObject *new_map = new VSMapObject();
     for (auto entry : map->_map)
     {
         new_map->_map[entry.first] = entry.second;

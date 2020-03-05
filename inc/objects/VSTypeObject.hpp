@@ -11,7 +11,7 @@ public:
 
     VSObject *__attrs__;
 
-    unaryfunc __new__;
+    ternaryfunc __new__;
     void_ternaryfunc __init__;
     const_unaryfunc __copy__;
     void_unaryfunc __clear__;
@@ -40,7 +40,7 @@ public:
         TYPE_TYPE t_type,
         std::string __name__,
         VSObject *__attrs__,
-        unaryfunc __new__,
+        ternaryfunc __new__,
         void_ternaryfunc __init__,
         const_unaryfunc __copy__,
         void_unaryfunc __clear__,

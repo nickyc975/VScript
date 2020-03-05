@@ -13,22 +13,24 @@ public:
     VSStringObject(std::string val) : _value(val) {this->type = VSStringType;}
 };
 
-VSObject *vs_string_new(VSObject *)
+VSObject *vs_string_new(VSObject *typeobj, VSObject *args, VSObject *)
 {
-    return vs_as_object(new VSStringObject());
-}
+    VSTypeObject *ttype = vs_typeof(typeobj);
+    vs_ensure_type(ttype, T_TYPE, "str new");
 
-void vs_string_init(VSObject *strobj, VSObject *args, VSObject *)
-{
+    VSTypeObject *type = vs_as_type(typeobj);
+    vs_ensure_type(type, T_STR, "str new");
+
     vs_size_t len = VSObject::c_getlen(args);
-    if (len > 1)
+    if (len == 0)
     {
-        err("str.__init__() expected 0 or 1 arg but got %llu.", len);
+        return vs_as_object(new VSStringObject());
+    }
+    else if (len > 1)
+    {
+        err("str.__new__() expected 0 or 1 arg but got %llu.", len);
         terminate(TERM_ERROR);
     }
-
-    if (len == 0)
-        return;
     
     VSObject *init_val = VSObject::getitem_at(args, VS_INT_ZERO);
     VSTypeObject *init_type = vs_typeof(init_val);
@@ -39,15 +41,17 @@ void vs_string_init(VSObject *strobj, VSObject *args, VSObject *)
     }
 
     VSObject *val = init_type->__str__(init_val);
-    incref(val);
     if (vs_typeof(val)->t_type != T_STR)
     {
         err("%s.__str__() returned \"%s\" instead of str.", init_type->__name__.c_str(), vs_typeof(val)->__name__.c_str());
         terminate(TERM_ERROR);
     }
 
-    ((VSStringObject *)strobj)->_value = ((VSStringObject *)val)->_value;
-    decref_ex(val);
+    return val;
+}
+
+void vs_string_init(VSObject *strobj, VSObject *args, VSObject *)
+{
 }
 
 VSObject *vs_string_copy(const VSObject *that)

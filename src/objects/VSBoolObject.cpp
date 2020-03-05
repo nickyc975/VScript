@@ -15,6 +15,52 @@ public:
 VSObject *VS_TRUE = vs_as_object(new VSBoolObject(1));
 VSObject *VS_FALSE = vs_as_object(new VSBoolObject(0));
 
+VSObject *vs_bool_new(VSObject *typeobj, VSObject *args, VSObject *)
+{
+    VSTypeObject *ttype = vs_typeof(typeobj);
+    vs_ensure_type(ttype, T_TYPE, "bool new");
+
+    VSTypeObject *type = vs_as_type(typeobj);
+    vs_ensure_type(type, T_BOOL, "bool new");
+
+    vs_size_t len = VSObject::c_getlen(args);
+    if (len == 0)
+    {
+        return VS_FALSE;
+    }
+    else if (len > 1)
+    {
+        err("bool.__new__() expected 0 or 1 arg but got %llu.", len);
+        terminate(TERM_ERROR);
+    }
+
+    VSObject *init_val = VSObject::getitem_at(args, VS_INT_ZERO);
+    VSTypeObject *init_type = vs_typeof(init_val);
+    if (init_type->_number_funcs == NULL || init_type->_number_funcs->__bool__ == NULL)
+    {
+        err("can not cast type \"%s\" to type \"bool\".", init_type->__name__.c_str());
+        terminate(TERM_ERROR);
+    }
+
+    VSObject *val = init_type->_number_funcs->__bool__(init_val);
+    if (vs_typeof(val)->t_type != T_BOOL)
+    {
+        err("%s.__bool__() returned \"%s\" instead of bool.", init_type->__name__.c_str(), vs_typeof(val)->__name__.c_str());
+        terminate(TERM_ERROR);
+    }
+
+    return val;
+}
+
+void vs_bool_init(VSObject *, VSObject *, VSObject *)
+{
+}
+
+VSObject *vs_bool_copy(const VSObject *boolobj)
+{
+    return vs_bool_from_cbool(is_true(const_cast<VSObject *>(boolobj)));
+}
+
 VSObject *vs_bool_hash(const VSObject *obj)
 {
     VSTypeObject *type = vs_typeof(obj);
@@ -148,9 +194,9 @@ VSTypeObject *VSBoolType = new VSTypeObject(
     T_BOOL,
     "bool", // __name__
     NULL,  // __attrs__
-    NULL,  // __new__
-    NULL,  // __init__
-    NULL,  // __copy__
+    vs_bool_new,  // __new__
+    vs_bool_init,  // __init__
+    vs_bool_copy,  // __copy__
     NULL,  // __clear__
     NULL,  // __getattr__
     NULL,  // __hasattr__

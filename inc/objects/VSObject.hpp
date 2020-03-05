@@ -7,6 +7,8 @@
 
 #define vs_as_object(obj) ((VSObject *)obj)
 
+#define vs_as_type(obj) ((VSTypeObject *)obj)
+
 #define vs_ensure_type(type, ttype, op)                                          \
     if (type->t_type != ttype)                                                   \
     {                                                                            \
@@ -16,7 +18,7 @@
 
 #define incref(obj) obj->refcnt++;
 
-#define decref(obj) \
+#define decref(obj)                            \
     obj->refcnt--;                             \
     if (obj->refcnt == 0)                      \
     {                                          \
