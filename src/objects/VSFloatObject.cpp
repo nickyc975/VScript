@@ -10,8 +10,8 @@ class VSFloatObject : public VSObject
 public:
     cfloat_t _value;
 
-    VSFloatObject() : _value(0.0L) {this->type = VSFloatType;}
-    VSFloatObject(cfloat_t val) : _value(val) {this->type = VSFloatType;}
+    VSFloatObject() : _value(0.0L) { this->type = VSFloatType; }
+    VSFloatObject(cfloat_t val) : _value(val) { this->type = VSFloatType; }
 };
 
 VSObject *vs_float_new(VSObject *typeobj, VSObject *args, VSObject *)
@@ -32,7 +32,7 @@ VSObject *vs_float_new(VSObject *typeobj, VSObject *args, VSObject *)
         err("float.__new__() expected 0 or 1 arg but got %llu.", len);
         terminate(TERM_ERROR);
     }
-    
+
     VSObject *init_val = VSObject::getitem_at(args, VS_INT_ZERO);
     VSTypeObject *init_type = VS_TYPEOF(init_val);
     if (init_type->_number_funcs == NULL || init_type->_number_funcs->__float__ == NULL)
@@ -239,39 +239,39 @@ inline VSObject *vs_float_from_cfloat(cfloat_t floatval)
 }
 
 NumberFuncs *number_funcs = new NumberFuncs(
-    NULL, // __not__
-    vs_float_neg, // __neg__
-    vs_float_add, // __add__
-    vs_float_sub, // __sub__
-    vs_float_mul, // __mul__
-    vs_float_div, // __div__
-    NULL, // __mod__
-    NULL, // __and__
-    NULL, // __or__
+    NULL,          // __not__
+    vs_float_neg,  // __neg__
+    vs_float_add,  // __add__
+    vs_float_sub,  // __sub__
+    vs_float_mul,  // __mul__
+    vs_float_div,  // __div__
+    NULL,          // __mod__
+    NULL,          // __and__
+    NULL,          // __or__
     vs_float_bool, // __bool__
     vs_float_char, // __char__
-    vs_float_int, // __int__
-    vs_float_float  // __float__
+    vs_float_int,  // __int__
+    vs_float_float // __float__
 );
 
 VSTypeObject *VSFloatType = new VSTypeObject(
     T_FLOAT,
-    "float", // __name__
-    NULL,  // __attrs__
-    vs_float_new,  // __new__
+    "float",        // __name__
+    NULL,           // __attrs__
+    vs_float_new,   // __new__
     vs_float_init,  // __init__
     vs_float_copy,  // __copy__
-    NULL,  // __clear__
-    NULL,  // __getattr__
-    NULL,  // __hasattr__
-    NULL,  // __setattr__
-    NULL,  // __removeattr__
+    NULL,           // __clear__
+    NULL,           // __getattr__
+    NULL,           // __hasattr__
+    NULL,           // __setattr__
+    NULL,           // __removeattr__
     vs_float_hash,  // __hash__
-    vs_float_lt, // __lt__
-    vs_float_eq,  // __eq__
-    vs_float_str,  // __str__
-    vs_float_bytes,  // __bytes__
-    NULL,  // __call__
-    number_funcs,  // _number_funcs
-    NULL   // _container_funcs
+    vs_float_lt,    // __lt__
+    vs_float_eq,    // __eq__
+    vs_float_str,   // __str__
+    vs_float_bytes, // __bytes__
+    NULL,           // __call__
+    number_funcs,   // _number_funcs
+    NULL            // _container_funcs
 );

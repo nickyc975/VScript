@@ -10,8 +10,8 @@ class VSBoolObject : public VSObject
 public:
     cbool_t _value;
 
-    VSBoolObject() : _value(0) {this->type = VSBoolType;}
-    VSBoolObject(cbool_t val) : _value(val ? 1 : 0) {this->type = VSBoolType;}
+    VSBoolObject() : _value(0) { this->type = VSBoolType; }
+    VSBoolObject(cbool_t val) : _value(val ? 1 : 0) { this->type = VSBoolType; }
 };
 
 VSObject *VS_TRUE = VS_AS_OBJECT(new VSBoolObject(1));
@@ -190,7 +190,7 @@ VSObject *vs_bool_float(VSObject *boolobj)
     return vs_float_from_cfloat((cfloat_t)vs_bool_to_cbool(boolobj));
 }
 
-inline cbool_t vs_bool_to_cbool(VSObject * boolobj)
+inline cbool_t vs_bool_to_cbool(VSObject *boolobj)
 {
     VSTypeObject *type = VS_TYPEOF(boolobj);
     VS_ENSURE_TYPE(type, T_BOOL, "to c bool");
@@ -210,39 +210,39 @@ inline cbool_t is_true(VSObject *obj)
 }
 
 NumberFuncs *number_funcs = new NumberFuncs(
-    vs_bool_not, // __not__
-    NULL, // __neg__
-    NULL, // __add__
-    NULL, // __sub__
-    NULL, // __mul__
-    NULL, // __div__
-    NULL, // __mod__
-    vs_bool_and, // __and__
-    vs_bool_or, // __or__
+    vs_bool_not,  // __not__
+    NULL,         // __neg__
+    NULL,         // __add__
+    NULL,         // __sub__
+    NULL,         // __mul__
+    NULL,         // __div__
+    NULL,         // __mod__
+    vs_bool_and,  // __and__
+    vs_bool_or,   // __or__
     vs_bool_bool, // __bool__
     vs_bool_char, // __char__
-    vs_bool_int, // __int__
-    vs_bool_float  // __float__
+    vs_bool_int,  // __int__
+    vs_bool_float // __float__
 );
 
 VSTypeObject *VSBoolType = new VSTypeObject(
     T_BOOL,
-    "bool", // __name__
-    NULL,  // __attrs__
-    vs_bool_new,  // __new__
+    "bool",        // __name__
+    NULL,          // __attrs__
+    vs_bool_new,   // __new__
     vs_bool_init,  // __init__
     vs_bool_copy,  // __copy__
-    NULL,  // __clear__
-    NULL,  // __getattr__
-    NULL,  // __hasattr__
-    NULL,  // __setattr__
-    NULL,  // __removeattr__
+    NULL,          // __clear__
+    NULL,          // __getattr__
+    NULL,          // __hasattr__
+    NULL,          // __setattr__
+    NULL,          // __removeattr__
     vs_bool_hash,  // __hash__
-    vs_bool_lt, // __lt__
-    vs_bool_eq,  // __eq__
-    vs_bool_str,  // __str__
-    vs_bool_bytes,  // __bytes__
-    NULL,  // __call__
+    vs_bool_lt,    // __lt__
+    vs_bool_eq,    // __eq__
+    vs_bool_str,   // __str__
+    vs_bool_bytes, // __bytes__
+    NULL,          // __call__
     number_funcs,  // _number_funcs
-    NULL   // _container_funcs
+    NULL           // _container_funcs
 );

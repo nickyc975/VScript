@@ -20,7 +20,7 @@ bool equal_to(const VSObject *a, const VSObject *b)
     {
         return false;
     }
-    
+
     VSTypeObject *type = VS_TYPEOF(a);
     return (bool)vs_bool_to_cbool(type->__eq__(a, b));
 }
@@ -30,7 +30,7 @@ class VSMapObject : public VSObject
 public:
     std::unordered_map<VSObject *, VSObject *, decltype(&hash), decltype(&equal_to)> _map;
 
-    VSMapObject() {this->type = VSMapType;}
+    VSMapObject() { this->type = VSMapType; }
 };
 
 VSObject *vs_map_new(VSObject *typeobj, VSObject *args, VSObject *)
@@ -172,34 +172,34 @@ VSObject *vs_map_bytes(VSObject *obj)
 }
 
 ContainerFuncs *map_funcs = new ContainerFuncs(
-    vs_map_len,
-    vs_map_get,
-    vs_map_set,
-    NULL,
-    NULL,
-    vs_map_has_at,
-    NULL,
-    vs_map_remove_at
+    vs_map_len,      // __len__
+    vs_map_get,      // __get__
+    vs_map_set,      // __set__
+    NULL,            // __append__
+    NULL,            // __has__
+    vs_map_has_at,   // __has_at__
+    NULL,            // __remove__
+    vs_map_remove_at // __remove_at__
 );
 
 VSTypeObject *VSMapType = new VSTypeObject(
     T_MAP,
-    "map", // __name__
-    NULL,  // __attrs__
-    vs_map_new,  // __new__
-    vs_map_init,  // __init__
-    vs_map_copy,  // __copy__
-    vs_map_clear,  // __clear__
-    NULL,  // __getattr__
-    NULL,  // __hasattr__
-    NULL,  // __setattr__
-    NULL,  // __removeattr__
-    vs_hash_not_implemented,  // __hash__
-    NULL, // __lt__
-    vs_default_eq,  // __eq__
-    vs_map_str,  // __str__
-    vs_map_bytes,  // __bytes__
-    NULL,  // __call__
-    NULL,  // _number_funcs
-    map_funcs   // _container_funcs
+    "map",                   // __name__
+    NULL,                    // __attrs__
+    vs_map_new,              // __new__
+    vs_map_init,             // __init__
+    vs_map_copy,             // __copy__
+    vs_map_clear,            // __clear__
+    NULL,                    // __getattr__
+    NULL,                    // __hasattr__
+    NULL,                    // __setattr__
+    NULL,                    // __removeattr__
+    vs_hash_not_implemented, // __hash__
+    NULL,                    // __lt__
+    vs_default_eq,           // __eq__
+    vs_map_str,              // __str__
+    vs_map_bytes,            // __bytes__
+    NULL,                    // __call__
+    NULL,                    // _number_funcs
+    map_funcs                // _container_funcs
 );

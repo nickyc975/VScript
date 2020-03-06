@@ -10,8 +10,8 @@ class VSCharObject : public VSObject
 public:
     cchar_t _value;
 
-    VSCharObject() : _value(0) {this->type = VSCharType;}
-    VSCharObject(cchar_t val) : _value(val) {this->type = VSCharType;}
+    VSCharObject() : _value(0) { this->type = VSCharType; }
+    VSCharObject(cchar_t val) : _value(val) { this->type = VSCharType; }
 };
 
 VSObject *vs_char_new(VSObject *typeobj, VSObject *args, VSObject *)
@@ -161,7 +161,7 @@ VSObject *vs_char_float(VSObject *charobj)
     return vs_float_from_cfloat((cfloat_t)vs_char_to_cchar(charobj));
 }
 
-inline cchar_t vs_char_to_cchar(VSObject * charobj)
+inline cchar_t vs_char_to_cchar(VSObject *charobj)
 {
     VSTypeObject *type = VS_TYPEOF(charobj);
     VS_ENSURE_TYPE(type, T_CHAR, "cchar_t to cchar");
@@ -175,39 +175,39 @@ inline VSObject *vs_char_from_cchar(cchar_t charval)
 }
 
 NumberFuncs *number_funcs = new NumberFuncs(
-    NULL, // __not__
-    NULL, // __neg__
-    NULL, // __add__
-    NULL, // __sub__
-    NULL, // __mul__
-    NULL, // __div__
-    NULL, // __mod__
-    NULL, // __and__
-    NULL, // __or__
+    NULL,         // __not__
+    NULL,         // __neg__
+    NULL,         // __add__
+    NULL,         // __sub__
+    NULL,         // __mul__
+    NULL,         // __div__
+    NULL,         // __mod__
+    NULL,         // __and__
+    NULL,         // __or__
     vs_char_bool, // __bool__
     vs_char_char, // __char__
-    vs_char_int, // __int__
-    vs_char_float  // __float__
+    vs_char_int,  // __int__
+    vs_char_float // __float__
 );
 
 VSTypeObject *VSCharType = new VSTypeObject(
     T_CHAR,
-    "char", // __name__
-    NULL,  // __attrs__
-    vs_char_new,  // __new__
+    "char",        // __name__
+    NULL,          // __attrs__
+    vs_char_new,   // __new__
     vs_char_init,  // __init__
     vs_char_copy,  // __copy__
-    NULL,  // __clear__
-    NULL,  // __getattr__
-    NULL,  // __hasattr__
-    NULL,  // __setattr__
-    NULL,  // __removeattr__
+    NULL,          // __clear__
+    NULL,          // __getattr__
+    NULL,          // __hasattr__
+    NULL,          // __setattr__
+    NULL,          // __removeattr__
     vs_char_hash,  // __hash__
-    vs_char_lt, // __lt__
-    vs_char_eq,  // __eq__
-    vs_char_str,  // __str__
-    vs_char_bytes,  // __bytes__
-    NULL,  // __call__
+    vs_char_lt,    // __lt__
+    vs_char_eq,    // __eq__
+    vs_char_str,   // __str__
+    vs_char_bytes, // __bytes__
+    NULL,          // __call__
     number_funcs,  // _number_funcs
-    NULL   // _container_funcs
+    NULL           // _container_funcs
 );

@@ -6,10 +6,10 @@
 class VSNoneObject : public VSObject
 {
 public:
-    VSNoneObject() {this->type = VSNoneType;}
+    VSNoneObject() { this->type = VSNoneType; }
 };
 
-VSObject *vs_none_new(VSObject *typeobj, VSObject *args, VSObject *) 
+VSObject *vs_none_new(VSObject *typeobj, VSObject *args, VSObject *)
 {
     INCREF_RET(VS_NONE);
 }
@@ -57,24 +57,24 @@ VSObject *vs_none_bytes(VSObject *obj)
 
 VSTypeObject *VSNoneType = new VSTypeObject(
     T_NONE,
-    "none", // __name__
-    NULL,  // __attrs__
-    vs_none_new,  // __new__
-    vs_none_init,  // __init__
-    vs_none_copy,  // __copy__
-    NULL,  // __clear__
-    NULL,  // __getattr__
-    NULL,  // __hasattr__
-    NULL,  // __setattr__
-    NULL,  // __removeattr__
-    vs_hash_not_implemented,  // __hash__
-    NULL, // __lt__
-    vs_none_eq,  // __eq__
-    vs_none_str,  // __str__
-    vs_none_bytes,  // __bytes__
-    NULL,  // __call__
-    NULL,  // _number_funcs
-    NULL   // _container_funcs
+    "none",                  // __name__
+    NULL,                    // __attrs__
+    vs_none_new,             // __new__
+    vs_none_init,            // __init__
+    vs_none_copy,            // __copy__
+    NULL,                    // __clear__
+    NULL,                    // __getattr__
+    NULL,                    // __hasattr__
+    NULL,                    // __setattr__
+    NULL,                    // __removeattr__
+    vs_hash_not_implemented, // __hash__
+    NULL,                    // __lt__
+    vs_none_eq,              // __eq__
+    vs_none_str,             // __str__
+    vs_none_bytes,           // __bytes__
+    NULL,                    // __call__
+    NULL,                    // _number_funcs
+    NULL                     // _container_funcs
 );
 
 VSObject *VS_NONE = VS_AS_OBJECT(new VSNoneObject());

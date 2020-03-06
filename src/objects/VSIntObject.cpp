@@ -10,8 +10,8 @@ class VSIntObject : public VSObject
 public:
     cint_t _value;
 
-    VSIntObject() : _value(0) {this->type = VSIntType;}
-    VSIntObject(cint_t val) : _value(val) {this->type = VSIntType;}
+    VSIntObject() : _value(0) { this->type = VSIntType; }
+    VSIntObject(cint_t val) : _value(val) { this->type = VSIntType; }
 };
 
 VSObject *vs_int_new(VSObject *typeobj, VSObject *args, VSObject *)
@@ -260,41 +260,41 @@ inline VSObject *vs_int_from_cint(cint_t intval)
 }
 
 NumberFuncs *number_funcs = new NumberFuncs(
-    NULL, // __not__
-    vs_int_neg, // __neg__
-    vs_int_add, // __add__
-    vs_int_sub, // __sub__
-    vs_int_mul, // __mul__
-    vs_int_div, // __div__
-    vs_int_mod, // __mod__
-    NULL, // __and__
-    NULL, // __or__
+    NULL,        // __not__
+    vs_int_neg,  // __neg__
+    vs_int_add,  // __add__
+    vs_int_sub,  // __sub__
+    vs_int_mul,  // __mul__
+    vs_int_div,  // __div__
+    vs_int_mod,  // __mod__
+    NULL,        // __and__
+    NULL,        // __or__
     vs_int_bool, // __bool__
     vs_int_char, // __char__
-    vs_int_int, // __int__
-    vs_int_float  // __float__
+    vs_int_int,  // __int__
+    vs_int_float // __float__
 );
 
 VSTypeObject *VSIntType = new VSTypeObject(
     T_INT,
-    "int", // __name__
-    NULL,  // __attrs__
-    vs_int_new,  // __new__
+    "int",        // __name__
+    NULL,         // __attrs__
+    vs_int_new,   // __new__
     vs_int_init,  // __init__
     vs_int_copy,  // __copy__
-    NULL,  // __clear__
-    NULL,  // __getattr__
-    NULL,  // __hasattr__
-    NULL,  // __setattr__
-    NULL,  // __removeattr__
+    NULL,         // __clear__
+    NULL,         // __getattr__
+    NULL,         // __hasattr__
+    NULL,         // __setattr__
+    NULL,         // __removeattr__
     vs_int_hash,  // __hash__
-    vs_int_lt, // __lt__
-    vs_int_eq,  // __eq__
-    vs_int_str,  // __str__
-    vs_int_bytes,  // __bytes__
-    NULL,  // __call__
-    number_funcs,  // _number_funcs
-    NULL   // _container_funcs
+    vs_int_lt,    // __lt__
+    vs_int_eq,    // __eq__
+    vs_int_str,   // __str__
+    vs_int_bytes, // __bytes__
+    NULL,         // __call__
+    number_funcs, // _number_funcs
+    NULL          // _container_funcs
 );
 
 VSObject *VS_INT_ZERO = VS_AS_OBJECT(new VSIntObject(0));
