@@ -82,4 +82,6 @@ public:
 
 extern VSTypeObject *VSTypeType;
 
+#define INIT_TYPE(type) VSTypeType->__init__(type, NULL, NULL)
+
 #endif
