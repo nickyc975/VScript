@@ -75,6 +75,20 @@ VSObject *vs_char_hash(const VSObject *charobj)
     return vs_int_from_cint(((VSCharObject *)charobj)->_value);
 }
 
+VSObject *vs_char_lt(const VSObject *a, const VSObject *b)
+{
+    VSTypeObject *a_type = VS_TYPEOF(a);
+
+    VS_ENSURE_TYPE(a_type, T_BOOL, "char lt");
+
+    VSTypeObject *b_type = VS_TYPEOF(b);
+
+    VS_ENSURE_TYPE(b_type, T_BOOL, "char lt");
+
+    cbool_t res = ((VSCharObject *)a)->_value < ((VSCharObject *)b)->_value;
+    INCREF_RET(res ? VS_TRUE : VS_FALSE);
+}
+
 VSObject *vs_char_eq(const VSObject *a, const VSObject *b)
 {
     VSTypeObject *a_type = VS_TYPEOF(a);
@@ -108,18 +122,85 @@ VSObject *vs_char_bytes(VSObject *charobj)
     return NULL;
 }
 
-VSObject *vs_char_lt(const VSObject *a, const VSObject *b)
+VSObject *vs_char_neg(VSObject *charobj)
 {
-    VSTypeObject *a_type = VS_TYPEOF(a);
+    VSTypeObject *type = VS_TYPEOF(charobj);
+    VS_ENSURE_TYPE(type, T_CHAR, "char.__neg__()");
 
-    VS_ENSURE_TYPE(a_type, T_BOOL, "char lt");
+    cchar_t res = -((VSCharObject *)charobj)->_value;
+    return vs_char_from_cchar(res);
+}
 
-    VSTypeObject *b_type = VS_TYPEOF(b);
+VSObject *vs_char_add(VSObject *a, VSObject *b)
+{
+    VSTypeObject *atype = VS_TYPEOF(a);
+    VS_ENSURE_TYPE(atype, T_CHAR, "char.__add__()");
 
-    VS_ENSURE_TYPE(b_type, T_BOOL, "char lt");
+    VSTypeObject *btype = VS_TYPEOF(b);
+    VS_ENSURE_TYPE(btype, T_CHAR, "char.__add__()");
 
-    cbool_t res = ((VSCharObject *)a)->_value < ((VSCharObject *)b)->_value;
-    INCREF_RET(res ? VS_TRUE : VS_FALSE);
+    cchar_t res = ((VSCharObject *)a)->_value + ((VSCharObject *)b)->_value;
+    return vs_char_from_cchar(res);
+}
+
+VSObject *vs_char_sub(VSObject *a, VSObject *b)
+{
+    VSTypeObject *atype = VS_TYPEOF(a);
+    VS_ENSURE_TYPE(atype, T_CHAR, "char.__sub__()");
+
+    VSTypeObject *btype = VS_TYPEOF(b);
+    VS_ENSURE_TYPE(btype, T_CHAR, "char.__sub__()");
+
+    cchar_t res = ((VSCharObject *)a)->_value - ((VSCharObject *)b)->_value;
+    return vs_char_from_cchar(res);
+}
+
+VSObject *vs_char_mul(VSObject *a, VSObject *b)
+{
+    VSTypeObject *atype = VS_TYPEOF(a);
+    VS_ENSURE_TYPE(atype, T_CHAR, "char.__mul__()");
+
+    VSTypeObject *btype = VS_TYPEOF(b);
+    VS_ENSURE_TYPE(btype, T_CHAR, "char.__mul__()");
+
+    cchar_t res = ((VSCharObject *)a)->_value * ((VSCharObject *)b)->_value;
+    return vs_char_from_cchar(res);
+}
+
+VSObject *vs_char_div(VSObject *a, VSObject *b)
+{
+    VSTypeObject *atype = VS_TYPEOF(a);
+    VS_ENSURE_TYPE(atype, T_CHAR, "char.__div__()");
+
+    VSTypeObject *btype = VS_TYPEOF(b);
+    VS_ENSURE_TYPE(btype, T_CHAR, "char.__div__()");
+
+    if (((VSCharObject *)b)->_value == 0)
+    {
+        err("divided by zero\n");
+        terminate(TERM_ERROR);
+    }
+
+    cchar_t res = ((VSCharObject *)a)->_value / ((VSCharObject *)b)->_value;
+    return vs_char_from_cchar(res);
+}
+
+VSObject *vs_char_mod(VSObject *a, VSObject *b)
+{
+    VSTypeObject *atype = VS_TYPEOF(a);
+    VS_ENSURE_TYPE(atype, T_CHAR, "char.__mod__()");
+
+    VSTypeObject *btype = VS_TYPEOF(b);
+    VS_ENSURE_TYPE(btype, T_CHAR, "char.__mod__()");
+
+    if (((VSCharObject *)b)->_value == 0)
+    {
+        err("mod by zero\n");
+        terminate(TERM_ERROR);
+    }
+
+    cchar_t res = ((VSCharObject *)a)->_value % ((VSCharObject *)b)->_value;
+    return vs_char_from_cchar(res);
 }
 
 VSObject *vs_char_bool(VSObject *charobj)
@@ -176,12 +257,12 @@ inline VSObject *vs_char_from_cchar(cchar_t charval)
 
 NumberFuncs *number_funcs = new NumberFuncs(
     NULL,         // __not__
-    NULL,         // __neg__
-    NULL,         // __add__
-    NULL,         // __sub__
-    NULL,         // __mul__
-    NULL,         // __div__
-    NULL,         // __mod__
+    vs_char_neg,  // __neg__
+    vs_char_add,  // __add__
+    vs_char_sub,  // __sub__
+    vs_char_mul,  // __mul__
+    vs_char_div,  // __div__
+    vs_char_mod,  // __mod__
     NULL,         // __and__
     NULL,         // __or__
     vs_char_bool, // __bool__
