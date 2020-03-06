@@ -104,6 +104,69 @@ VSObject *vs_float_eq(const VSObject *a, const VSObject *b)
     INCREF_RET(res ? VS_TRUE : VS_FALSE);
 }
 
+VSObject *vs_float_neg(VSObject *floatobj)
+{
+    VSTypeObject *type = VS_TYPEOF(floatobj);
+    VS_ENSURE_TYPE(type, T_FLOAT, "float.__neg__()");
+
+    cfloat_t res = -((VSFloatObject *)floatobj)->_value;
+    return vs_float_from_cfloat(res);
+}
+
+VSObject *vs_float_add(VSObject *a, VSObject *b)
+{
+    VSTypeObject *atype = VS_TYPEOF(a);
+    VS_ENSURE_TYPE(atype, T_FLOAT, "float.__add__()");
+
+    VSTypeObject *btype = VS_TYPEOF(b);
+    VS_ENSURE_TYPE(btype, T_FLOAT, "float.__add__()");
+
+    cfloat_t res = ((VSFloatObject *)a)->_value + ((VSFloatObject *)b)->_value;
+    return vs_float_from_cfloat(res);
+}
+
+VSObject *vs_float_sub(VSObject *a, VSObject *b)
+{
+    VSTypeObject *atype = VS_TYPEOF(a);
+    VS_ENSURE_TYPE(atype, T_FLOAT, "float.__sub__()");
+
+    VSTypeObject *btype = VS_TYPEOF(b);
+    VS_ENSURE_TYPE(btype, T_FLOAT, "float.__sub__()");
+
+    cfloat_t res = ((VSFloatObject *)a)->_value - ((VSFloatObject *)b)->_value;
+    return vs_float_from_cfloat(res);
+}
+
+VSObject *vs_float_mul(VSObject *a, VSObject *b)
+{
+    VSTypeObject *atype = VS_TYPEOF(a);
+    VS_ENSURE_TYPE(atype, T_FLOAT, "float.__mul__()");
+
+    VSTypeObject *btype = VS_TYPEOF(b);
+    VS_ENSURE_TYPE(btype, T_FLOAT, "float.__mul__()");
+
+    cfloat_t res = ((VSFloatObject *)a)->_value * ((VSFloatObject *)b)->_value;
+    return vs_float_from_cfloat(res);
+}
+
+VSObject *vs_float_div(VSObject *a, VSObject *b)
+{
+    VSTypeObject *atype = VS_TYPEOF(a);
+    VS_ENSURE_TYPE(atype, T_FLOAT, "float.__div__()");
+
+    VSTypeObject *btype = VS_TYPEOF(b);
+    VS_ENSURE_TYPE(btype, T_FLOAT, "float.__div__()");
+
+    if (((VSFloatObject *)b)->_value == 0)
+    {
+        err("divided by zero\n");
+        terminate(TERM_ERROR);
+    }
+
+    cfloat_t res = ((VSFloatObject *)a)->_value / ((VSFloatObject *)b)->_value;
+    return vs_float_from_cfloat(res);
+}
+
 VSObject *vs_float_bool(VSObject *floatobj)
 {
     VSTypeObject *type = VS_TYPEOF(floatobj);
@@ -177,11 +240,11 @@ inline VSObject *vs_float_from_cfloat(cfloat_t floatval)
 
 NumberFuncs *number_funcs = new NumberFuncs(
     NULL, // __not__
-    NULL, // __neg__
-    NULL, // __add__
-    NULL, // __sub__
-    NULL, // __mul__
-    NULL, // __div__
+    vs_float_neg, // __neg__
+    vs_float_add, // __add__
+    vs_float_sub, // __sub__
+    vs_float_mul, // __mul__
+    vs_float_div, // __div__
     NULL, // __mod__
     NULL, // __and__
     NULL, // __or__

@@ -125,6 +125,18 @@ VSObject *vs_string_bytes(VSObject *strobj)
     return NULL;
 }
 
+VSObject *vs_string_add(VSObject *a, VSObject *b)
+{
+    VSTypeObject *atype = VS_TYPEOF(a);
+    VS_ENSURE_TYPE(atype, T_STR, "str.__add__()");
+
+    VSTypeObject *btype = VS_TYPEOF(b);
+    VS_ENSURE_TYPE(btype, T_STR, "str.__add__()");
+
+    std::string res = ((VSStringObject *)a)->_value + ((VSStringObject *)b)->_value;
+    return vs_string_from_cstring(res);
+}
+
 VSObject *vs_string_bool(VSObject *strobj)
 {
     VSTypeObject *type = VS_TYPEOF(strobj);
@@ -368,7 +380,7 @@ inline VSObject *vs_string_from_cstring(std::string strval)
 NumberFuncs *number_funcs = new NumberFuncs(
     NULL, // __not__
     NULL, // __neg__
-    NULL, // __add__
+    vs_string_add, // __add__
     NULL, // __sub__
     NULL, // __mul__
     NULL, // __div__

@@ -126,6 +126,87 @@ VSObject *vs_int_bytes(VSObject *obj)
     return NULL;
 }
 
+VSObject *vs_int_neg(VSObject *intobj)
+{
+    VSTypeObject *type = VS_TYPEOF(intobj);
+    VS_ENSURE_TYPE(type, T_INT, "int.__neg__()");
+
+    cint_t res = -((VSIntObject *)intobj)->_value;
+    return vs_int_from_cint(res);
+}
+
+VSObject *vs_int_add(VSObject *a, VSObject *b)
+{
+    VSTypeObject *atype = VS_TYPEOF(a);
+    VS_ENSURE_TYPE(atype, T_INT, "int.__add__()");
+
+    VSTypeObject *btype = VS_TYPEOF(b);
+    VS_ENSURE_TYPE(btype, T_INT, "int.__add__()");
+
+    cint_t res = ((VSIntObject *)a)->_value + ((VSIntObject *)b)->_value;
+    return vs_int_from_cint(res);
+}
+
+VSObject *vs_int_sub(VSObject *a, VSObject *b)
+{
+    VSTypeObject *atype = VS_TYPEOF(a);
+    VS_ENSURE_TYPE(atype, T_INT, "int.__sub__()");
+
+    VSTypeObject *btype = VS_TYPEOF(b);
+    VS_ENSURE_TYPE(btype, T_INT, "int.__sub__()");
+
+    cint_t res = ((VSIntObject *)a)->_value - ((VSIntObject *)b)->_value;
+    return vs_int_from_cint(res);
+}
+
+VSObject *vs_int_mul(VSObject *a, VSObject *b)
+{
+    VSTypeObject *atype = VS_TYPEOF(a);
+    VS_ENSURE_TYPE(atype, T_INT, "int.__mul__()");
+
+    VSTypeObject *btype = VS_TYPEOF(b);
+    VS_ENSURE_TYPE(btype, T_INT, "int.__mul__()");
+
+    cint_t res = ((VSIntObject *)a)->_value * ((VSIntObject *)b)->_value;
+    return vs_int_from_cint(res);
+}
+
+VSObject *vs_int_div(VSObject *a, VSObject *b)
+{
+    VSTypeObject *atype = VS_TYPEOF(a);
+    VS_ENSURE_TYPE(atype, T_INT, "int.__div__()");
+
+    VSTypeObject *btype = VS_TYPEOF(b);
+    VS_ENSURE_TYPE(btype, T_INT, "int.__div__()");
+
+    if (((VSIntObject *)b)->_value == 0)
+    {
+        err("divided by zero\n");
+        terminate(TERM_ERROR);
+    }
+
+    cint_t res = ((VSIntObject *)a)->_value / ((VSIntObject *)b)->_value;
+    return vs_int_from_cint(res);
+}
+
+VSObject *vs_int_mod(VSObject *a, VSObject *b)
+{
+    VSTypeObject *atype = VS_TYPEOF(a);
+    VS_ENSURE_TYPE(atype, T_INT, "int.__mod__()");
+
+    VSTypeObject *btype = VS_TYPEOF(b);
+    VS_ENSURE_TYPE(btype, T_INT, "int.__mod__()");
+
+    if (((VSIntObject *)b)->_value == 0)
+    {
+        err("mod by zero\n");
+        terminate(TERM_ERROR);
+    }
+
+    cint_t res = ((VSIntObject *)a)->_value % ((VSIntObject *)b)->_value;
+    return vs_int_from_cint(res);
+}
+
 VSObject *vs_int_bool(VSObject *intobj)
 {
     VSTypeObject *type = VS_TYPEOF(intobj);
@@ -180,12 +261,12 @@ inline VSObject *vs_int_from_cint(cint_t intval)
 
 NumberFuncs *number_funcs = new NumberFuncs(
     NULL, // __not__
-    NULL, // __neg__
-    NULL, // __add__
-    NULL, // __sub__
-    NULL, // __mul__
-    NULL, // __div__
-    NULL, // __mod__
+    vs_int_neg, // __neg__
+    vs_int_add, // __add__
+    vs_int_sub, // __sub__
+    vs_int_mul, // __mul__
+    vs_int_div, // __div__
+    vs_int_mod, // __mod__
     NULL, // __and__
     NULL, // __or__
     vs_int_bool, // __bool__
