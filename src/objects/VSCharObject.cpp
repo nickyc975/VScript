@@ -107,6 +107,20 @@ VSObject *vs_char_bytes(VSObject *charobj)
     return NULL;
 }
 
+VSObject *vs_char_lt(const VSObject *a, const VSObject *b)
+{
+    VSTypeObject *a_type = VS_TYPEOF(a);
+
+    VS_ENSURE_TYPE(a_type, T_BOOL, "char lt");
+
+    VSTypeObject *b_type = VS_TYPEOF(b);
+
+    VS_ENSURE_TYPE(b_type, T_BOOL, "char lt");
+
+    cbool_t res = ((VSCharObject *)a)->_value < ((VSCharObject *)b)->_value;
+    INCREF_RET(res ? VS_TRUE : VS_FALSE);
+}
+
 VSObject *vs_char_bool(VSObject *charobj)
 {
     VSTypeObject *type = VS_TYPEOF(charobj);
@@ -153,10 +167,6 @@ NumberFuncs *number_funcs = new NumberFuncs(
     NULL, // __mul__
     NULL, // __div__
     NULL, // __mod__
-    NULL, // __lt__
-    NULL, // __gt__
-    NULL, // __le__
-    NULL, // __ge__
     NULL, // __and__
     NULL, // __or__
     vs_char_bool, // __bool__
@@ -178,6 +188,7 @@ VSTypeObject *VSCharType = new VSTypeObject(
     NULL,  // __setattr__
     NULL,  // __removeattr__
     vs_char_hash,  // __hash__
+    vs_char_lt, // __lt__
     vs_char_eq,  // __eq__
     vs_char_str,  // __str__
     vs_char_bytes,  // __bytes__

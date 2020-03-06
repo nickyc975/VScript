@@ -63,10 +63,6 @@ NumberFuncs *number_funcs = new NumberFuncs(
     NULL, // __mul__
     NULL, // __div__
     NULL, // __mod__
-    NULL, // __lt__
-    NULL, // __gt__
-    NULL, // __le__
-    NULL, // __ge__
     NULL, // __and__
     NULL, // __or__
     NULL, // __bool__
@@ -88,6 +84,7 @@ VSTypeObject *VSNoneType = new VSTypeObject(
     NULL,  // __setattr__
     NULL,  // __removeattr__
     NULL,  // __hash__
+    NULL, // __lt__
     vs_none_eq,  // __eq__
     vs_none_str,  // __str__
     vs_none_bytes,  // __bytes__

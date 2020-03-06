@@ -75,6 +75,20 @@ VSObject *vs_float_hash(const VSObject *floatobj)
     INCREF_RET(vs_int_from_cint(hash));
 }
 
+VSObject *vs_float_lt(const VSObject *a, const VSObject *b)
+{
+    VSTypeObject *a_type = VS_TYPEOF(a);
+
+    VS_ENSURE_TYPE(a_type, T_FLOAT, "float lt");
+
+    VSTypeObject *b_type = VS_TYPEOF(b);
+
+    VS_ENSURE_TYPE(b_type, T_FLOAT, "float lt");
+
+    bool res = ((VSFloatObject *)a)->_value < ((VSFloatObject *)b)->_value;
+    INCREF_RET(res ? VS_TRUE : VS_FALSE);
+}
+
 VSObject *vs_float_eq(const VSObject *a, const VSObject *b)
 {
     VSTypeObject *a_type = VS_TYPEOF(a);
@@ -127,10 +141,6 @@ NumberFuncs *number_funcs = new NumberFuncs(
     NULL, // __mul__
     NULL, // __div__
     NULL, // __mod__
-    NULL, // __lt__
-    NULL, // __gt__
-    NULL, // __le__
-    NULL, // __ge__
     NULL, // __and__
     NULL, // __or__
     NULL, // __bool__
@@ -152,6 +162,7 @@ VSTypeObject *VSFloatType = new VSTypeObject(
     NULL,  // __setattr__
     NULL,  // __removeattr__
     vs_float_hash,  // __hash__
+    vs_float_lt, // __lt__
     vs_float_eq,  // __eq__
     vs_float_str,  // __str__
     vs_float_bytes,  // __bytes__

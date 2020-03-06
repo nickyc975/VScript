@@ -73,6 +73,20 @@ VSObject *vs_int_hash(const VSObject *obj)
     INCREF_RET(type->__copy__(obj));
 }
 
+VSObject *vs_int_lt(const VSObject *a, const VSObject *b)
+{
+    VSTypeObject *a_type = VS_TYPEOF(a);
+
+    VS_ENSURE_TYPE(a_type, T_INT, "int lt");
+
+    VSTypeObject *b_type = VS_TYPEOF(b);
+
+    VS_ENSURE_TYPE(b_type, T_INT, "int lt");
+
+    bool res = ((VSIntObject *)a)->_value < ((VSIntObject *)b)->_value;
+    INCREF_RET(res ? VS_TRUE : VS_FALSE);
+}
+
 VSObject *vs_int_eq(const VSObject *a, const VSObject *b)
 {
     VSTypeObject *a_type = VS_TYPEOF(a);
@@ -123,10 +137,6 @@ NumberFuncs *number_funcs = new NumberFuncs(
     NULL, // __mul__
     NULL, // __div__
     NULL, // __mod__
-    NULL, // __lt__
-    NULL, // __gt__
-    NULL, // __le__
-    NULL, // __ge__
     NULL, // __and__
     NULL, // __or__
     NULL, // __bool__
@@ -148,6 +158,7 @@ VSTypeObject *VSIntType = new VSTypeObject(
     NULL,  // __setattr__
     NULL,  // __removeattr__
     vs_int_hash,  // __hash__
+    vs_int_lt, // __lt__
     vs_int_eq,  // __eq__
     vs_int_str,  // __str__
     vs_int_bytes,  // __bytes__

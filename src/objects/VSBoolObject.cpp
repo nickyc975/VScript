@@ -71,6 +71,20 @@ VSObject *vs_bool_hash(const VSObject *obj)
     return vs_int_from_cint(((VSBoolObject *)obj)->_value);
 }
 
+VSObject *vs_bool_lt(const VSObject *a, const VSObject *b)
+{
+    VSTypeObject *a_type = VS_TYPEOF(a);
+
+    VS_ENSURE_TYPE(a_type, T_BOOL, "bool lt");
+
+    VSTypeObject *b_type = VS_TYPEOF(b);
+
+    VS_ENSURE_TYPE(b_type, T_BOOL, "bool lt");
+
+    bool res = ((VSBoolObject *)a)->_value < ((VSBoolObject *)b)->_value;
+    INCREF_RET(res ? VS_TRUE : VS_FALSE);
+}
+
 VSObject *vs_bool_eq(const VSObject *a, const VSObject *b)
 {
     VSTypeObject *a_type = VS_TYPEOF(a);
@@ -179,10 +193,6 @@ NumberFuncs *number_funcs = new NumberFuncs(
     NULL, // __mul__
     NULL, // __div__
     NULL, // __mod__
-    NULL, // __lt__
-    NULL, // __gt__
-    NULL, // __le__
-    NULL, // __ge__
     vs_bool_and, // __and__
     vs_bool_or, // __or__
     vs_bool_bool, // __bool__
@@ -204,6 +214,7 @@ VSTypeObject *VSBoolType = new VSTypeObject(
     NULL,  // __setattr__
     NULL,  // __removeattr__
     vs_bool_hash,  // __hash__
+    vs_bool_lt, // __lt__
     vs_bool_eq,  // __eq__
     vs_bool_str,  // __str__
     vs_bool_bytes,  // __bytes__

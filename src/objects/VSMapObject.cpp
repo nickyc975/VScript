@@ -195,6 +195,7 @@ VSTypeObject *VSMapType = new VSTypeObject(
     NULL,  // __setattr__
     NULL,  // __removeattr__
     vs_hash_not_implemented,  // __hash__
+    NULL, // __lt__
     vs_default_eq,  // __eq__
     vs_map_str,  // __str__
     vs_map_bytes,  // __bytes__

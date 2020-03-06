@@ -128,12 +128,6 @@ public:
     binaryfunc __mul__;
     binaryfunc __div__;
     binaryfunc __mod__;
-    binaryfunc __lt__;
-    binaryfunc __gt__;
-    binaryfunc __le__;
-    binaryfunc __ge__;
-    binaryfunc __eq__;
-    binaryfunc __neq__;
     binaryfunc __and__;
     binaryfunc __or__;
 
@@ -151,10 +145,6 @@ public:
         binaryfunc __mul__,
         binaryfunc __div__,
         binaryfunc __mod__,
-        binaryfunc __lt__,
-        binaryfunc __gt__,
-        binaryfunc __le__,
-        binaryfunc __ge__,
         binaryfunc __and__,
         binaryfunc __or__,
         unaryfunc __bool__,
@@ -168,10 +158,6 @@ public:
         __mul__(__mul__),
         __div__(__div__),
         __mod__(__mod__),
-        __lt__(__lt__),
-        __gt__(__gt__),
-        __le__(__le__),
-        __ge__(__ge__),
         __and__(__and__),
         __or__(__or__),
         __bool__(__bool__),

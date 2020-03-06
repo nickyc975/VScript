@@ -22,6 +22,7 @@ public:
     void_binaryfunc __removeattr__;
 
     const_unaryfunc __hash__;
+    const_binaryfunc __lt__;
     const_binaryfunc __eq__;
 
     unaryfunc __str__;
@@ -49,6 +50,7 @@ public:
         void_ternaryfunc __setattr__,
         void_binaryfunc __removeattr__,
         const_unaryfunc __hash__,
+        const_binaryfunc __lt__,
         const_binaryfunc __eq__,
         unaryfunc __str__,
         unaryfunc __bytes__,
@@ -67,6 +69,7 @@ public:
         __setattr__(__setattr__),
         __removeattr__(__removeattr__),
         __hash__(__hash__),
+        __lt__(__lt__),
         __eq__(__eq__),
         __str__(__str__),
         __bytes__(__bytes__),
