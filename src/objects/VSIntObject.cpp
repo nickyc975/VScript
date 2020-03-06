@@ -259,7 +259,7 @@ inline VSObject *vs_int_from_cint(cint_t intval)
     INCREF_RET(new VSIntObject(intval));
 }
 
-NumberFuncs *number_funcs = new NumberFuncs(
+NumberFuncs *int_number_funcs = new NumberFuncs(
     NULL,        // __not__
     vs_int_neg,  // __neg__
     vs_int_add,  // __add__
@@ -277,24 +277,24 @@ NumberFuncs *number_funcs = new NumberFuncs(
 
 VSTypeObject *VSIntType = new VSTypeObject(
     T_INT,
-    "int",        // __name__
-    NULL,         // __attrs__
-    vs_int_new,   // __new__
-    vs_int_init,  // __init__
-    vs_int_copy,  // __copy__
-    NULL,         // __clear__
-    NULL,         // __getattr__
-    NULL,         // __hasattr__
-    NULL,         // __setattr__
-    NULL,         // __removeattr__
-    vs_int_hash,  // __hash__
-    vs_int_lt,    // __lt__
-    vs_int_eq,    // __eq__
-    vs_int_str,   // __str__
-    vs_int_bytes, // __bytes__
-    NULL,         // __call__
-    number_funcs, // _number_funcs
-    NULL          // _container_funcs
+    "int",            // __name__
+    NULL,             // __attrs__
+    vs_int_new,       // __new__
+    vs_int_init,      // __init__
+    vs_int_copy,      // __copy__
+    NULL,             // __clear__
+    NULL,             // __getattr__
+    NULL,             // __hasattr__
+    NULL,             // __setattr__
+    NULL,             // __removeattr__
+    vs_int_hash,      // __hash__
+    vs_int_lt,        // __lt__
+    vs_int_eq,        // __eq__
+    vs_int_str,       // __str__
+    vs_int_bytes,     // __bytes__
+    NULL,             // __call__
+    int_number_funcs, // _number_funcs
+    NULL              // _container_funcs
 );
 
 VSObject *VS_INT_ZERO = VS_AS_OBJECT(new VSIntObject(0));

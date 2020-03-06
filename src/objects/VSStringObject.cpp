@@ -163,6 +163,7 @@ VSObject *vs_string_char(VSObject *strobj)
 
     err("Can not cast string \"%s\" to char.", str->_value.c_str());
     terminate(TERM_ERROR);
+    return NULL;
 }
 
 VSObject *vs_string_int(VSObject *strobj, VSObject *baseobj)
@@ -237,7 +238,7 @@ VSObject *vs_string_len(VSObject *obj)
 
 VSObject *vs_string_get(VSObject *strobj, VSObject *posobj)
 {
-    int64_t pos = vs_int_to_cint(posobj);
+    cint_t pos = vs_int_to_cint(posobj);
 
     VSTypeObject *stype = VS_TYPEOF(strobj);
     VS_ENSURE_TYPE(stype, T_STR, "str get");
@@ -260,8 +261,8 @@ VSObject *vs_string_get(VSObject *strobj, VSObject *posobj)
 
 void vs_string_set(VSObject *strobj, VSObject *posobj, VSObject *charobj)
 {
-    int64_t pos = vs_int_to_cint(posobj);
-    char char_val = vs_char_to_cchar(charobj);
+    cint_t pos = vs_int_to_cint(posobj);
+    cchar_t char_val = vs_char_to_cchar(charobj);
 
     VSTypeObject *stype = VS_TYPEOF(strobj);
     VS_ENSURE_TYPE(stype, T_STR, "str set");
@@ -310,7 +311,7 @@ VSObject *vs_string_has(VSObject *strobj, VSObject *charobj)
 
 VSObject *vs_string_has_at(VSObject *strobj, VSObject *posobj)
 {
-    int64_t pos = vs_int_to_cint(posobj);
+    cint_t pos = vs_int_to_cint(posobj);
 
     VSTypeObject *stype = VS_TYPEOF(strobj);
     VS_ENSURE_TYPE(stype, T_STR, "str has at");
@@ -342,7 +343,7 @@ void vs_string_remove(VSObject *strobj, VSObject *charobj)
 
 void vs_string_remove_at(VSObject *strobj, VSObject *posobj)
 {
-    int64_t pos = vs_int_to_cint(posobj);
+    cint_t pos = vs_int_to_cint(posobj);
 
     VSTypeObject *stype = VS_TYPEOF(strobj);
     VS_ENSURE_TYPE(stype, T_STR, "str remove at");
@@ -376,7 +377,7 @@ inline VSObject *vs_string_from_cstring(std::string strval)
     INCREF_RET(VS_AS_OBJECT(new VSStringObject(strval)));
 }
 
-NumberFuncs *number_funcs = new NumberFuncs(
+NumberFuncs *string_number_funcs = new NumberFuncs(
     NULL,           // __not__
     NULL,           // __neg__
     vs_string_add,  // __add__
@@ -392,7 +393,7 @@ NumberFuncs *number_funcs = new NumberFuncs(
     vs_string_float // __float__
 );
 
-ContainerFuncs *string_funcs = new ContainerFuncs(
+ContainerFuncs *string_container_funcs = new ContainerFuncs(
     vs_string_len,      // __len__
     vs_string_get,      // __get__
     vs_string_set,      // __set__
@@ -405,22 +406,22 @@ ContainerFuncs *string_funcs = new ContainerFuncs(
 
 VSTypeObject *VSStringType = new VSTypeObject(
     T_STR,
-    "str",           // __name__
-    NULL,            // __attrs__
-    vs_string_new,   // __new__
-    vs_string_init,  // __init__
-    vs_string_copy,  // __copy__
-    vs_string_clear, // __clear__
-    NULL,            // __getattr__
-    NULL,            // __hasattr__
-    NULL,            // __setattr__
-    NULL,            // __removeattr__
-    vs_string_hash,  // __hash__
-    vs_string_lt,    // __lt__
-    vs_string_eq,    // __eq__
-    vs_string_str,   // __str__
-    vs_string_bytes, // __bytes__
-    NULL,            // __call__
-    number_funcs,    // _number_funcs
-    string_funcs     // _container_funcs
+    "str",                 // __name__
+    NULL,                  // __attrs__
+    vs_string_new,         // __new__
+    vs_string_init,        // __init__
+    vs_string_copy,        // __copy__
+    vs_string_clear,       // __clear__
+    NULL,                  // __getattr__
+    NULL,                  // __hasattr__
+    NULL,                  // __setattr__
+    NULL,                  // __removeattr__
+    vs_string_hash,        // __hash__
+    vs_string_lt,          // __lt__
+    vs_string_eq,          // __eq__
+    vs_string_str,         // __str__
+    vs_string_bytes,       // __bytes__
+    NULL,                  // __call__
+    string_number_funcs,   // _number_funcs
+    string_container_funcs // _container_funcs
 );

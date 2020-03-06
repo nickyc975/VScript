@@ -209,7 +209,7 @@ inline cbool_t is_true(VSObject *obj)
     return (cbool_t)(obj == VS_TRUE);
 }
 
-NumberFuncs *number_funcs = new NumberFuncs(
+NumberFuncs *bool_number_funcs = new NumberFuncs(
     vs_bool_not,  // __not__
     NULL,         // __neg__
     NULL,         // __add__
@@ -227,22 +227,22 @@ NumberFuncs *number_funcs = new NumberFuncs(
 
 VSTypeObject *VSBoolType = new VSTypeObject(
     T_BOOL,
-    "bool",        // __name__
-    NULL,          // __attrs__
-    vs_bool_new,   // __new__
-    vs_bool_init,  // __init__
-    vs_bool_copy,  // __copy__
-    NULL,          // __clear__
-    NULL,          // __getattr__
-    NULL,          // __hasattr__
-    NULL,          // __setattr__
-    NULL,          // __removeattr__
-    vs_bool_hash,  // __hash__
-    vs_bool_lt,    // __lt__
-    vs_bool_eq,    // __eq__
-    vs_bool_str,   // __str__
-    vs_bool_bytes, // __bytes__
-    NULL,          // __call__
-    number_funcs,  // _number_funcs
-    NULL           // _container_funcs
+    "bool",            // __name__
+    NULL,              // __attrs__
+    vs_bool_new,       // __new__
+    vs_bool_init,      // __init__
+    vs_bool_copy,      // __copy__
+    NULL,              // __clear__
+    NULL,              // __getattr__
+    NULL,              // __hasattr__
+    NULL,              // __setattr__
+    NULL,              // __removeattr__
+    vs_bool_hash,      // __hash__
+    vs_bool_lt,        // __lt__
+    vs_bool_eq,        // __eq__
+    vs_bool_str,       // __str__
+    vs_bool_bytes,     // __bytes__
+    NULL,              // __call__
+    bool_number_funcs, // _number_funcs
+    NULL               // _container_funcs
 );

@@ -4,9 +4,11 @@ vpath %.cpp src src/compiler src/runtime src/tools src/objects
 CXX=g++
 CXXFLAGS=-I inc -g -Wall -Wextra -Wno-write-strings
 
-SRCS=vslexer.cpp vsparser.cpp gencode.cpp printers.cpp error.cpp File.cpp VSObject.cpp \
+# SRCS=vslexer.cpp vsparser.cpp gencode.cpp printers.cpp error.cpp File.cpp VSObject.cpp \
 	 VSObjectList.cpp VSCodeObject.cpp VSValue.cpp VSCallStackFrame.cpp global.cpp \
 	 execute.cpp vs.cpp
+SRCS=error.cpp VSBoolObject.cpp VSCharObject.cpp VSFloatObject.cpp VSIntObject.cpp \
+	 VSMapObject.cpp VSNoneObject.cpp VSObject.cpp VSStringObject.cpp VSTypeObject.cpp
 OBJECTS=$(SRCS:.cpp=.o)
 
 OUTPUT_DIR=build
@@ -19,6 +21,8 @@ VS=vs
 
 vs: $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(foreach obj, $(OBJECTS), $(OUTPUT_DIR)/$(obj)) -o $(OUTPUT_DIR)/vs
+
+objects:$(OBJECTS)
 
 test: vs
 	$(OUTPUT_DIR)/$(VS) -l -p -s test/hello.vs

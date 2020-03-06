@@ -171,7 +171,7 @@ VSObject *vs_map_bytes(VSObject *obj)
     return NULL;
 }
 
-ContainerFuncs *map_funcs = new ContainerFuncs(
+ContainerFuncs *map_container_funcs = new ContainerFuncs(
     vs_map_len,      // __len__
     vs_map_get,      // __get__
     vs_map_set,      // __set__
@@ -201,5 +201,5 @@ VSTypeObject *VSMapType = new VSTypeObject(
     vs_map_bytes,            // __bytes__
     NULL,                    // __call__
     NULL,                    // _number_funcs
-    map_funcs                // _container_funcs
+    map_container_funcs      // _container_funcs
 );

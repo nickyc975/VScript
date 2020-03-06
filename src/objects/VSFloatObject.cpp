@@ -238,7 +238,7 @@ inline VSObject *vs_float_from_cfloat(cfloat_t floatval)
     INCREF_RET(VS_AS_OBJECT(new VSFloatObject(floatval)));
 }
 
-NumberFuncs *number_funcs = new NumberFuncs(
+NumberFuncs *float_number_funcs = new NumberFuncs(
     NULL,          // __not__
     vs_float_neg,  // __neg__
     vs_float_add,  // __add__
@@ -256,22 +256,22 @@ NumberFuncs *number_funcs = new NumberFuncs(
 
 VSTypeObject *VSFloatType = new VSTypeObject(
     T_FLOAT,
-    "float",        // __name__
-    NULL,           // __attrs__
-    vs_float_new,   // __new__
-    vs_float_init,  // __init__
-    vs_float_copy,  // __copy__
-    NULL,           // __clear__
-    NULL,           // __getattr__
-    NULL,           // __hasattr__
-    NULL,           // __setattr__
-    NULL,           // __removeattr__
-    vs_float_hash,  // __hash__
-    vs_float_lt,    // __lt__
-    vs_float_eq,    // __eq__
-    vs_float_str,   // __str__
-    vs_float_bytes, // __bytes__
-    NULL,           // __call__
-    number_funcs,   // _number_funcs
-    NULL            // _container_funcs
+    "float",            // __name__
+    NULL,               // __attrs__
+    vs_float_new,       // __new__
+    vs_float_init,      // __init__
+    vs_float_copy,      // __copy__
+    NULL,               // __clear__
+    NULL,               // __getattr__
+    NULL,               // __hasattr__
+    NULL,               // __setattr__
+    NULL,               // __removeattr__
+    vs_float_hash,      // __hash__
+    vs_float_lt,        // __lt__
+    vs_float_eq,        // __eq__
+    vs_float_str,       // __str__
+    vs_float_bytes,     // __bytes__
+    NULL,               // __call__
+    float_number_funcs, // _number_funcs
+    NULL                // _container_funcs
 );

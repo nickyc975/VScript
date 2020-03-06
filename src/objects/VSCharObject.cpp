@@ -255,7 +255,7 @@ inline VSObject *vs_char_from_cchar(cchar_t charval)
     INCREF_RET(VS_AS_OBJECT(new VSCharObject(charval)));
 }
 
-NumberFuncs *number_funcs = new NumberFuncs(
+NumberFuncs *char_number_funcs = new NumberFuncs(
     NULL,         // __not__
     vs_char_neg,  // __neg__
     vs_char_add,  // __add__
@@ -273,22 +273,22 @@ NumberFuncs *number_funcs = new NumberFuncs(
 
 VSTypeObject *VSCharType = new VSTypeObject(
     T_CHAR,
-    "char",        // __name__
-    NULL,          // __attrs__
-    vs_char_new,   // __new__
-    vs_char_init,  // __init__
-    vs_char_copy,  // __copy__
-    NULL,          // __clear__
-    NULL,          // __getattr__
-    NULL,          // __hasattr__
-    NULL,          // __setattr__
-    NULL,          // __removeattr__
-    vs_char_hash,  // __hash__
-    vs_char_lt,    // __lt__
-    vs_char_eq,    // __eq__
-    vs_char_str,   // __str__
-    vs_char_bytes, // __bytes__
-    NULL,          // __call__
-    number_funcs,  // _number_funcs
-    NULL           // _container_funcs
+    "char",            // __name__
+    NULL,              // __attrs__
+    vs_char_new,       // __new__
+    vs_char_init,      // __init__
+    vs_char_copy,      // __copy__
+    NULL,              // __clear__
+    NULL,              // __getattr__
+    NULL,              // __hasattr__
+    NULL,              // __setattr__
+    NULL,              // __removeattr__
+    vs_char_hash,      // __hash__
+    vs_char_lt,        // __lt__
+    vs_char_eq,        // __eq__
+    vs_char_str,       // __str__
+    vs_char_bytes,     // __bytes__
+    NULL,              // __call__
+    char_number_funcs, // _number_funcs
+    NULL               // _container_funcs
 );
