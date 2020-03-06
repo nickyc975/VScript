@@ -105,18 +105,22 @@ static inline VSObject *_NEW_REF(VSObject *obj)
 typedef VSObject *(*unaryfunc)(VSObject *);
 typedef VSObject *(*binaryfunc)(VSObject *, VSObject *);
 typedef VSObject *(*ternaryfunc)(VSObject *, VSObject *, VSObject *);
+typedef VSObject *(*quaternaryfunc)(VSObject *, VSObject *, VSObject *, VSObject *);
 
 typedef VSObject *(*const_unaryfunc)(const VSObject *);
 typedef VSObject *(*const_binaryfunc)(const VSObject *, const VSObject *);
 typedef VSObject *(*const_ternaryfunc)(const VSObject *, const VSObject *, const VSObject *);
+typedef VSObject *(*const_quaternaryfunc)(const VSObject *, const VSObject *, const VSObject *, const VSObject *);
 
 typedef void (*void_unaryfunc)(VSObject *);
 typedef void (*void_binaryfunc)(VSObject *, VSObject *);
 typedef void (*void_ternaryfunc)(VSObject *, VSObject *, VSObject *);
+typedef void (*void_quaternaryfunc)(VSObject *, VSObject *, VSObject *, VSObject *);
 
 typedef void (*void_const_unaryfunc)(const VSObject *);
 typedef void (*void_const_binaryfunc)(const VSObject *, const VSObject *);
 typedef void (*void_const_ternaryfunc)(const VSObject *, const VSObject *, const VSObject *);
+typedef void (*void_const_quaternaryfunc)(const VSObject *, const VSObject *, const VSObject *, const VSObject *);
 
 class NumberFuncs
 {
