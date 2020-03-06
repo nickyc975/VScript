@@ -27,9 +27,9 @@ VSObject *vs_int_new(VSObject *typeobj, VSObject *args, VSObject *)
     {
         INCREF_RET(VS_AS_OBJECT(new VSIntObject()));
     }
-    else if (len > 1)
+    else if (len > 2)
     {
-        err("int.__new__() expected 0 or 1 arg but got %llu.", len);
+        err("int.__new__() expected at most 2 args but got %llu.", len);
         terminate(TERM_ERROR);
     }
 
@@ -41,7 +41,13 @@ VSObject *vs_int_new(VSObject *typeobj, VSObject *args, VSObject *)
         terminate(TERM_ERROR);
     }
 
-    VSObject *val = init_type->_number_funcs->__int__(init_val);
+    VSObject *base = NULL;
+    if (len == 2)
+    {
+        base = VSObject::getitem_at(args, VS_INT_ONE);
+    }
+
+    VSObject *val = init_type->_number_funcs->__int__(init_val, base);
     if (VS_TYPEOF(val)->t_type != T_INT)
     {
         err("%s.__int__() returned \"%s\" instead of int.", init_type->__name__.c_str(), VS_TYPEOF(val)->__name__.c_str());
@@ -138,10 +144,16 @@ VSObject *vs_int_char(VSObject *intobj)
     INCREF_RET(vs_char_from_cchar((cchar_t)res));
 }
 
-VSObject *vs_int_int(VSObject *intobj)
+VSObject *vs_int_int(VSObject *intobj, VSObject *base)
 {
     VSTypeObject *type = VS_TYPEOF(intobj);
     VS_ENSURE_TYPE(type, T_INT, "int.__int__()");
+
+    if (base != NULL)
+    {
+        err("int.__int__() expected 1 arg but got 2\n");
+        terminate(TERM_ERROR);
+    }
 
     INCREF_RET(intobj);
 }

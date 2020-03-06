@@ -134,7 +134,7 @@ public:
     // type conversion
     unaryfunc __bool__;
     unaryfunc __char__;
-    unaryfunc __int__;
+    binaryfunc __int__;
     unaryfunc __float__;
 
     NumberFuncs(
@@ -149,7 +149,7 @@ public:
         binaryfunc __or__,
         unaryfunc __bool__,
         unaryfunc __char__,
-        unaryfunc __int__,
+        binaryfunc __int__,
         unaryfunc __float__
     ) : __not__(__not__),
         __neg__(__neg__),

@@ -122,10 +122,16 @@ VSObject *vs_float_char(VSObject *floatobj)
     INCREF_RET(vs_char_from_cchar((cchar_t)res));
 }
 
-VSObject *vs_float_int(VSObject *floatobj)
+VSObject *vs_float_int(VSObject *floatobj, VSObject *base)
 {
     VSTypeObject *type = VS_TYPEOF(floatobj);
     VS_ENSURE_TYPE(type, T_FLOAT, "float.__int__()");
+
+    if (base != NULL)
+    {
+        err("float.__int__() expected 1 arg but got 2\n");
+        terminate(TERM_ERROR);
+    }
 
     cbool_t res = ((VSFloatObject *)floatobj)->_value;
     INCREF_RET(vs_int_from_cint((cint_t)res));

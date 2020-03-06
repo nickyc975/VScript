@@ -139,10 +139,16 @@ VSObject *vs_char_char(VSObject *charobj)
     INCREF_RET(charobj);
 }
 
-VSObject *vs_char_int(VSObject *charobj)
+VSObject *vs_char_int(VSObject *charobj, VSObject *base)
 {
     VSTypeObject *type = VS_TYPEOF(charobj);
     VS_ENSURE_TYPE(type, T_CHAR, "__int__()");
+
+    if (base != NULL)
+    {
+        err("char.__int__() expected 1 arg but got 2\n");
+        terminate(TERM_ERROR);
+    }
 
     INCREF_RET(vs_int_from_cint((cint_t)vs_char_to_cchar(charobj)));
 }

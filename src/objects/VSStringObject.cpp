@@ -154,14 +154,27 @@ VSObject *vs_string_char(VSObject *strobj)
     terminate(TERM_ERROR);
 }
 
-VSObject *vs_string_int(VSObject *strobj)
+VSObject *vs_string_int(VSObject *strobj, VSObject *baseobj)
 {
     VSTypeObject *type = VS_TYPEOF(strobj);
     VS_ENSURE_TYPE(type, T_STR, "str.__int__");
 
+    int base = 0;
+    if (baseobj != NULL)
+    {
+        VS_ENSURE_TYPE(VS_TYPEOF(baseobj), T_INT, "str.__int__()");
+
+        base = (int)vs_int_to_cint(baseobj);
+        if (base < 0 || base == 1 || base > 36)
+        {
+            err("invalid int base: %d\n", base);
+            terminate(TERM_ERROR);
+        }
+    }
+
     char *end = NULL;
     VSStringObject *str = (VSStringObject *)strobj;
-    cint_t val = std::strtoll(str->_value.c_str(), &end, 0);
+    cint_t val = std::strtoll(str->_value.c_str(), &end, base);
 
     if (errno == ERANGE)
     {

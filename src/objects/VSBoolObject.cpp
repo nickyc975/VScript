@@ -168,10 +168,16 @@ VSObject *vs_bool_char(VSObject *boolobj)
     INCREF_RET(vs_char_from_cchar((cchar_t)vs_bool_to_cbool(boolobj)));
 }
 
-VSObject *vs_bool_int(VSObject *boolobj)
+VSObject *vs_bool_int(VSObject *boolobj, VSObject *base)
 {
     VSTypeObject *type = VS_TYPEOF(boolobj);
     VS_ENSURE_TYPE(type, T_BOOL, "__int__()");
+
+    if (base != NULL)
+    {
+        err("bool.__int__() expected 1 arg but got 2\n");
+        terminate(TERM_ERROR);
+    }
 
     INCREF_RET(vs_int_from_cint((cint_t)vs_bool_to_cbool(boolobj)));
 }
