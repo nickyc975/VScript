@@ -55,22 +55,6 @@ VSObject *vs_none_bytes(VSObject *obj)
     return NULL;
 }
 
-NumberFuncs *number_funcs = new NumberFuncs(
-    NULL, // __not__
-    NULL, // __neg__
-    NULL, // __add__
-    NULL, // __sub__
-    NULL, // __mul__
-    NULL, // __div__
-    NULL, // __mod__
-    NULL, // __and__
-    NULL, // __or__
-    NULL, // __bool__
-    NULL, // __char__
-    NULL, // __int__
-    NULL  // __float__
-);
-
 VSTypeObject *VSNoneType = new VSTypeObject(
     T_NONE,
     "none", // __name__
@@ -83,13 +67,13 @@ VSTypeObject *VSNoneType = new VSTypeObject(
     NULL,  // __hasattr__
     NULL,  // __setattr__
     NULL,  // __removeattr__
-    NULL,  // __hash__
+    vs_hash_not_implemented,  // __hash__
     NULL, // __lt__
     vs_none_eq,  // __eq__
     vs_none_str,  // __str__
     vs_none_bytes,  // __bytes__
     NULL,  // __call__
-    number_funcs,  // _number_funcs
+    NULL,  // _number_funcs
     NULL   // _container_funcs
 );
 
