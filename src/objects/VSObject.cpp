@@ -49,7 +49,7 @@ void VSObject::removeitem(VSObject *container, VSObject *item)
 
 VSObject *vs_hash_not_implemented(const VSObject *obj)
 {
-    err("%s.__hash__() not implemented.", vs_typeof(obj)->__name__.c_str());
+    err("%s.__hash__() not implemented.", VS_TYPEOF(obj)->__name__.c_str());
     terminate(TERM_ERROR);
     return NULL;
 }

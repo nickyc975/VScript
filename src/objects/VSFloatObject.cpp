@@ -15,16 +15,16 @@ public:
 
 VSObject *vs_float_new(VSObject *typeobj, VSObject *args, VSObject *)
 {
-    VSTypeObject *ttype = vs_typeof(typeobj);
-    vs_ensure_type(ttype, T_TYPE, "float new");
+    VSTypeObject *ttype = VS_TYPEOF(typeobj);
+    VS_ENSURE_TYPE(ttype, T_TYPE, "float new");
 
-    VSTypeObject *type = vs_as_type(typeobj);
-    vs_ensure_type(type, T_FLOAT, "float new");
+    VSTypeObject *type = VS_AS_TYPE(typeobj);
+    VS_ENSURE_TYPE(type, T_FLOAT, "float new");
 
     vs_size_t len = VSObject::c_getlen(args);
     if (len == 0)
     {
-        return vs_as_object(new VSFloatObject());
+        INCREF_RET(VS_AS_OBJECT(new VSFloatObject()));
     }
     if (len > 1)
     {
@@ -33,7 +33,7 @@ VSObject *vs_float_new(VSObject *typeobj, VSObject *args, VSObject *)
     }
     
     VSObject *init_val = VSObject::getitem_at(args, VS_INT_ZERO);
-    VSTypeObject *init_type = vs_typeof(init_val);
+    VSTypeObject *init_type = VS_TYPEOF(init_val);
     if (init_type->_number_funcs == NULL || init_type->_number_funcs->__float__ == NULL)
     {
         err("can not cast type \"%s\" to type \"float\".", init_type->__name__.c_str());
@@ -41,13 +41,14 @@ VSObject *vs_float_new(VSObject *typeobj, VSObject *args, VSObject *)
     }
 
     VSObject *val = init_type->_number_funcs->__float__(init_val);
-    if (vs_typeof(val)->t_type != T_FLOAT)
+    if (VS_TYPEOF(val)->t_type != T_FLOAT)
     {
-        err("%s.__float__() returned \"%s\" instead of \"float\".", init_type->__name__.c_str(), vs_typeof(val)->__name__.c_str());
+        err("%s.__float__() returned \"%s\" instead of \"float\".", init_type->__name__.c_str(), VS_TYPEOF(val)->__name__.c_str());
         terminate(TERM_ERROR);
     }
 
-    return val;
+    DECREF_EX(init_val);
+    INCREF_RET(val);
 }
 
 void vs_float_init(VSObject *floatobj, VSObject *args, VSObject *)
@@ -56,66 +57,66 @@ void vs_float_init(VSObject *floatobj, VSObject *args, VSObject *)
 
 VSObject *vs_float_copy(const VSObject *that)
 {
-    VSTypeObject *type = vs_typeof(that);
-    vs_ensure_type(type, T_FLOAT, "float copy");
+    VSTypeObject *type = VS_TYPEOF(that);
+    VS_ENSURE_TYPE(type, T_FLOAT, "float copy");
 
     VSFloatObject *old_float = (VSFloatObject *)that;
     VSFloatObject *new_float = new VSFloatObject(old_float->_value);
-    return vs_as_object(new_float);
+    INCREF_RET(VS_AS_OBJECT(new_float));
 }
 
 VSObject *vs_float_hash(const VSObject *floatobj)
 {
-    VSTypeObject *type = vs_typeof(floatobj);
-    vs_ensure_type(type, T_FLOAT, "float hash");
+    VSTypeObject *type = VS_TYPEOF(floatobj);
+    VS_ENSURE_TYPE(type, T_FLOAT, "float hash");
 
     cfloat_t val = ((VSFloatObject *)floatobj)->_value;
     std::size_t hash = std::hash<cfloat_t>{}(val);
-    return vs_int_from_cint(hash);
+    INCREF_RET(vs_int_from_cint(hash));
 }
 
 VSObject *vs_float_eq(const VSObject *a, const VSObject *b)
 {
-    VSTypeObject *a_type = vs_typeof(a);
+    VSTypeObject *a_type = VS_TYPEOF(a);
 
-    vs_ensure_type(a_type, T_FLOAT, "float eq");
+    VS_ENSURE_TYPE(a_type, T_FLOAT, "float eq");
 
-    VSTypeObject *b_type = vs_typeof(b);
+    VSTypeObject *b_type = VS_TYPEOF(b);
 
-    vs_ensure_type(b_type, T_FLOAT, "float eq");
+    VS_ENSURE_TYPE(b_type, T_FLOAT, "float eq");
 
     bool res = ((VSFloatObject *)a)->_value == ((VSFloatObject *)b)->_value;
-    return res ? VS_TRUE : VS_FALSE;
+    INCREF_RET(res ? VS_TRUE : VS_FALSE);
 }
 
 VSObject *vs_float_str(VSObject *floatobj)
 {
-    VSTypeObject *type = vs_typeof(floatobj);
-    vs_ensure_type(type, T_FLOAT, "float str");
+    VSTypeObject *type = VS_TYPEOF(floatobj);
+    VS_ENSURE_TYPE(type, T_FLOAT, "float str");
 
     cfloat_t val = ((VSFloatObject *)floatobj)->_value;
-    return vs_string_from_cstring(std::to_string(val));
+    INCREF_RET(vs_string_from_cstring(std::to_string(val)));
 }
 
 VSObject *vs_float_bytes(VSObject *floatobj)
 {
-    VSTypeObject *type = vs_typeof(floatobj);
-    vs_ensure_type(type, T_FLOAT, "float bytes");
+    VSTypeObject *type = VS_TYPEOF(floatobj);
+    VS_ENSURE_TYPE(type, T_FLOAT, "float bytes");
 
     return NULL;
 }
 
 inline cfloat_t vs_float_to_cfloat(VSObject *floatobj)
 {
-    VSTypeObject *type = vs_typeof(floatobj);
-    vs_ensure_type(type, T_FLOAT, "float to cfloat");
+    VSTypeObject *type = VS_TYPEOF(floatobj);
+    VS_ENSURE_TYPE(type, T_FLOAT, "float to cfloat");
 
     return ((VSFloatObject *)floatobj)->_value;
 }
 
 inline VSObject *vs_float_from_cfloat(cfloat_t floatval)
 {
-    return vs_as_object(new VSFloatObject(floatval));
+    INCREF_RET(VS_AS_OBJECT(new VSFloatObject(floatval)));
 }
 
 NumberFuncs *number_funcs = new NumberFuncs(

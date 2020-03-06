@@ -14,16 +14,16 @@ public:
 
 VSObject *vs_int_new(VSObject *typeobj, VSObject *args, VSObject *)
 {
-    VSTypeObject *ttype = vs_typeof(typeobj);
-    vs_ensure_type(ttype, T_TYPE, "int new");
+    VSTypeObject *ttype = VS_TYPEOF(typeobj);
+    VS_ENSURE_TYPE(ttype, T_TYPE, "int new");
 
-    VSTypeObject *type = vs_as_type(typeobj);
-    vs_ensure_type(type, T_INT, "int new");
+    VSTypeObject *type = VS_AS_TYPE(typeobj);
+    VS_ENSURE_TYPE(type, T_INT, "int new");
 
     vs_size_t len = VSObject::c_getlen(args);
     if (len == 0)
     {
-        return vs_as_object(new VSIntObject());
+        INCREF_RET(VS_AS_OBJECT(new VSIntObject()));
     }
     else if (len > 1)
     {
@@ -32,7 +32,7 @@ VSObject *vs_int_new(VSObject *typeobj, VSObject *args, VSObject *)
     }
 
     VSObject *init_val = VSObject::getitem_at(args, VS_INT_ZERO);
-    VSTypeObject *init_type = vs_typeof(init_val);
+    VSTypeObject *init_type = VS_TYPEOF(init_val);
     if (init_type->_number_funcs == NULL || init_type->_number_funcs->__int__ == NULL)
     {
         err("can not cast type \"%s\" to type \"int\".", init_type->__name__.c_str());
@@ -40,13 +40,14 @@ VSObject *vs_int_new(VSObject *typeobj, VSObject *args, VSObject *)
     }
 
     VSObject *val = init_type->_number_funcs->__int__(init_val);
-    if (vs_typeof(val)->t_type != T_INT)
+    if (VS_TYPEOF(val)->t_type != T_INT)
     {
-        err("%s.__int__() returned \"%s\" instead of int.", init_type->__name__.c_str(), vs_typeof(val)->__name__.c_str());
+        err("%s.__int__() returned \"%s\" instead of int.", init_type->__name__.c_str(), VS_TYPEOF(val)->__name__.c_str());
         terminate(TERM_ERROR);
     }
 
-    return val;
+    DECREF_EX(init_val);
+    INCREF_RET(val);
 }
 
 void vs_int_init(VSObject *, VSObject *, VSObject *)
@@ -55,63 +56,63 @@ void vs_int_init(VSObject *, VSObject *, VSObject *)
 
 VSObject *vs_int_copy(const VSObject *that)
 {
-    VSTypeObject *type = vs_typeof(that);
-    vs_ensure_type(type, T_INT, "int copy");
+    VSTypeObject *type = VS_TYPEOF(that);
+    VS_ENSURE_TYPE(type, T_INT, "int copy");
 
     VSIntObject *old_int = (VSIntObject *)that;
     VSIntObject *new_int = new VSIntObject(old_int->_value);
-    return vs_as_object(new_int);
+    INCREF_RET(VS_AS_OBJECT(new_int));
 }
 
 VSObject *vs_int_hash(const VSObject *obj)
 {
-    VSTypeObject *type = vs_typeof(obj);
+    VSTypeObject *type = VS_TYPEOF(obj);
 
-    vs_ensure_type(type, T_INT, "int hash");
+    VS_ENSURE_TYPE(type, T_INT, "int hash");
 
-    return type->__copy__(obj);
+    INCREF_RET(type->__copy__(obj));
 }
 
 VSObject *vs_int_eq(const VSObject *a, const VSObject *b)
 {
-    VSTypeObject *a_type = vs_typeof(a);
+    VSTypeObject *a_type = VS_TYPEOF(a);
 
-    vs_ensure_type(a_type, T_INT, "int eq");
+    VS_ENSURE_TYPE(a_type, T_INT, "int eq");
 
-    VSTypeObject *b_type = vs_typeof(b);
+    VSTypeObject *b_type = VS_TYPEOF(b);
 
-    vs_ensure_type(b_type, T_INT, "int eq");
+    VS_ENSURE_TYPE(b_type, T_INT, "int eq");
 
     bool res = ((VSIntObject *)a)->_value == ((VSIntObject *)b)->_value;
-    return res ? VS_TRUE : VS_FALSE;
+    INCREF_RET(res ? VS_TRUE : VS_FALSE);
 }
 
 VSObject *vs_int_str(VSObject *obj)
 {
-    VSTypeObject *type = vs_typeof(obj);
-    vs_ensure_type(type, T_INT, "int to str");
+    VSTypeObject *type = VS_TYPEOF(obj);
+    VS_ENSURE_TYPE(type, T_INT, "int to str");
 
     cint_t val = ((VSIntObject *)obj)->_value;
-    return vs_string_from_cstring(std::to_string(val));
+    INCREF_RET(vs_string_from_cstring(std::to_string(val)));
 }
 
 VSObject *vs_int_bytes(VSObject *obj)
 {
-    VSTypeObject *type = vs_typeof(obj);
-    vs_ensure_type(type, T_INT, "int to bytes");
+    VSTypeObject *type = VS_TYPEOF(obj);
+    VS_ENSURE_TYPE(type, T_INT, "int to bytes");
 
     return NULL;
 }
 
 inline cint_t vs_int_to_cint(VSObject *intobj)
 {
-    vs_ensure_type(vs_typeof(intobj), T_INT, "to c int");
+    VS_ENSURE_TYPE(VS_TYPEOF(intobj), T_INT, "to c int");
     return ((VSIntObject *)intobj)->_value;
 }
 
 inline VSObject *vs_int_from_cint(cint_t intval)
 {
-    return new VSIntObject(intval);
+    INCREF_RET(new VSIntObject(intval));
 }
 
 NumberFuncs *number_funcs = new NumberFuncs(
@@ -155,5 +156,5 @@ VSTypeObject *VSIntType = new VSTypeObject(
     NULL   // _container_funcs
 );
 
-VSObject *VS_INT_ZERO = vs_as_object(new VSIntObject(0));
-VSObject *VS_INT_ONE = vs_as_object(new VSIntObject(1));
+VSObject *VS_INT_ZERO = VS_AS_OBJECT(new VSIntObject(0));
+VSObject *VS_INT_ONE = VS_AS_OBJECT(new VSIntObject(1));

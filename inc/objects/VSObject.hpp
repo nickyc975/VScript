@@ -3,43 +3,57 @@
 
 #include "vs.hpp"
 
-#define vs_typeof(obj) ((VSTypeObject *)obj->type)
+#define VS_TYPEOF(obj) ((VSTypeObject *)obj->type)
 
-#define vs_as_object(obj) ((VSObject *)obj)
+#define VS_AS_OBJECT(obj) ((VSObject *)obj)
 
-#define vs_as_type(obj) ((VSTypeObject *)obj)
+#define VS_AS_TYPE(obj) ((VSTypeObject *)obj)
 
-#define vs_ensure_type(type, ttype, op)                                          \
+#define VS_ENSURE_TYPE(type, ttype, op)                                          \
     if (type->t_type != ttype)                                                   \
     {                                                                            \
         err("Can not apply \"" op "\" on type \"%s\".", type->__name__.c_str()); \
         terminate(TERM_ERROR);                                                   \
     }
 
-#define incref(obj) obj->refcnt++;
+#define INCREF(obj) VS_AS_OBJECT(obj)->refcnt++;
 
-#define decref(obj)                            \
-    obj->refcnt--;                             \
-    if (obj->refcnt == 0)                      \
-    {                                          \
-        if (vs_typeof(obj)->__clear__ != NULL) \
-        {                                      \
-            vs_typeof(obj)->__clear__(obj);    \
-        }                                      \
-        delete obj;                            \
-    }
+#define INCREF_RET(obj)  \
+    do {                 \
+        auto _obj = obj; \
+        INCREF(_obj);    \
+        return _obj;     \
+    } while(0);
 
-#define decref_ex(obj)                         \
-    obj->refcnt--;                             \
-    if (obj->refcnt == 0)                      \
-    {                                          \
-        if (vs_typeof(obj)->__clear__ != NULL) \
-        {                                      \
-            vs_typeof(obj)->__clear__(obj);    \
-        }                                      \
-        delete obj;                            \
-        obj = NULL;                            \
-    }
+#define NEW_REF(type, obj) (type)_NEW_REF(VS_AS_OBJECT(obj))
+
+#define DECREF(obj)                                \
+    do {                                            \
+        auto _obj = obj;                            \
+        VS_AS_OBJECT(_obj)->refcnt--;               \
+        if (VS_AS_OBJECT(_obj)->refcnt == 0)        \
+        {                                           \
+            if (VS_TYPEOF(_obj)->__clear__ != NULL) \
+            {                                       \
+                VS_TYPEOF(_obj)->__clear__(_obj);   \
+            }                                       \
+            delete _obj;                            \
+        }                                           \
+    } while(0);
+
+#define DECREF_EX(obj)                             \
+    do {                                           \
+        VS_AS_OBJECT(obj)->refcnt--;               \
+        if (VS_AS_OBJECT(obj)->refcnt == 0)        \
+        {                                          \
+            if (VS_TYPEOF(obj)->__clear__ != NULL) \
+            {                                      \
+                VS_TYPEOF(obj)->__clear__(obj);    \
+            }                                      \
+            delete obj;                            \
+            obj = NULL;                            \
+        }                                          \
+    } while(0);
 
 typedef enum
 {
@@ -81,6 +95,12 @@ public:
     static VSObject *hasitem(VSObject *container, VSObject *item);
     static void removeitem(VSObject *container, VSObject *item);
 };
+
+static inline VSObject *_NEW_REF(VSObject *obj)
+{
+    obj->refcnt++;
+    return obj;
+}
 
 typedef VSObject *(*unaryfunc)(VSObject *);
 typedef VSObject *(*binaryfunc)(VSObject *, VSObject *);

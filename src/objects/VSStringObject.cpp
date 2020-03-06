@@ -15,16 +15,16 @@ public:
 
 VSObject *vs_string_new(VSObject *typeobj, VSObject *args, VSObject *)
 {
-    VSTypeObject *ttype = vs_typeof(typeobj);
-    vs_ensure_type(ttype, T_TYPE, "str new");
+    VSTypeObject *ttype = VS_TYPEOF(typeobj);
+    VS_ENSURE_TYPE(ttype, T_TYPE, "str new");
 
-    VSTypeObject *type = vs_as_type(typeobj);
-    vs_ensure_type(type, T_STR, "str new");
+    VSTypeObject *type = VS_AS_TYPE(typeobj);
+    VS_ENSURE_TYPE(type, T_STR, "str new");
 
     vs_size_t len = VSObject::c_getlen(args);
     if (len == 0)
     {
-        return vs_as_object(new VSStringObject());
+        INCREF_RET(VS_AS_OBJECT(new VSStringObject()));
     }
     else if (len > 1)
     {
@@ -33,7 +33,7 @@ VSObject *vs_string_new(VSObject *typeobj, VSObject *args, VSObject *)
     }
     
     VSObject *init_val = VSObject::getitem_at(args, VS_INT_ZERO);
-    VSTypeObject *init_type = vs_typeof(init_val);
+    VSTypeObject *init_type = VS_TYPEOF(init_val);
     if (init_type->__str__ == NULL)
     {
         err("can not cast type \"%s\" to type \"str\".", init_type->__name__.c_str());
@@ -41,13 +41,14 @@ VSObject *vs_string_new(VSObject *typeobj, VSObject *args, VSObject *)
     }
 
     VSObject *val = init_type->__str__(init_val);
-    if (vs_typeof(val)->t_type != T_STR)
+    if (VS_TYPEOF(val)->t_type != T_STR)
     {
-        err("%s.__str__() returned \"%s\" instead of str.", init_type->__name__.c_str(), vs_typeof(val)->__name__.c_str());
+        err("%s.__str__() returned \"%s\" instead of str.", init_type->__name__.c_str(), VS_TYPEOF(val)->__name__.c_str());
         terminate(TERM_ERROR);
     }
 
-    return val;
+    DECREF_EX(init_val);
+    INCREF_RET(val);
 }
 
 void vs_string_init(VSObject *strobj, VSObject *args, VSObject *)
@@ -56,73 +57,75 @@ void vs_string_init(VSObject *strobj, VSObject *args, VSObject *)
 
 VSObject *vs_string_copy(const VSObject *that)
 {
-    VSTypeObject *type = vs_typeof(that);
-    vs_ensure_type(type, T_STR, "str copy");
+    VSTypeObject *type = VS_TYPEOF(that);
+    VS_ENSURE_TYPE(type, T_STR, "str copy");
 
-    return new VSStringObject(((VSStringObject *)that)->_value);
+    INCREF_RET(
+        VS_AS_OBJECT(new VSStringObject(((VSStringObject *)that)->_value))
+    );
 }
 
 void vs_string_clear(VSObject *strobj)
 {
-    VSTypeObject *type = vs_typeof(strobj);
-    vs_ensure_type(type, T_STR, "str clear");
+    VSTypeObject *type = VS_TYPEOF(strobj);
+    VS_ENSURE_TYPE(type, T_STR, "str clear");
 
     ((VSStringObject *)strobj)->_value.clear();
 }
 
 VSObject *vs_string_hash(const VSObject *strobj)
 {
-    VSTypeObject *type = vs_typeof(strobj);
-    vs_ensure_type(type, T_STR, "str hash");
+    VSTypeObject *type = VS_TYPEOF(strobj);
+    VS_ENSURE_TYPE(type, T_STR, "str hash");
 
     std::size_t hash = std::hash<std::string>{}(((VSStringObject *)strobj)->_value);
-    return vs_int_from_cint(hash);
+    INCREF_RET(vs_int_from_cint(hash));
 }
 
 VSObject *vs_string_eq(const VSObject *a, const VSObject *b)
 {
-    VSTypeObject *a_type = vs_typeof(a);
-    vs_ensure_type(a_type, T_STR, "str eq");
+    VSTypeObject *a_type = VS_TYPEOF(a);
+    VS_ENSURE_TYPE(a_type, T_STR, "str eq");
 
-    VSTypeObject *b_type = vs_typeof(b);
-    vs_ensure_type(b_type, T_STR, "str eq");
+    VSTypeObject *b_type = VS_TYPEOF(b);
+    VS_ENSURE_TYPE(b_type, T_STR, "str eq");
 
     VSStringObject *astr = (VSStringObject *)a;
     VSStringObject *bstr = (VSStringObject *)b;
 
-    return astr->_value == bstr->_value ? VS_TRUE : VS_FALSE;
+    INCREF_RET(astr->_value == bstr->_value ? VS_TRUE : VS_FALSE);
 }
 
 VSObject *vs_string_str(VSObject *strobj)
 {
-    VSTypeObject *type = vs_typeof(strobj);
-    vs_ensure_type(type, T_STR, "str str");
+    VSTypeObject *type = VS_TYPEOF(strobj);
+    VS_ENSURE_TYPE(type, T_STR, "str str");
 
-    return strobj;
+    INCREF_RET(strobj);
 }
 
 VSObject *vs_string_bytes(VSObject *strobj)
 {
-    VSTypeObject *type = vs_typeof(strobj);
-    vs_ensure_type(type, T_STR, "str bytes");
+    VSTypeObject *type = VS_TYPEOF(strobj);
+    VS_ENSURE_TYPE(type, T_STR, "str bytes");
 
     return NULL;
 }
 
 VSObject *vs_string_len(VSObject *obj)
 {
-    VSTypeObject *type = vs_typeof(obj);
-    vs_ensure_type(type, T_STR, "str len");
+    VSTypeObject *type = VS_TYPEOF(obj);
+    VS_ENSURE_TYPE(type, T_STR, "str len");
 
-    return vs_int_from_cint(((VSStringObject *)obj)->_value.size());
+    INCREF_RET(vs_int_from_cint(((VSStringObject *)obj)->_value.size()));
 }
 
 VSObject *vs_string_get(VSObject *strobj, VSObject *posobj)
 {
     int64_t pos = vs_int_to_cint(posobj);
 
-    VSTypeObject *stype = vs_typeof(strobj);
-    vs_ensure_type(stype, T_STR, "str get");
+    VSTypeObject *stype = VS_TYPEOF(strobj);
+    VS_ENSURE_TYPE(stype, T_STR, "str get");
     VSStringObject *str = (VSStringObject *)strobj;
 
     if (pos < 0)
@@ -137,7 +140,7 @@ VSObject *vs_string_get(VSObject *strobj, VSObject *posobj)
         terminate(TERM_ERROR);
     }
 
-    return vs_char_from_cchar(str->_value.at(pos));
+    INCREF_RET(vs_char_from_cchar(str->_value.at(pos)));
 }
 
 void vs_string_set(VSObject *strobj, VSObject *posobj, VSObject *charobj)
@@ -145,8 +148,8 @@ void vs_string_set(VSObject *strobj, VSObject *posobj, VSObject *charobj)
     int64_t pos = vs_int_to_cint(posobj);
     char char_val = vs_char_to_cchar(charobj);
 
-    VSTypeObject *stype = vs_typeof(strobj);
-    vs_ensure_type(stype, T_STR, "str set");
+    VSTypeObject *stype = VS_TYPEOF(strobj);
+    VS_ENSURE_TYPE(stype, T_STR, "str set");
     VSStringObject *str = (VSStringObject *)strobj;
 
     if (pos < 0)
@@ -168,8 +171,8 @@ void vs_string_append(VSObject *strobj, VSObject *charobj)
 {
     char char_val = vs_char_to_cchar(charobj);
 
-    VSTypeObject *stype = vs_typeof(strobj);
-    vs_ensure_type(stype, T_STR, "str append");
+    VSTypeObject *stype = VS_TYPEOF(strobj);
+    VS_ENSURE_TYPE(stype, T_STR, "str append");
     VSStringObject *str = (VSStringObject *)strobj;
 
     str->_value.push_back(char_val);
@@ -179,39 +182,39 @@ VSObject *vs_string_has(VSObject *strobj, VSObject *charobj)
 {
     char char_val = vs_char_to_cchar(charobj);
 
-    VSTypeObject *stype = vs_typeof(strobj);
-    vs_ensure_type(stype, T_STR, "str has");
+    VSTypeObject *stype = VS_TYPEOF(strobj);
+    VS_ENSURE_TYPE(stype, T_STR, "str has");
     VSStringObject *str = (VSStringObject *)strobj;
 
     if (str->_value.find(char_val) != str->_value.npos)
     {
-        return VS_TRUE;
+        INCREF_RET(VS_TRUE);
     }
-    return VS_FALSE;
+    INCREF_RET(VS_FALSE);
 }
 
 VSObject *vs_string_has_at(VSObject *strobj, VSObject *posobj)
 {
     int64_t pos = vs_int_to_cint(posobj);
 
-    VSTypeObject *stype = vs_typeof(strobj);
-    vs_ensure_type(stype, T_STR, "str has at");
+    VSTypeObject *stype = VS_TYPEOF(strobj);
+    VS_ENSURE_TYPE(stype, T_STR, "str has at");
     VSStringObject *str = (VSStringObject *)strobj;
 
     if (pos < 0 || pos >= str->_value.size())
     {
-        return VS_FALSE;
+        INCREF_RET(VS_TRUE);
     }
 
-    return VS_TRUE;
+    INCREF_RET(VS_FALSE);
 }
 
 void vs_string_remove(VSObject *strobj, VSObject *charobj)
 {
     char char_val = vs_char_to_cchar(charobj);
 
-    VSTypeObject *stype = vs_typeof(strobj);
-    vs_ensure_type(stype, T_STR, "str remove");
+    VSTypeObject *stype = VS_TYPEOF(strobj);
+    VS_ENSURE_TYPE(stype, T_STR, "str remove");
     VSStringObject *str = (VSStringObject *)strobj;
 
     std::size_t pos = str->_value.find_first_of(char_val);
@@ -226,8 +229,8 @@ void vs_string_remove_at(VSObject *strobj, VSObject *posobj)
 {
     int64_t pos = vs_int_to_cint(posobj);
 
-    VSTypeObject *stype = vs_typeof(strobj);
-    vs_ensure_type(stype, T_STR, "str remove at");
+    VSTypeObject *stype = VS_TYPEOF(strobj);
+    VS_ENSURE_TYPE(stype, T_STR, "str remove at");
     VSStringObject *str = (VSStringObject *)strobj;
 
     if (pos < 0)
@@ -247,15 +250,15 @@ void vs_string_remove_at(VSObject *strobj, VSObject *posobj)
 
 inline std::string vs_string_to_cstring(VSObject *strobj)
 {
-    VSTypeObject *type = vs_typeof(strobj);
-    vs_ensure_type(type, T_STR, "str to cstr");
+    VSTypeObject *type = VS_TYPEOF(strobj);
+    VS_ENSURE_TYPE(type, T_STR, "str to cstr");
 
     return ((VSStringObject *)strobj)->_value;
 }
 
 inline VSObject *vs_string_from_cstring(std::string strval)
 {
-    return vs_as_object(new VSStringObject(strval));
+    INCREF_RET(VS_AS_OBJECT(new VSStringObject(strval)));
 }
 
 NumberFuncs *number_funcs = new NumberFuncs(
