@@ -72,7 +72,7 @@ VSObject *vs_char_hash(const VSObject *charobj)
 
     VS_ENSURE_TYPE(type, T_CHAR, "char hash");
 
-    INCREF_RET(vs_int_from_cint(((VSCharObject *)charobj)->_value));
+    return vs_int_from_cint(((VSCharObject *)charobj)->_value);
 }
 
 VSObject *vs_char_eq(const VSObject *a, const VSObject *b)
@@ -96,7 +96,7 @@ VSObject *vs_char_str(VSObject *charobj)
 
     auto str = std::string();
     str.push_back(((VSCharObject *)charobj)->_value);
-    INCREF_RET(vs_string_from_cstring(str));
+    return vs_string_from_cstring(str);
 }
 
 VSObject *vs_char_bytes(VSObject *charobj)
@@ -150,7 +150,7 @@ VSObject *vs_char_int(VSObject *charobj, VSObject *base)
         terminate(TERM_ERROR);
     }
 
-    INCREF_RET(vs_int_from_cint((cint_t)vs_char_to_cchar(charobj)));
+    return vs_int_from_cint((cint_t)vs_char_to_cchar(charobj));
 }
 
 VSObject *vs_char_float(VSObject *charobj)
@@ -158,7 +158,7 @@ VSObject *vs_char_float(VSObject *charobj)
     VSTypeObject *type = VS_TYPEOF(charobj);
     VS_ENSURE_TYPE(type, T_CHAR, "__float__()");
 
-    INCREF_RET(vs_float_from_cfloat((cfloat_t)vs_char_to_cchar(charobj)));
+    return vs_float_from_cfloat((cfloat_t)vs_char_to_cchar(charobj));
 }
 
 inline cchar_t vs_char_to_cchar(VSObject * charobj)

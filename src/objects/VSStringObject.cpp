@@ -80,7 +80,7 @@ VSObject *vs_string_hash(const VSObject *strobj)
     VS_ENSURE_TYPE(type, T_STR, "str hash");
 
     std::size_t hash = std::hash<std::string>{}(((VSStringObject *)strobj)->_value);
-    INCREF_RET(vs_int_from_cint(hash));
+    return vs_int_from_cint(hash);
 }
 
 VSObject *vs_string_lt(const VSObject *a, const VSObject *b)
@@ -155,11 +155,11 @@ VSObject *vs_string_char(VSObject *strobj)
     vs_size_t len = str->_value.length();
     if (len == 0)
     {
-        INCREF_RET(vs_char_from_cchar((cchar_t)0));
+        return vs_char_from_cchar((cchar_t)0);
     }
     else if (len == 1)
     {
-        INCREF_RET(vs_char_from_cchar((cchar_t)str->_value[0]));
+        return vs_char_from_cchar((cchar_t)str->_value[0]);
     }
 
     err("Can not cast string \"%s\" to char.", str->_value.c_str());
@@ -200,7 +200,7 @@ VSObject *vs_string_int(VSObject *strobj, VSObject *baseobj)
         terminate(TERM_ERROR);
     }
 
-    INCREF_RET(vs_int_from_cint(val));
+    return vs_int_from_cint(val);
 }
 
 VSObject *vs_string_float(VSObject *strobj)
@@ -225,7 +225,7 @@ VSObject *vs_string_float(VSObject *strobj)
         terminate(TERM_ERROR);
     }
 
-    INCREF_RET(vs_float_from_cfloat(val));
+    return vs_float_from_cfloat(val);
 }
 
 VSObject *vs_string_len(VSObject *obj)
@@ -233,7 +233,7 @@ VSObject *vs_string_len(VSObject *obj)
     VSTypeObject *type = VS_TYPEOF(obj);
     VS_ENSURE_TYPE(type, T_STR, "str len");
 
-    INCREF_RET(vs_int_from_cint(((VSStringObject *)obj)->_value.size()));
+    return vs_int_from_cint(((VSStringObject *)obj)->_value.size());
 }
 
 VSObject *vs_string_get(VSObject *strobj, VSObject *posobj)
@@ -256,7 +256,7 @@ VSObject *vs_string_get(VSObject *strobj, VSObject *posobj)
         terminate(TERM_ERROR);
     }
 
-    INCREF_RET(vs_char_from_cchar(str->_value.at(pos)));
+    return vs_char_from_cchar(str->_value.at(pos));
 }
 
 void vs_string_set(VSObject *strobj, VSObject *posobj, VSObject *charobj)

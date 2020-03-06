@@ -61,7 +61,7 @@ void vs_bool_init(VSObject *, VSObject *, VSObject *)
 
 VSObject *vs_bool_copy(const VSObject *boolobj)
 {
-    INCREF_RET(vs_bool_from_cbool(is_true(const_cast<VSObject *>(boolobj))));
+    return vs_bool_from_cbool(is_true(const_cast<VSObject *>(boolobj)));
 }
 
 VSObject *vs_bool_hash(const VSObject *obj)
@@ -106,7 +106,7 @@ VSObject *vs_bool_str(VSObject *obj)
     VSTypeObject *type = VS_TYPEOF(obj);
     VS_ENSURE_TYPE(type, T_BOOL, "bool to str");
 
-    INCREF_RET(vs_string_from_cstring(is_true(obj) ? "true" : "false"));
+    return vs_string_from_cstring(is_true(obj) ? "true" : "false");
 }
 
 VSObject *vs_bool_bytes(VSObject *obj)
@@ -136,7 +136,7 @@ VSObject *vs_bool_and(VSObject *a, VSObject *b)
 
     VS_ENSURE_TYPE(b_type, T_BOOL, "and");
 
-    INCREF_RET(vs_bool_from_cbool(is_true(a) && is_true(b)));
+    return vs_bool_from_cbool(is_true(a) && is_true(b));
 }
 
 VSObject *vs_bool_or(VSObject *a, VSObject *b)
@@ -149,7 +149,7 @@ VSObject *vs_bool_or(VSObject *a, VSObject *b)
 
     VS_ENSURE_TYPE(b_type, T_BOOL, "and");
 
-    INCREF_RET(vs_bool_from_cbool(is_true(a) || is_true(b)));
+    return vs_bool_from_cbool(is_true(a) || is_true(b));
 }
 
 VSObject *vs_bool_bool(VSObject *boolobj)
@@ -165,7 +165,7 @@ VSObject *vs_bool_char(VSObject *boolobj)
     VSTypeObject *type = VS_TYPEOF(boolobj);
     VS_ENSURE_TYPE(type, T_BOOL, "__char__()");
 
-    INCREF_RET(vs_char_from_cchar((cchar_t)vs_bool_to_cbool(boolobj)));
+    return vs_char_from_cchar((cchar_t)vs_bool_to_cbool(boolobj));
 }
 
 VSObject *vs_bool_int(VSObject *boolobj, VSObject *base)
@@ -179,7 +179,7 @@ VSObject *vs_bool_int(VSObject *boolobj, VSObject *base)
         terminate(TERM_ERROR);
     }
 
-    INCREF_RET(vs_int_from_cint((cint_t)vs_bool_to_cbool(boolobj)));
+    return vs_int_from_cint((cint_t)vs_bool_to_cbool(boolobj));
 }
 
 VSObject *vs_bool_float(VSObject *boolobj)
@@ -187,7 +187,7 @@ VSObject *vs_bool_float(VSObject *boolobj)
     VSTypeObject *type = VS_TYPEOF(boolobj);
     VS_ENSURE_TYPE(type, T_BOOL, "__float__()");
 
-    INCREF_RET(vs_float_from_cfloat((cfloat_t)vs_bool_to_cbool(boolobj)));
+    return vs_float_from_cfloat((cfloat_t)vs_bool_to_cbool(boolobj));
 }
 
 inline cbool_t vs_bool_to_cbool(VSObject * boolobj)

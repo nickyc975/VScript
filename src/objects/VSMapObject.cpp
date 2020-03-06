@@ -82,7 +82,7 @@ VSObject *vs_map_len(VSObject *obj)
 
     VS_ENSURE_TYPE(type, T_MAP, "map len");
 
-    INCREF_RET(vs_int_from_cint(((VSMapObject *)obj)->_map.size()));
+    return vs_int_from_cint(((VSMapObject *)obj)->_map.size());
 }
 
 VSObject *vs_map_get(VSObject *obj, VSObject *key)
@@ -134,7 +134,7 @@ VSObject *vs_map_has_at(VSObject *obj, VSObject *key)
 
     VSMapObject *map = (VSMapObject *)obj;
     auto iter = map->_map.find(key);
-    INCREF_RET(vs_bool_from_cbool(iter != map->_map.end()));
+    return vs_bool_from_cbool(iter != map->_map.end());
 }
 
 void vs_map_remove_at(VSObject *obj, VSObject *key)
@@ -159,7 +159,7 @@ VSObject *vs_map_str(VSObject *obj)
 
     VS_ENSURE_TYPE(type, T_MAP, "map to str");
 
-    INCREF_RET(vs_string_from_cstring("map"));
+    return vs_string_from_cstring("map");
 }
 
 VSObject *vs_map_bytes(VSObject *obj)

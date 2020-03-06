@@ -73,7 +73,7 @@ VSObject *vs_float_hash(const VSObject *floatobj)
 
     cfloat_t val = ((VSFloatObject *)floatobj)->_value;
     std::size_t hash = std::hash<cfloat_t>{}(val);
-    INCREF_RET(vs_int_from_cint(hash));
+    return vs_int_from_cint(hash);
 }
 
 VSObject *vs_float_lt(const VSObject *a, const VSObject *b)
@@ -182,7 +182,7 @@ VSObject *vs_float_char(VSObject *floatobj)
     VS_ENSURE_TYPE(type, T_FLOAT, "float.__char__()");
 
     cbool_t res = ((VSFloatObject *)floatobj)->_value;
-    INCREF_RET(vs_char_from_cchar((cchar_t)res));
+    return vs_char_from_cchar((cchar_t)res);
 }
 
 VSObject *vs_float_int(VSObject *floatobj, VSObject *base)
@@ -197,7 +197,7 @@ VSObject *vs_float_int(VSObject *floatobj, VSObject *base)
     }
 
     cbool_t res = ((VSFloatObject *)floatobj)->_value;
-    INCREF_RET(vs_int_from_cint((cint_t)res));
+    return vs_int_from_cint((cint_t)res);
 }
 
 VSObject *vs_float_float(VSObject *floatobj)
@@ -214,7 +214,7 @@ VSObject *vs_float_str(VSObject *floatobj)
     VS_ENSURE_TYPE(type, T_FLOAT, "float str");
 
     cfloat_t val = ((VSFloatObject *)floatobj)->_value;
-    INCREF_RET(vs_string_from_cstring(std::to_string(val)));
+    return vs_string_from_cstring(std::to_string(val));
 }
 
 VSObject *vs_float_bytes(VSObject *floatobj)

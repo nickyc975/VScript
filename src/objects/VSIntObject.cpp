@@ -78,7 +78,7 @@ VSObject *vs_int_hash(const VSObject *obj)
 
     VS_ENSURE_TYPE(type, T_INT, "int hash");
 
-    INCREF_RET(vs_int_copy(obj));
+    return vs_int_copy(obj);
 }
 
 VSObject *vs_int_lt(const VSObject *a, const VSObject *b)
@@ -115,7 +115,7 @@ VSObject *vs_int_str(VSObject *obj)
     VS_ENSURE_TYPE(type, T_INT, "int to str");
 
     cint_t val = ((VSIntObject *)obj)->_value;
-    INCREF_RET(vs_string_from_cstring(std::to_string(val)));
+    return vs_string_from_cstring(std::to_string(val));
 }
 
 VSObject *vs_int_bytes(VSObject *obj)
@@ -222,7 +222,7 @@ VSObject *vs_int_char(VSObject *intobj)
     VS_ENSURE_TYPE(type, T_INT, "int.__char__()");
 
     cbool_t res = ((VSIntObject *)intobj)->_value;
-    INCREF_RET(vs_char_from_cchar((cchar_t)res));
+    return vs_char_from_cchar((cchar_t)res);
 }
 
 VSObject *vs_int_int(VSObject *intobj, VSObject *base)
@@ -245,7 +245,7 @@ VSObject *vs_int_float(VSObject *intobj)
     VS_ENSURE_TYPE(type, T_INT, "int.__float__()");
 
     cbool_t res = ((VSIntObject *)intobj)->_value;
-    INCREF_RET(vs_float_from_cfloat((cfloat_t)res));
+    return vs_float_from_cfloat((cfloat_t)res);
 }
 
 inline cint_t vs_int_to_cint(VSObject *intobj)

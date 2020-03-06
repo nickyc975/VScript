@@ -43,7 +43,7 @@ VSObject *vs_none_str(VSObject *obj)
     VSTypeObject *type = VS_TYPEOF(obj);
     VS_ENSURE_TYPE(type, T_NONE, "none to str");
 
-    INCREF_RET(vs_string_from_cstring("None"));
+    return vs_string_from_cstring("None");
 }
 
 VSObject *vs_none_bytes(VSObject *obj)
