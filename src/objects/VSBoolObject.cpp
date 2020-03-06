@@ -1,6 +1,8 @@
 #include "error.hpp"
 #include "objects/VSIntObject.hpp"
+#include "objects/VSCharObject.hpp"
 #include "objects/VSBoolObject.hpp"
+#include "objects/VSFloatObject.hpp"
 #include "objects/VSStringObject.hpp"
 
 class VSBoolObject : public VSObject
@@ -158,12 +160,28 @@ VSObject *vs_bool_bool(VSObject *boolobj)
     INCREF_RET(boolobj);
 }
 
+VSObject *vs_bool_char(VSObject *boolobj)
+{
+    VSTypeObject *type = VS_TYPEOF(boolobj);
+    VS_ENSURE_TYPE(type, T_BOOL, "__char__()");
+
+    INCREF_RET(vs_char_from_cchar((cchar_t)vs_bool_to_cbool(boolobj)));
+}
+
 VSObject *vs_bool_int(VSObject *boolobj)
 {
     VSTypeObject *type = VS_TYPEOF(boolobj);
     VS_ENSURE_TYPE(type, T_BOOL, "__int__()");
 
     INCREF_RET(vs_int_from_cint((cint_t)vs_bool_to_cbool(boolobj)));
+}
+
+VSObject *vs_bool_float(VSObject *boolobj)
+{
+    VSTypeObject *type = VS_TYPEOF(boolobj);
+    VS_ENSURE_TYPE(type, T_BOOL, "__float__()");
+
+    INCREF_RET(vs_float_from_cfloat((cfloat_t)vs_bool_to_cbool(boolobj)));
 }
 
 inline cbool_t vs_bool_to_cbool(VSObject * boolobj)
@@ -196,9 +214,9 @@ NumberFuncs *number_funcs = new NumberFuncs(
     vs_bool_and, // __and__
     vs_bool_or, // __or__
     vs_bool_bool, // __bool__
-    NULL, // __char__
+    vs_bool_char, // __char__
     vs_bool_int, // __int__
-    NULL  // __float__
+    vs_bool_float  // __float__
 );
 
 VSTypeObject *VSBoolType = new VSTypeObject(

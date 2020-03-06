@@ -1,6 +1,7 @@
 #include "error.hpp"
 #include "objects/VSBoolObject.hpp"
 #include "objects/VSIntObject.hpp"
+#include "objects/VSCharObject.hpp"
 #include "objects/VSStringObject.hpp"
 #include "objects/VSFloatObject.hpp"
 
@@ -103,6 +104,41 @@ VSObject *vs_float_eq(const VSObject *a, const VSObject *b)
     INCREF_RET(res ? VS_TRUE : VS_FALSE);
 }
 
+VSObject *vs_float_bool(VSObject *floatobj)
+{
+    VSTypeObject *type = VS_TYPEOF(floatobj);
+    VS_ENSURE_TYPE(type, T_FLOAT, "float.__bool__()");
+
+    cbool_t res = ((VSFloatObject *)floatobj)->_value;
+    INCREF_RET(res ? VS_TRUE : VS_FALSE);
+}
+
+VSObject *vs_float_char(VSObject *floatobj)
+{
+    VSTypeObject *type = VS_TYPEOF(floatobj);
+    VS_ENSURE_TYPE(type, T_FLOAT, "float.__char__()");
+
+    cbool_t res = ((VSFloatObject *)floatobj)->_value;
+    INCREF_RET(vs_char_from_cchar((cchar_t)res));
+}
+
+VSObject *vs_float_int(VSObject *floatobj)
+{
+    VSTypeObject *type = VS_TYPEOF(floatobj);
+    VS_ENSURE_TYPE(type, T_FLOAT, "float.__int__()");
+
+    cbool_t res = ((VSFloatObject *)floatobj)->_value;
+    INCREF_RET(vs_int_from_cint((cint_t)res));
+}
+
+VSObject *vs_float_float(VSObject *floatobj)
+{
+    VSTypeObject *type = VS_TYPEOF(floatobj);
+    VS_ENSURE_TYPE(type, T_FLOAT, "float.__float__()");
+
+    INCREF_RET(floatobj);
+}
+
 VSObject *vs_float_str(VSObject *floatobj)
 {
     VSTypeObject *type = VS_TYPEOF(floatobj);
@@ -143,10 +179,10 @@ NumberFuncs *number_funcs = new NumberFuncs(
     NULL, // __mod__
     NULL, // __and__
     NULL, // __or__
-    NULL, // __bool__
-    NULL, // __char__
-    NULL, // __int__
-    NULL  // __float__
+    vs_float_bool, // __bool__
+    vs_float_char, // __char__
+    vs_float_int, // __int__
+    vs_float_float  // __float__
 );
 
 VSTypeObject *VSFloatType = new VSTypeObject(

@@ -2,6 +2,7 @@
 #include "objects/VSIntObject.hpp"
 #include "objects/VSCharObject.hpp"
 #include "objects/VSBoolObject.hpp"
+#include "objects/VSFloatObject.hpp"
 #include "objects/VSStringObject.hpp"
 
 class VSStringObject : public VSObject
@@ -122,6 +123,84 @@ VSObject *vs_string_bytes(VSObject *strobj)
     VS_ENSURE_TYPE(type, T_STR, "str bytes");
 
     return NULL;
+}
+
+VSObject *vs_string_bool(VSObject *strobj)
+{
+    VSTypeObject *type = VS_TYPEOF(strobj);
+    VS_ENSURE_TYPE(type, T_STR, "str.__bool__");
+
+    vs_size_t len = VSObject::c_getlen(strobj);
+    INCREF_RET(len ? VS_TRUE : VS_FALSE);
+}
+
+VSObject *vs_string_char(VSObject *strobj)
+{
+    VSTypeObject *type = VS_TYPEOF(strobj);
+    VS_ENSURE_TYPE(type, T_STR, "str.__char__");
+
+    VSStringObject *str = (VSStringObject *)strobj;
+    vs_size_t len = str->_value.length();
+    if (len == 0)
+    {
+        INCREF_RET(vs_char_from_cchar((cchar_t)0));
+    }
+    else if (len == 1)
+    {
+        INCREF_RET(vs_char_from_cchar((cchar_t)str->_value[0]));
+    }
+
+    err("Can not cast string \"%s\" to char.", str->_value.c_str());
+    terminate(TERM_ERROR);
+}
+
+VSObject *vs_string_int(VSObject *strobj)
+{
+    VSTypeObject *type = VS_TYPEOF(strobj);
+    VS_ENSURE_TYPE(type, T_STR, "str.__int__");
+
+    char *end = NULL;
+    VSStringObject *str = (VSStringObject *)strobj;
+    cint_t val = std::strtoll(str->_value.c_str(), &end, 0);
+
+    if (errno == ERANGE)
+    {
+        err("literal out of range of int: \"%s\"", str->_value.c_str());
+        terminate(TERM_ERROR);
+    }
+
+    if (end - 1 != &(str->_value.back()))
+    {
+        err("invalid literal: \"%s\"", str->_value.c_str());
+        terminate(TERM_ERROR);
+    }
+
+    INCREF_RET(vs_int_from_cint(val));
+}
+
+VSObject *vs_string_float(VSObject *strobj)
+{
+    VSTypeObject *type = VS_TYPEOF(strobj);
+    VS_ENSURE_TYPE(type, T_STR, "str.__float__");
+
+    char *end = NULL;
+    VSStringObject *str = (VSStringObject *)strobj;
+    cfloat_t val = std::strtold(str->_value.c_str(), &end);
+
+    if (errno == ERANGE)
+    {
+        errno = 0;
+        err("literal out of range of float: \"%s\"", str->_value.c_str());
+        terminate(TERM_ERROR);
+    }
+
+    if (end - 1 != &(str->_value.back()))
+    {
+        err("invalid literal: \"%s\"", str->_value.c_str());
+        terminate(TERM_ERROR);
+    }
+
+    INCREF_RET(vs_float_from_cfloat(val));
 }
 
 VSObject *vs_string_len(VSObject *obj)
@@ -283,10 +362,10 @@ NumberFuncs *number_funcs = new NumberFuncs(
     NULL, // __mod__
     NULL, // __and__
     NULL, // __or__
-    NULL, // __bool__
-    NULL, // __char__
-    NULL, // __int__
-    NULL  // __float__
+    vs_string_bool, // __bool__
+    vs_string_char, // __char__
+    vs_string_int, // __int__
+    vs_string_float  // __float__
 );
 
 ContainerFuncs *string_funcs = new ContainerFuncs(

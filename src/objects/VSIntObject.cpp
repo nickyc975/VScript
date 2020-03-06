@@ -1,6 +1,8 @@
 #include "error.hpp"
+#include "objects/VSCharObject.hpp"
 #include "objects/VSBoolObject.hpp"
 #include "objects/VSIntObject.hpp"
+#include "objects/VSFloatObject.hpp"
 #include "objects/VSStringObject.hpp"
 
 class VSIntObject : public VSObject
@@ -70,7 +72,7 @@ VSObject *vs_int_hash(const VSObject *obj)
 
     VS_ENSURE_TYPE(type, T_INT, "int hash");
 
-    INCREF_RET(type->__copy__(obj));
+    INCREF_RET(vs_int_copy(obj));
 }
 
 VSObject *vs_int_lt(const VSObject *a, const VSObject *b)
@@ -118,6 +120,41 @@ VSObject *vs_int_bytes(VSObject *obj)
     return NULL;
 }
 
+VSObject *vs_int_bool(VSObject *intobj)
+{
+    VSTypeObject *type = VS_TYPEOF(intobj);
+    VS_ENSURE_TYPE(type, T_INT, "int.__bool__()");
+
+    cbool_t res = ((VSIntObject *)intobj)->_value;
+    INCREF_RET(res ? VS_TRUE : VS_FALSE);
+}
+
+VSObject *vs_int_char(VSObject *intobj)
+{
+    VSTypeObject *type = VS_TYPEOF(intobj);
+    VS_ENSURE_TYPE(type, T_INT, "int.__char__()");
+
+    cbool_t res = ((VSIntObject *)intobj)->_value;
+    INCREF_RET(vs_char_from_cchar((cchar_t)res));
+}
+
+VSObject *vs_int_int(VSObject *intobj)
+{
+    VSTypeObject *type = VS_TYPEOF(intobj);
+    VS_ENSURE_TYPE(type, T_INT, "int.__int__()");
+
+    INCREF_RET(intobj);
+}
+
+VSObject *vs_int_float(VSObject *intobj)
+{
+    VSTypeObject *type = VS_TYPEOF(intobj);
+    VS_ENSURE_TYPE(type, T_INT, "int.__float__()");
+
+    cbool_t res = ((VSIntObject *)intobj)->_value;
+    INCREF_RET(vs_float_from_cfloat((cfloat_t)res));
+}
+
 inline cint_t vs_int_to_cint(VSObject *intobj)
 {
     VS_ENSURE_TYPE(VS_TYPEOF(intobj), T_INT, "to c int");
@@ -139,10 +176,10 @@ NumberFuncs *number_funcs = new NumberFuncs(
     NULL, // __mod__
     NULL, // __and__
     NULL, // __or__
-    NULL, // __bool__
-    NULL, // __char__
-    NULL, // __int__
-    NULL  // __float__
+    vs_int_bool, // __bool__
+    vs_int_char, // __char__
+    vs_int_int, // __int__
+    vs_int_float  // __float__
 );
 
 VSTypeObject *VSIntType = new VSTypeObject(

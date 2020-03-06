@@ -1,5 +1,6 @@
 #include "error.hpp"
 #include "objects/VSIntObject.hpp"
+#include "objects/VSFloatObject.hpp"
 #include "objects/VSBoolObject.hpp"
 #include "objects/VSCharObject.hpp"
 #include "objects/VSStringObject.hpp"
@@ -146,6 +147,14 @@ VSObject *vs_char_int(VSObject *charobj)
     INCREF_RET(vs_int_from_cint((cint_t)vs_char_to_cchar(charobj)));
 }
 
+VSObject *vs_char_float(VSObject *charobj)
+{
+    VSTypeObject *type = VS_TYPEOF(charobj);
+    VS_ENSURE_TYPE(type, T_CHAR, "__float__()");
+
+    INCREF_RET(vs_float_from_cfloat((cfloat_t)vs_char_to_cchar(charobj)));
+}
+
 inline cchar_t vs_char_to_cchar(VSObject * charobj)
 {
     VSTypeObject *type = VS_TYPEOF(charobj);
@@ -172,7 +181,7 @@ NumberFuncs *number_funcs = new NumberFuncs(
     vs_char_bool, // __bool__
     vs_char_char, // __char__
     vs_char_int, // __int__
-    NULL  // __float__
+    vs_char_float  // __float__
 );
 
 VSTypeObject *VSCharType = new VSTypeObject(
