@@ -1,14 +1,14 @@
 #ifndef VS_ERROR_H
 #define VS_ERROR_H
 
-#define err(...)    __vs_report__(ERR, __VA_ARGS__)
-#define warn(...)   __vs_report__(WARN, __VA_ARGS__)
-#define note(...)   __vs_report__(NOTE, __VA_ARGS__)
+#define err(...) __vs_report__(ERR, __VA_ARGS__)
+#define warn(...) __vs_report__(WARN, __VA_ARGS__)
+#define note(...) __vs_report__(NOTE, __VA_ARGS__)
 
 #define negative_index(idx) \
     err("negative index %ld.", idx)
 
-#define index_out_of_bound(idx, size) \
+#define INDEX_OUT_OF_BOUND(idx, size) \
     err("index %ld out of bound %ld.", idx, size)
 
 #define u_op_err(op, type) \

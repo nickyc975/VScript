@@ -66,6 +66,7 @@ typedef enum
     T_FLOAT,
     T_STR,
     T_LIST,
+    T_TUPLE,
     T_MAP,
     T_SET,
     T_CODE,

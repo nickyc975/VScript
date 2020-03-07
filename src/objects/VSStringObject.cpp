@@ -252,7 +252,7 @@ VSObject *vs_string_get(VSObject *strobj, VSObject *posobj)
 
     if (pos >= str->_value.size())
     {
-        index_out_of_bound(pos, str->_value.size());
+        INDEX_OUT_OF_BOUND(pos, str->_value.size());
         terminate(TERM_ERROR);
     }
 
@@ -276,7 +276,7 @@ void vs_string_set(VSObject *strobj, VSObject *posobj, VSObject *charobj)
 
     if (pos >= str->_value.size())
     {
-        index_out_of_bound(pos, str->_value.size());
+        INDEX_OUT_OF_BOUND(pos, str->_value.size());
         terminate(TERM_ERROR);
     }
 
@@ -357,7 +357,7 @@ void vs_string_remove_at(VSObject *strobj, VSObject *posobj)
 
     if (pos >= str->_value.size())
     {
-        index_out_of_bound(pos, str->_value.size());
+        INDEX_OUT_OF_BOUND(pos, str->_value.size());
         terminate(TERM_ERROR);
     }
 
