@@ -236,51 +236,39 @@ VSObject *vs_string_len(VSObject *obj)
     return vs_int_from_cint(((VSStringObject *)obj)->_value.size());
 }
 
-VSObject *vs_string_get(VSObject *strobj, VSObject *posobj)
+VSObject *vs_string_get(VSObject *strobj, VSObject *idxobj)
 {
-    cint_t pos = vs_int_to_cint(posobj);
+    vs_size_t idx = (vs_size_t)vs_int_to_cint(idxobj);
 
     VSTypeObject *stype = VS_TYPEOF(strobj);
     VS_ENSURE_TYPE(stype, T_STR, "str get");
     VSStringObject *str = (VSStringObject *)strobj;
 
-    if (pos < 0)
+    if (idx >= str->_value.size())
     {
-        negative_index(pos);
+        INDEX_OUT_OF_BOUND(idx, str->_value.size());
         terminate(TERM_ERROR);
     }
 
-    if (pos >= str->_value.size())
-    {
-        INDEX_OUT_OF_BOUND(pos, str->_value.size());
-        terminate(TERM_ERROR);
-    }
-
-    return vs_char_from_cchar(str->_value.at(pos));
+    return vs_char_from_cchar(str->_value.at(idx));
 }
 
-void vs_string_set(VSObject *strobj, VSObject *posobj, VSObject *charobj)
+void vs_string_set(VSObject *strobj, VSObject *idxobj, VSObject *charobj)
 {
-    cint_t pos = vs_int_to_cint(posobj);
     cchar_t char_val = vs_char_to_cchar(charobj);
+    vs_size_t idx = (vs_size_t)vs_int_to_cint(idxobj);
 
     VSTypeObject *stype = VS_TYPEOF(strobj);
     VS_ENSURE_TYPE(stype, T_STR, "str set");
     VSStringObject *str = (VSStringObject *)strobj;
 
-    if (pos < 0)
+    if (idx >= str->_value.size())
     {
-        negative_index(pos);
+        INDEX_OUT_OF_BOUND(idx, str->_value.size());
         terminate(TERM_ERROR);
     }
 
-    if (pos >= str->_value.size())
-    {
-        INDEX_OUT_OF_BOUND(pos, str->_value.size());
-        terminate(TERM_ERROR);
-    }
-
-    str->_value[pos] = char_val;
+    str->_value[idx] = char_val;
 }
 
 void vs_string_append(VSObject *strobj, VSObject *charobj)
@@ -309,20 +297,15 @@ VSObject *vs_string_has(VSObject *strobj, VSObject *charobj)
     INCREF_RET(VS_FALSE);
 }
 
-VSObject *vs_string_has_at(VSObject *strobj, VSObject *posobj)
+VSObject *vs_string_has_at(VSObject *strobj, VSObject *idxobj)
 {
-    cint_t pos = vs_int_to_cint(posobj);
+    vs_size_t idx = (vs_size_t)vs_int_to_cint(idxobj);
 
     VSTypeObject *stype = VS_TYPEOF(strobj);
     VS_ENSURE_TYPE(stype, T_STR, "str has at");
     VSStringObject *str = (VSStringObject *)strobj;
 
-    if (pos < 0 || pos >= str->_value.size())
-    {
-        INCREF_RET(VS_TRUE);
-    }
-
-    INCREF_RET(VS_FALSE);
+    INCREF_RET(idx < str->_value.size() ? VS_FALSE : VS_TRUE);
 }
 
 void vs_string_remove(VSObject *strobj, VSObject *charobj)
@@ -333,35 +316,29 @@ void vs_string_remove(VSObject *strobj, VSObject *charobj)
     VS_ENSURE_TYPE(stype, T_STR, "str remove");
     VSStringObject *str = (VSStringObject *)strobj;
 
-    std::size_t pos = str->_value.find_first_of(char_val);
-    while (pos != str->_value.npos)
+    std::size_t idx = str->_value.find_first_of(char_val);
+    while (idx != str->_value.npos)
     {
-        str->_value.erase(pos, 1);
-        pos = str->_value.find_first_of(char_val, pos);
+        str->_value.erase(idx, 1);
+        idx = str->_value.find_first_of(char_val, idx);
     }
 }
 
-void vs_string_remove_at(VSObject *strobj, VSObject *posobj)
+void vs_string_remove_at(VSObject *strobj, VSObject *idxobj)
 {
-    cint_t pos = vs_int_to_cint(posobj);
+    vs_size_t idx = (vs_size_t)vs_int_to_cint(idxobj);
 
     VSTypeObject *stype = VS_TYPEOF(strobj);
     VS_ENSURE_TYPE(stype, T_STR, "str remove at");
     VSStringObject *str = (VSStringObject *)strobj;
 
-    if (pos < 0)
+    if (idx >= str->_value.size())
     {
-        negative_index(pos);
+        INDEX_OUT_OF_BOUND(idx, str->_value.size());
         terminate(TERM_ERROR);
     }
 
-    if (pos >= str->_value.size())
-    {
-        INDEX_OUT_OF_BOUND(pos, str->_value.size());
-        terminate(TERM_ERROR);
-    }
-
-    str->_value.erase(pos, 1);
+    str->_value.erase(idx, 1);
 }
 
 inline std::string vs_string_to_cstring(VSObject *strobj)

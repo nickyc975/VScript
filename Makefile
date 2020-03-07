@@ -8,7 +8,8 @@ CXXFLAGS=-I inc -g -Wall -Wextra -Wno-write-strings
 	 VSObjectList.cpp VSCodeObject.cpp VSValue.cpp VSCallStackFrame.cpp global.cpp \
 	 execute.cpp vs.cpp
 SRCS=error.cpp VSBoolObject.cpp VSCharObject.cpp VSFloatObject.cpp VSIntObject.cpp \
-	 VSMapObject.cpp VSNoneObject.cpp VSObject.cpp VSStringObject.cpp VSTypeObject.cpp
+	 VSMapObject.cpp VSNoneObject.cpp VSObject.cpp VSStringObject.cpp VSTypeObject.cpp \
+	 VSTupleObject.cpp VSListObject.cpp
 OBJECTS=$(SRCS:.cpp=.o)
 
 OUTPUT_DIR=build
