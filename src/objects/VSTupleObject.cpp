@@ -108,7 +108,7 @@ VSObject *vs_tuple_get(VSObject *tupleobj, VSObject *idxobj)
 
     VSTupleObject *tuple = (VSTupleObject *)tupleobj;
     vs_size_t idx = (vs_size_t)vs_int_to_cint(idxobj);
-    if(idx >= tuple->nitems)
+    if (idx >= tuple->nitems)
     {
         INDEX_OUT_OF_BOUND(idx, tuple->nitems);
         terminate(TERM_ERROR);
@@ -140,13 +140,42 @@ VSObject *vs_tuple_has_at(VSObject *tupleobj, VSObject *idxobj)
     INCREF_RET(idx < tuple->nitems ? VS_TRUE : VS_FALSE);
 }
 
+VSObject *vs_tuple_add(VSObject *a, VSObject *b)
+{
+    VSTypeObject *atype = VS_TYPEOF(a);
+    VS_ENSURE_TYPE(atype, T_TUPLE, "tuple.__add__()");
+
+    VSTypeObject *btype = VS_TYPEOF(b);
+    VS_ENSURE_TYPE(btype, T_TUPLE, "tuple.__add__()");
+
+    VSTupleObject *tuple_a = (VSTupleObject *)a;
+    VSTupleObject *tuple_b = (VSTupleObject *)b;
+
+    VSTupleObject *tuple = new VSTupleObject(tuple_a->nitems + tuple_b->nitems);
+    for (vs_size_t i = 0; i < tuple_a->nitems; i++)
+    {
+        VSObject *item = tuple_a->items[i];
+        tuple->items[i] = item;
+        INCREF(item);
+    }
+
+    for (vs_size_t i = 0; i < tuple_b->nitems; i++)
+    {
+        VSObject *item = tuple_b->items[i];
+        tuple->items[tuple_a->nitems + i] = item;
+        INCREF(item);
+    }
+
+    INCREF_RET(VS_AS_OBJECT(tuple));
+}
+
 VSObject *vs_tuple_pack(vs_size_t nitems, ...)
 {
     VSTupleObject *tuple = new VSTupleObject(nitems);
 
     va_list args;
     va_start(args, nitems);
-    for (vs_size_t i = 0; i < nitems; i ++)
+    for (vs_size_t i = 0; i < nitems; i++)
     {
         VSObject *item = va_arg(args, VSObject *);
         tuple->items[i] = item;
@@ -180,25 +209,41 @@ void vs_tuple_unpack(VSObject *tupleobj, vs_size_t nitems, ...)
     va_end(args);
 }
 
+NumberFuncs *tuple_number_funcs = new NumberFuncs(
+    NULL,         // __not__
+    NULL,         // __neg__
+    vs_tuple_add, // __add__
+    NULL,         // __sub__
+    NULL,         // __mul__
+    NULL,         // __div__
+    NULL,         // __mod__
+    NULL,         // __and__
+    NULL,         // __or__
+    NULL,         // __bool__
+    NULL,         // __char__
+    NULL,         // __int__
+    NULL          // __float__
+);
+
 ContainerFuncs *tuple_container_funcs = new ContainerFuncs(
-    vs_tuple_len,      // __len__
-    vs_tuple_get,      // __get__
-    NULL,      // __set__
+    vs_tuple_len,    // __len__
+    vs_tuple_get,    // __get__
+    NULL,            // __set__
     NULL,            // __append__
-    vs_tuple_has,            // __has__
-    vs_tuple_has_at,   // __has_at__
+    vs_tuple_has,    // __has__
+    vs_tuple_has_at, // __has_at__
     NULL,            // __remove__
-    NULL // __remove_at__
+    NULL             // __remove_at__
 );
 
 VSTypeObject *VSTupleType = new VSTypeObject(
     T_TUPLE,
-    "tuple",                   // __name__
+    "tuple",                 // __name__
     NULL,                    // __attrs__
-    vs_tuple_new,              // __new__
-    vs_tuple_init,             // __init__
-    vs_tuple_copy,             // __copy__
-    NULL,            // __clear__
+    vs_tuple_new,            // __new__
+    vs_tuple_init,           // __init__
+    vs_tuple_copy,           // __copy__
+    NULL,                    // __clear__
     NULL,                    // __getattr__
     NULL,                    // __hasattr__
     NULL,                    // __setattr__
@@ -206,9 +251,9 @@ VSTypeObject *VSTupleType = new VSTypeObject(
     vs_hash_not_implemented, // __hash__
     NULL,                    // __lt__
     vs_default_eq,           // __eq__
-    vs_tuple_str,              // __str__
-    vs_tuple_bytes,            // __bytes__
+    vs_tuple_str,            // __str__
+    vs_tuple_bytes,          // __bytes__
     NULL,                    // __call__
-    NULL,                    // _number_funcs
-    tuple_container_funcs      // _container_funcs
+    tuple_number_funcs,      // _number_funcs
+    tuple_container_funcs    // _container_funcs
 );
