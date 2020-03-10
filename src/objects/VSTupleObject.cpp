@@ -27,6 +27,10 @@ public:
 
     ~VSTupleObject()
     {
+        for (vs_size_t i = 0; i < this->nitems; i++)
+        {
+            DECREF(this->items[i]);
+        }
         free(this->items);
     }
 };
