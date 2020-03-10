@@ -190,7 +190,7 @@ VSObject *vs_tuple_pack(vs_size_t nitems, ...)
     INCREF_RET(VS_AS_OBJECT(tuple));
 }
 
-void vs_tuple_unpack(VSObject *tupleobj, vs_size_t nitems, ...)
+int vs_tuple_unpack(VSObject *tupleobj, vs_size_t nitems, ...)
 {
     VSTypeObject *type = VS_TYPEOF(tupleobj);
     VS_ENSURE_TYPE(type, T_TUPLE, "tuple unpack");
@@ -199,7 +199,7 @@ void vs_tuple_unpack(VSObject *tupleobj, vs_size_t nitems, ...)
     if (nitems >= tuple->nitems)
     {
         INDEX_OUT_OF_BOUND(nitems, tuple->nitems);
-        terminate(TERM_ERROR);
+        return -1;
     }
 
     va_list args;
@@ -211,6 +211,7 @@ void vs_tuple_unpack(VSObject *tupleobj, vs_size_t nitems, ...)
         INCREF(*item);
     }
     va_end(args);
+    return 0;
 }
 
 NumberFuncs *tuple_number_funcs = new NumberFuncs(

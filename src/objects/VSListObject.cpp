@@ -258,7 +258,7 @@ VSObject *vs_list_pack(vs_size_t nitems, ...)
     INCREF_RET(VS_AS_OBJECT(list));
 }
 
-void vs_list_unpack(VSObject *listobj, vs_size_t nitems, ...)
+int vs_list_unpack(VSObject *listobj, vs_size_t nitems, ...)
 {
     VSTypeObject *type = VS_TYPEOF(listobj);
     VS_ENSURE_TYPE(type, T_LIST, "list unpack");
@@ -267,7 +267,7 @@ void vs_list_unpack(VSObject *listobj, vs_size_t nitems, ...)
     if (nitems >= list->items.size())
     {
         INDEX_OUT_OF_BOUND(nitems, list->items.size());
-        terminate(TERM_ERROR);
+        return -1;
     }
 
     va_list args;
@@ -279,6 +279,7 @@ void vs_list_unpack(VSObject *listobj, vs_size_t nitems, ...)
         INCREF(*item);
     }
     va_end(args);
+    return 0;
 }
 
 NumberFuncs *list_number_funcs = new NumberFuncs(

@@ -9,6 +9,6 @@ class VSListObject;
 extern VSTypeObject *VSListType;
 
 extern VSObject *vs_list_pack(vs_size_t nitems, ...);
-extern void vs_list_unpack(VSObject *listobj, vs_size_t nitems, ...);
+extern int vs_list_unpack(VSObject *listobj, vs_size_t nitems, ...);
 
 #endif
