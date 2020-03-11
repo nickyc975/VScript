@@ -8,6 +8,7 @@ extern VSTypeObject *VSCellType;
 
 class VSCellObject : public VSObject {
 public:
+    bool mut;
     VSObject *item;
 
     VSCellObject(VSObject *item);
@@ -22,10 +23,14 @@ extern int vs_cell_set(VSObject *cellobj, VSObject *item);
 #define VS_CELL_SET(cell, value)                          \
     do {                                                  \
         VSObject *item = AS_CELL(cell)->item;             \
+        if (!AS_CELL(cell)->mut) {                        \
+            err("modifying immutable cell at %p", cell);  \
+            break;                                        \
+        }                                                 \
         if (item != NULL) {                               \
             DECREF(item);                                 \
         }                                                 \
         AS_CELL(cell)->item = NEW_REF(VSObject *, value); \
-    } while(0);
+    } while (0);
 
 #endif

@@ -9,6 +9,7 @@
 #include <cassert>
 
 VSCellObject::VSCellObject(VSObject *item) {
+    this->mut = true;
     this->item = item;
     this->type = VSCellType;
     INCREF(item);
@@ -97,6 +98,11 @@ inline int vs_cell_set(VSObject *cellobj, VSObject *item) {
     VS_ENSURE_TYPE(VS_TYPEOF(cellobj), T_CELL, "cell set");
 
     VSCellObject *cell = AS_CELL(cellobj);
+    if (!cell->mut) {
+        err("modifying immutable cell at %p", cell);
+        return;
+    }
+
     DECREF(cell->item);
     cell->item = item;
     INCREF(cell->item);
