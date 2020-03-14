@@ -22,6 +22,15 @@ typedef enum
     // 1 arg, list length, create a list of objects in the stack
     OP_BUILD_LIST,
 
+    // 1 arg, tuple size, create a tuple of objects in the stack
+    OP_BUILD_TUPLE,
+
+    // 1 arg, pair num in map, create a map of objects in the stack
+    OP_BUILD_MAP,
+
+    // 1 arg, set size, create a set of objects in the stack
+    OP_BUILD_SET,
+
     // no arg, load the value at index in the list
     OP_INDEX_LOAD,
 
@@ -32,22 +41,19 @@ typedef enum
     OP_LOAD_LOCAL,
 
     // 1 arg, load the object with the name indicated by the arg
-    OP_LOAD_NAME,
+    OP_LOAD_ATTR,
 
     // 1 arg, store stack top to local indicated by the arg
     OP_STORE_LOCAL,
 
     // 1 arg, store stack top to name indicated by the arg
-    OP_STORE_NAME,
+    OP_STORE_ATTR,
 
     // 1 arg, load the object at index in the const vector
     OP_LOAD_CONST,
 
     // 1 arg, load the global object indicated by the arg
     OP_LOAD_BUILTIN,
-
-    // no arg, eval stack top
-    OP_EVAL,
 
     // 1 arg, jump to point in current block
     OP_JMP,

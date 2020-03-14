@@ -1,7 +1,5 @@
 primary_expression:CONSTANT
 primary_expression:IDENTIFIER
-primary_expression:L_BRACK R_BRACK
-primary_expression:L_BRACK value_list_expression L_BRACK
 primary_expression:L_PAREN logical_or_expression R_PAREN
 
 postfix_expression:primary_expression
@@ -40,6 +38,23 @@ logical_or_expression:logical_or_expression OR logical_and_expression
 
 value_list_expression:logical_or_expression
 value_list_expression:value_list_expression COMMA logical_or_expression
+
+pair_list_expression:logical_or_expression COLON logical_or_expression
+pair_list_expression:pair_list_expression COMMA logical_or_expression COLON logical_or_expression
+
+tuple_declaration:L_PAREN R_PAREN
+tuple_declaration:L_PAREN value_list_expression R_PAREN
+
+list_declaration:L_BRACK R_BRACK
+list_declaration:L_BRACK value_list_expression R_BRACK
+
+dict_declaration:L_CURLY R_CURLY
+dict_declaration:L_CURLY pair_list_expression R_CURLY
+
+set_declaration:L_CURLY value_list_expression R_CURLY
+
+anony_function_declaration:FUNC L_PAREN R_PAREN compound_statement
+anony_function_declaration:FUNC L_PAREN parameter_list R_PAREN compound_statement
 
 assignment_operator:ASSIGN
 assignment_operator:MUL_ASSIGN
