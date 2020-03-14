@@ -57,6 +57,15 @@ VSObject *vs_cell_copy(const VSObject *that) {
     INCREF_RET(VS_AS_OBJECT(cell));
 }
 
+void vs_cell_clear(VSObject *cellobj) {
+    assert(cellobj != NULL);
+    VS_ENSURE_TYPE(VS_TYPEOF(cellobj), T_CELL, "cell.__clear__()");
+
+    VSCellObject *cell = AS_CELL(cellobj);
+    DECREF(cell->item);
+    cell->item = NULL;
+}
+
 VSObject *vs_cell_hash(const VSObject *cellobj) {
     assert(cellobj != NULL);
     VS_ENSURE_TYPE(VS_TYPEOF(cellobj), T_CELL, "cell.__hash__()");
@@ -116,7 +125,7 @@ VSTypeObject *VSCellType = new VSTypeObject(
     vs_cell_new,    // __new__
     vs_cell_init,   // __init__
     vs_cell_copy,   // __copy__
-    NULL,           // __clear__
+    vs_cell_clear,  // __clear__
     NULL,           // __getattr__
     NULL,           // __hasattr__
     NULL,           // __setattr__
