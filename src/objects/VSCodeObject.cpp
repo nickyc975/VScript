@@ -23,6 +23,7 @@ VSInst &VSInst::operator=(VSInst &inst)
 
 VSCodeObject::VSCodeObject(VSObject *name)
 {
+    this->type = VSCodeType;
     this->name = name;
     INCREF(name);
 
@@ -39,8 +40,6 @@ VSCodeObject::VSCodeObject(VSObject *name)
 
     // set constants
     this->add_const(VS_NONE);
-    this->add_const(VS_TRUE);
-    this->add_const(VS_FALSE);
 }
 
 void VSCodeObject::add_inst(VSInst inst)
@@ -126,6 +125,7 @@ VSObject *vs_code_bytes(VSObject *codeobj)
 }
 
 VSTypeObject *VSCodeType = new VSTypeObject(
+    VSTypeType,
     T_CODE,
     "code",                  // __name__
     NULL,                    // __attrs__

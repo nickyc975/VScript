@@ -310,6 +310,7 @@ ContainerFuncs *list_container_funcs = new ContainerFuncs(
 );
 
 VSTypeObject *VSListType = new VSTypeObject(
+    VSTypeType,
     T_LIST,
     "list",                  // __name__
     NULL,                    // __attrs__

@@ -226,6 +226,7 @@ NumberFuncs *bool_number_funcs = new NumberFuncs(
 );
 
 VSTypeObject *VSBoolType = new VSTypeObject(
+    VSTypeType,
     T_BOOL,
     "bool",            // __name__
     NULL,              // __attrs__

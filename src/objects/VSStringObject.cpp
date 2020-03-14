@@ -382,6 +382,7 @@ ContainerFuncs *string_container_funcs = new ContainerFuncs(
 );
 
 VSTypeObject *VSStringType = new VSTypeObject(
+    VSTypeType,
     T_STR,
     "str",                 // __name__
     NULL,                  // __attrs__

@@ -272,6 +272,7 @@ NumberFuncs *char_number_funcs = new NumberFuncs(
 );
 
 VSTypeObject *VSCharType = new VSTypeObject(
+    VSTypeType,
     T_CHAR,
     "char",            // __name__
     NULL,              // __attrs__

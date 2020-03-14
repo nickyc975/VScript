@@ -255,6 +255,7 @@ NumberFuncs *float_number_funcs = new NumberFuncs(
 );
 
 VSTypeObject *VSFloatType = new VSTypeObject(
+    VSTypeType,
     T_FLOAT,
     "float",            // __name__
     NULL,               // __attrs__

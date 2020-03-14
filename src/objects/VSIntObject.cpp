@@ -276,6 +276,7 @@ NumberFuncs *int_number_funcs = new NumberFuncs(
 );
 
 VSTypeObject *VSIntType = new VSTypeObject(
+    VSTypeType,
     T_INT,
     "int",            // __name__
     NULL,             // __attrs__

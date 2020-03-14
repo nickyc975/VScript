@@ -38,6 +38,7 @@ public:
     ContainerFuncs *_container_funcs;
 
     VSTypeObject(
+        VSTypeObject *type,
         TYPE_TYPE t_type,
         std::string __name__,
         VSObject *__attrs__,
@@ -57,31 +58,9 @@ public:
         ternaryfunc __call__,
         NumberFuncs *_number_funcs,
         ContainerFuncs *_container_funcs
-    ) : t_type(t_type),
-        __name__(__name__),
-        __attrs__(__attrs__),
-        __new__(__new__),
-        __init__(__init__),
-        __copy__(__copy__),
-        __clear__(__clear__),
-        __getattr__(__getattr__),
-        __hasattr__(__hasattr__),
-        __setattr__(__setattr__),
-        __removeattr__(__removeattr__),
-        __hash__(__hash__),
-        __lt__(__lt__),
-        __eq__(__eq__),
-        __str__(__str__),
-        __bytes__(__bytes__),
-        __call__(__call__),
-        _number_funcs(_number_funcs),
-        _container_funcs(_container_funcs)
-    {
-    }
+    );
 };
 
 extern VSTypeObject *VSTypeType;
-
-#define INIT_TYPE(type) VSTypeType->__init__(type, NULL, NULL)
 
 #endif

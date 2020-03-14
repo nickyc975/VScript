@@ -183,6 +183,7 @@ ContainerFuncs *map_container_funcs = new ContainerFuncs(
 );
 
 VSTypeObject *VSMapType = new VSTypeObject(
+    VSTypeType,
     T_MAP,
     "map",                   // __name__
     NULL,                    // __attrs__

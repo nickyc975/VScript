@@ -242,6 +242,7 @@ ContainerFuncs *tuple_container_funcs = new ContainerFuncs(
 );
 
 VSTypeObject *VSTupleType = new VSTypeObject(
+    VSTypeType,
     T_TUPLE,
     "tuple",                 // __name__
     NULL,                    // __attrs__

@@ -56,6 +56,7 @@ VSObject *vs_none_bytes(VSObject *obj)
 }
 
 VSTypeObject *VSNoneType = new VSTypeObject(
+    VSTypeType,
     T_NONE,
     "none",                  // __name__
     NULL,                    // __attrs__

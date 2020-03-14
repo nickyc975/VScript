@@ -109,6 +109,7 @@ inline int vs_cell_set(VSObject *cellobj, VSObject *item) {
 }
 
 VSTypeObject *VSCellType = new VSTypeObject(
+    VSTypeType,
     T_CELL,
     "cell",         // __name__
     NULL,           // __attrs__
