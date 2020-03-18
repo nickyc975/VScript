@@ -34,7 +34,6 @@ typedef enum {
     AST_CONTINUE,
     AST_BREAK,
     AST_RETURN,
-    AST_STMT,
     AST_CPD_STMT,
     AST_PROGRAM
 } AST_NODE_TYPE;
@@ -355,6 +354,152 @@ public:
         this->functions.push_back(function);
         INCREF(function);
     }
+};
+
+class MethDeclNode : public VSASTNode {
+public:
+    IdentNode *name;
+    std::vector<VSASTNode *> args;
+    VSASTNode *body;
+
+    MethDeclNode(IdentNode *name) {
+        this->node_type = AST_METH_DECL;
+        this->args = std::vector<VSASTNode *>();
+        this->body = NULL;
+        INCREF(name);
+    }
+    ~MethDeclNode() {
+        DECREF_EX(this->name);
+        DECREF_EX(this->body);
+        for (auto arg : this->args) {
+            DECREF(arg);
+        }
+    }
+};
+
+class ElifListNode : public VSASTNode {
+public:
+    std::vector<VSASTNode *> elifs;
+    VSASTNode *elsestmt;
+
+    ElifListNode() {
+        this->node_type = AST_ELIF_LIST;
+        this->elifs = std::vector<VSASTNode *>();
+    }
+
+    ~ElifListNode() {
+        for (auto elif : this->elifs) {
+            DECREF(elif);
+        }
+        DECREF_EX(this->elsestmt);
+    }
+
+    void add_elif(VSASTNode *elif) {
+        this->elifs.push_back(elif);
+        INCREF(elif);
+    }
+
+    void set_else(VSASTNode *elsenode) {
+        DECREF_EX(this->elsestmt);
+        this->elsestmt = elsenode;
+        INCREF(this->elsestmt);
+    }
+};
+
+class IfStmtNode : public VSASTNode {
+public:
+    VSASTNode *cond;
+    VSASTNode *truestmt;
+    VSASTNode *falsestmt;
+
+    IfStmtNode(VSASTNode *cond, VSASTNode *truestmt, VSASTNode *falsestmt) :
+        cond(cond), truestmt(truestmt), falsestmt(falsestmt) {
+        this->node_type = AST_IF_STMT;
+        INCREF(cond);
+        INCREF(truestmt);
+        INCREF(falsestmt);
+    }
+    ~IfStmtNode() {
+        DECREF_EX(cond);
+        DECREF_EX(truestmt);
+        DECREF_EX(falsestmt);
+    }
+};
+
+class WhileStmtNode : public VSASTNode {
+public:
+    VSASTNode *cond;
+    VSASTNode *body;
+
+    WhileStmtNode(VSASTNode *cond, VSASTNode *body) : cond(cond), body(body) {
+        this->node_type = AST_WHILE_STMT;
+        INCREF(cond);
+        INCREF(body);
+    }
+    ~WhileStmtNode() {
+        DECREF_EX(this->cond);
+        DECREF_EX(this->body);
+    }
+};
+
+class ForStmtNode : public VSASTNode {
+public:
+    VSASTNode *init;
+    VSASTNode *cond;
+    VSASTNode *incr;
+    VSASTNode *body;
+
+    ForStmtNode(VSASTNode *init, VSASTNode *cond, VSASTNode *incr, VSASTNode *body) : 
+        init(init), cond(cond), incr(incr), body(body) {
+        this->node_type = AST_FOR_STMT;
+        INCREF(init);
+        INCREF(cond);
+        INCREF(incr);
+        INCREF(body);
+    }
+    ~ForStmtNode() {
+        DECREF_EX(this->init);
+        DECREF_EX(this->cond);
+        DECREF_EX(this->incr);
+        DECREF_EX(this->body);
+    }
+};
+
+class ContinueStmtNode : public VSASTNode {
+public:
+    ContinueStmtNode() {
+        this->node_type = AST_CONTINUE;
+    }
+    ~ContinueStmtNode() = default;
+};
+
+class BreakStmtNode : public VSASTNode {
+public:
+    BreakStmtNode() {
+        this->node_type = AST_BREAK;
+    }
+    ~BreakStmtNode() = default;
+};
+
+class ReturnStmtNode : public VSASTNode {
+public:
+    VSASTNode *retval;
+
+    ReturnStmtNode(VSASTNode *retval) : retval(retval) {
+        this->node_type = AST_RETURN;
+        INCREF(retval);
+    }
+    ~ReturnStmtNode() {
+        DECREF_EX(this->retval);
+    }
+};
+
+class CpdStmtNode : public ContainerNode {
+public:
+    CpdStmtNode() {
+        this->node_type = AST_CPD_STMT;
+    }
+    ~CpdStmtNode() = default;
 };
 
 #endif
