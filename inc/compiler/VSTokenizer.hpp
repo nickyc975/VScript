@@ -6,6 +6,14 @@
 
 #include <string>
 
+#define IS_NUMBER(c) ((c) >= '0' && (c) <= '9')
+
+#define IS_LETTER(c) (((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))
+
+#define IS_WORD_CHAR(c) (IS_LETTER(c) || IS_NUMBER(c) || (c) == '_')
+
+#define IS_QUOTE(c) ((c) == '\'' || (c) == '\"')
+
 typedef enum
 {
     // constant
@@ -149,30 +157,33 @@ static char *TOKEN_STR[] =
 
 class VSToken : public VSObject {
 public:
+    long long ln, col;
     TOKEN_TYPE tk_type;
     VSObject *tk_value;
     std::string literal;
-    long long line, col;
 
-    VSToken(TOKEN_TYPE tk_type, VSObject *tk_value, std::string &literal, long long line, long long col);
+    VSToken(TOKEN_TYPE tk_type, VSObject *tk_value, std::string &literal, long long ln, long long col);
     ~VSToken();
 };
 
 class VSTokenizer : public VSObject {
 private:
     FILE *file;
-    long long line, col;
+    VSToken *peek;
+    long long ln, col;
 
     // char level operation
     char getchar();
-    char ungetchar();
-    char nextchar();
+    int ungetchar();
     char peekchar();
     int seek(int steps);
+    static char escape(char c);
 
     // string level operation
-    bool getword(std::string &str);
-    bool getstr(std::string &str, int len);
+    int getnum(std::string &str);
+    int getword(std::string &str);
+    int getquoted(std::string &str);
+    int getstr(std::string &str, int len);
 
     VSToken *reco_none(std::string &literal);
     VSToken *reco_bool(std::string &literal);
@@ -181,15 +192,12 @@ private:
     VSToken *reco_str(std::string &literal);
     VSToken *reco_kwd(std::string &literal);
 
-    static char escape(char c);
-
 public:
     VSTokenizer(FILE *file);
     ~VSTokenizer();
 
     bool hastoken();
     VSToken *gettoken();
-    VSToken *nexttoken();
     VSToken *peektoken();
 };
 

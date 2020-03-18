@@ -15,10 +15,12 @@ void __vs_report__(RE_TAG tag, char *fmt, ...)
     case ERR:
         fprintf(stderr, "%s:\t", TAG_STR[tag]);
         vfprintf(stderr, fmt, args);
+        fprintf(stderr, "\n");
         break;
     default:
         fprintf(stdout, "%s:\t", TAG_STR[tag]);
         vfprintf(stdout, fmt, args);
+        fprintf(stdout, "\n");
         break;
     }
     va_end(args);

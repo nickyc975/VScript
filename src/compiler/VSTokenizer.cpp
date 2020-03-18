@@ -1,13 +1,88 @@
-#include "objects/VSTypeObject.hpp"
 #include "compiler/VSTokenizer.hpp"
 
+#include "error.hpp"
+#include "objects/VSBoolObject.hpp"
+#include "objects/VSCharObject.hpp"
+#include "objects/VSFloatObject.hpp"
+#include "objects/VSIntObject.hpp"
+#include "objects/VSNoneObject.hpp"
+#include "objects/VSStringObject.hpp"
+#include "objects/VSTypeObject.hpp"
+
+#define ERR_WITH_POS(ln, col, msg, ...) err("line: %ld, col: %d, " msg, ln, col, __VA_ARGS__)
+
 VSToken::VSToken(
-    TOKEN_TYPE tk_type, VSObject *tk_value, std::string &literal, long long line, long long col) :
-    tk_type(tk_type), tk_value(tk_value), literal(literal), line(line), col(col) {
+    TOKEN_TYPE tk_type, VSObject *tk_value, std::string &literal, long long ln, long long col) : tk_type(tk_type), tk_value(tk_value), literal(literal), ln(ln), col(col) {
+        this->refcnt = 1;
 }
 
 VSToken::~VSToken() {
     DECREF_EX(this->tk_value);
+}
+
+VSTokenizer::VSTokenizer(FILE *file) {
+    this->file = file;
+    this->peek = NULL;
+    this->ln = 1;
+    this->col = 1;
+    this->refcnt = 1;
+}
+
+VSTokenizer::~VSTokenizer() {
+    if (this->peek != NULL) {
+        this->peek->refcnt--;
+        if (this->peek->refcnt == 0) {
+            delete this->peek;
+            this->peek = NULL;
+        }
+    }
+    fclose(this->file);
+}
+
+char VSTokenizer::getchar() {
+    char c = fgetc(this->file);
+    if (c == '\n') {
+        this->ln++;
+        this->col = 1;
+    } else if (c != EOF) {
+        this->col++;
+    }
+    return c;
+}
+
+int VSTokenizer::ungetchar() {
+    if (fseek(this->file, -1, SEEK_CUR)) {
+        return -1;
+    }
+    if (this->peekchar() == '\n') {
+        this->ln--;
+        this->col = 1;
+    } else if (col > 1) {
+        this->col--;
+    }
+    return 0;
+}
+
+char VSTokenizer::peekchar() {
+    char c = fgetc(this->file);
+    if (c != EOF)
+        fseek(this->file, -1, SEEK_CUR);
+    return c;
+}
+
+int VSTokenizer::seek(int steps) {
+    int seeked = 0;
+    if (steps > 0) {
+        while (seeked < steps && this->peekchar() != EOF) {
+            this->getchar();
+            seeked++;
+        }
+    } else if (steps < 0) {
+        while (seeked > steps && !this->ungetchar()) {
+            seeked--;
+        }
+    }
+    return seeked;
 }
 
 char VSTokenizer::escape(char c) {
@@ -25,394 +100,448 @@ char VSTokenizer::escape(char c) {
     }
 }
 
-int recognize_id(File *file, Token *token) {
-    int len = file->getword(buffer, BUFFER_SIZE);
-    token->identifier = new std::string(buffer);
-    token->type = TK_IDENTIFIER;
-    return 0;
+#define APPEND_CHAR(str, c, i)          \
+    do {                                \
+        str.push_back(this->getchar()); \
+        c = this->peekchar();           \
+        i++;                            \
+    } while (0);
+
+int VSTokenizer::getnum(std::string &str) {
+    int i = 0;
+    char c = this->peekchar();
+
+    // integer part of the number
+    while (IS_NUMBER(c)) {
+        APPEND_CHAR(str, c, i);
+    }
+
+    // if the number has decimal part
+    if (c == '.') {
+        APPEND_CHAR(str, c, i);
+        while (IS_NUMBER(c)) {
+            APPEND_CHAR(str, c, i);
+        }
+    }
+
+    return i;
 }
 
-int recognize_none(File *file, Token *token) {
-    int len = file->getword(buffer, BUFFER_SIZE);
-    if (len == 4 && !strcmp("none", buffer)) {
-        token->type = TK_CONSTANT;
-        token->value = VSValue::None();
-        return 0;
+int VSTokenizer::getword(std::string &str) {
+    int i = 0;
+    char c = this->peekchar();
+
+    while (!IS_WORD_CHAR(c) && c != 0) {
+        this->getchar();
+        c = this->peekchar();
     }
-    file->seek(-len);
-    return len;
+
+    while (IS_WORD_CHAR(c)) {
+        APPEND_CHAR(str, c, i);
+    }
+
+    return i;
 }
 
-int recognize_bool(File *file, Token *token) {
-    int offset = 0;
-    int len = file->getword(buffer, BUFFER_SIZE);
-    if (!strcmp("true", buffer)) {
-        token->type = TK_CONSTANT;
-        token->value = VSValue::True();
-    } else if (!strcmp("false", buffer)) {
-        token->type = TK_CONSTANT;
-        token->value = VSValue::False();
-    } else {
-        // Undo reading operation.
-        file->seek(-len);
-        offset = len;
-    }
-    return offset;
-}
-
-int recognize_num(File *file, Token *token) {
-    token->type = TK_CONSTANT;
-    file->getnum(buffer, BUFFER_SIZE);
-    if (strchr(buffer, '.') != NULL) {
-        token->value = new VSValue((long double)atof(buffer));
-    } else {
-        token->value = new VSValue(atoll(buffer));
-    }
-    return 0;
-}
-
-int recognize_char(File *file, Token *token) {
-    int len = file->getstr(buffer, 5);
-
-    if (!is_quote(buffer[0]) || (buffer[1] == '\\' && !is_quote(buffer[3])) || (buffer[1] != '\\' && !is_quote(buffer[2]))) {
-        file->seek(-len);
-        return len;
+int VSTokenizer::getquoted(std::string &str) {
+    int i = 0;
+    char c = this->peekchar();
+    if (c == EOF || !IS_QUOTE(c)) {
+        return i;
     }
 
-    token->type = TK_CONSTANT;
-    if (buffer[1] == '\\') {
-        token->value = new VSValue(escape(buffer[2]));
-    } else {
-        token->value = new VSValue(buffer[1]);
-        file->seek(-1);
-    }
-    return 0;
-}
-
-int recognize_str(File *file, Token *token) {
-    char c;
-    int len = 0, offset = 0, cur_size = STRING_BASE_LEN - 1;
-    char *str_buffer = (char *)malloc(STRING_BASE_LEN);
-    if (file->getchar() != '\"') {
-        file->seek(-1);
-        return 1;
-    }
-
-    c = file->getchar();
-    offset++;
-    while (str_buffer && c != EOF && c != '\n' && c != '\"') {
+    APPEND_CHAR(str, c, i);
+    while (c != EOF && !IS_QUOTE(c)) {
         if (c == '\\') {
-            c = escape(file->getchar());
-            offset++;
+            this->getchar();
+            c = escape(this->peekchar());
         }
-        str_buffer[len] = c;
-        len++;
-        if (len >= cur_size) {
-            cur_size = cur_size + len / 4 + 1;
-            str_buffer = (char *)realloc(str_buffer, cur_size);
-            cur_size -= 1;
-        }
-        c = file->getchar();
-        offset++;
+        APPEND_CHAR(str, c, i);
     }
 
-    offset += 1;
-    if (c == '\"') {
-        str_buffer[len] = '\0';
-        token->type = TK_CONSTANT;
-        token->value = new VSValue(std::string(str_buffer));
-        free(str_buffer);
-        return 0;
+    if (c != EOF) {
+        APPEND_CHAR(str, c, i);
     }
-
-    file->seek(-offset);
-    return offset - 1;
+    return i;
 }
 
-int recognize_keyword(File *file, Token *token) {
-    int offset = 0;
-    std::string buf;
-    int len = file->getword(buffer, BUFFER_SIZE);
-    switch (buffer[0]) {
-        case 'c':
-            if (!strcmp(buffer, "continue")) {
-                token->type = TK_CONTINUE;
-            } else {
-                offset = len;
+int VSTokenizer::getstr(std::string &str, int len) {
+    int i = 0;
+    char c = this->peekchar();
+    while (i < len - 1 && c != 0) {
+        APPEND_CHAR(str, c, i);
+    }
+    return i;
+}
+
+#undef APPEND_CHAR
+
+VSToken *VSTokenizer::reco_none(std::string &literal) {
+    if (literal.length() == 4 && literal == "none") {
+        INCREF(VS_NONE);
+        return new VSToken(TK_CONSTANT, VS_NONE, literal, this->ln, this->col);
+    }
+    return NULL;
+}
+
+VSToken *VSTokenizer::reco_bool(std::string &literal) {
+    VSToken *token = NULL;
+    int len = literal.length();
+    if (len == 4 && literal == "true") {
+        INCREF(VS_TRUE);
+        token = new VSToken(TK_CONSTANT, VS_TRUE, literal, this->ln, this->col);
+    } else if (len == 5 && literal == "false") {
+        INCREF(VS_FALSE);
+        token = new VSToken(TK_CONSTANT, VS_FALSE, literal, this->ln, this->col);
+    }
+    return token;
+}
+
+VSToken *VSTokenizer::reco_char(std::string &literal) {
+    int len = literal.length();
+    if (len > 4 || literal.front() != '\'' || literal.back() != '\'' || (len == 4 && literal[1] != '\\')) {
+        ERR_WITH_POS(this->ln, this->col, "invalid char literal: \"%s\"", literal.c_str());
+        return NULL;
+    }
+
+    VSToken *token = NULL;
+    if (literal[1] == '\\') {
+        token = new VSToken(
+            TK_CONSTANT, vs_char_from_cchar(escape(literal[2])), literal, this->ln, this->col);
+    } else {
+        token = new VSToken(
+            TK_CONSTANT, vs_char_from_cchar(literal[1]), literal, this->ln, this->col);
+    }
+    return token;
+}
+
+VSToken *VSTokenizer::reco_num(std::string &literal) {
+    if (literal.find(".") != literal.npos) {
+        char *end = NULL;
+        cfloat_t float_val = std::strtold(literal.c_str(), &end);
+        if (errno == ERANGE) {
+            errno = 0;
+            ERR_WITH_POS(this->ln, this->col, "literal out of range of float: \"%s\"", literal.c_str());
+            return NULL;
+        }
+
+        if (end - 1 != &(literal.back())) {
+            ERR_WITH_POS(this->ln, this->col, "invalid float literal: \"%s\"", literal.c_str());
+            return NULL;
+        }
+        return new VSToken(TK_CONSTANT, vs_float_from_cfloat(float_val), literal, this->ln, this->col);
+    } else {
+        char *end = NULL;
+        cint_t int_val = std::strtoll(literal.c_str(), &end, 0);
+        if (errno == ERANGE) {
+            errno = 0;
+            ERR_WITH_POS(this->ln, this->col, "literal out of range of int: \"%s\"", literal.c_str());
+            return NULL;
+        }
+
+        if (end - 1 != &(literal.back())) {
+            ERR_WITH_POS(this->ln, this->col, "invalid int literal: \"%s\"", literal.c_str());
+            return NULL;
+        }
+        return new VSToken(TK_CONSTANT, vs_float_from_cfloat(int_val), literal, this->ln, this->col);
+    }
+}
+
+VSToken *VSTokenizer::reco_str(std::string &literal) {
+    if (literal.front() != '\"' || literal.back() != '\"') {
+        ERR_WITH_POS(this->ln, this->col, "invalid string literal: \"%s\"", literal.c_str());
+        return NULL;
+    }
+    return new VSToken(TK_CONSTANT, vs_string_from_cstring(literal), literal, this->ln, this->col);
+}
+
+VSToken *VSTokenizer::reco_kwd(std::string &literal) {
+#define NEW_KWD_TOKEN(tp) new VSToken(tp, NULL, literal, this->ln, this->col)
+
+    VSToken *token = NULL;
+    switch (literal[0]) {
+        case 'b':
+            if (literal == "break") {
+                token = NEW_KWD_TOKEN(TK_BREAK);
             }
             break;
-        case 'i':
-            if (!strcmp(buffer, "if")) {
-                token->type = TK_IF;
-            } else {
-                offset = len;
+        case 'c':
+            if (literal == "continue") {
+                token = NEW_KWD_TOKEN(TK_CONTINUE);
+            } else if (literal == "class") {
+                token = NEW_KWD_TOKEN(TK_CLASS);
             }
             break;
         case 'e':
-            if (!strcmp(buffer, "else")) {
-                token->type = TK_ELSE;
-            } else if (!strcmp(buffer, "elif")) {
-                token->type = TK_ELIF;
-            } else {
-                offset = len;
-            }
-            break;
-        case 'w':
-            if (!strcmp(buffer, "while")) {
-                token->type = TK_WHILE;
-            } else {
-                offset = len;
+            if (literal == "else") {
+                token = NEW_KWD_TOKEN(TK_ELSE);
+            } else if (literal == "elif") {
+                token = NEW_KWD_TOKEN(TK_ELIF);
             }
             break;
         case 'f':
-            if (!strcmp(buffer, "for")) {
-                token->type = TK_FOR;
-            } else if (!strcmp(buffer, "func")) {
-                token->type = TK_FUNC;
-            } else {
-                offset = len;
+            if (literal == "for") {
+                token = NEW_KWD_TOKEN(TK_FOR);
+            } else if (literal == "func") {
+                token = NEW_KWD_TOKEN(TK_FUNC);
+            }
+            break;
+        case 'i':
+            if (literal == "if") {
+                token = NEW_KWD_TOKEN(TK_IF);
+            }
+            break;
+        case 'm':
+            if (literal == "meth") {
+                token = NEW_KWD_TOKEN(TK_METH);
             }
             break;
         case 'r':
-            if (!strcmp(buffer, "return")) {
-                token->type = TK_RETURN;
-            } else {
-                offset = len;
-            }
-            break;
-        case 'b':
-            if (!strcmp(buffer, "break")) {
-                token->type = TK_BREAK;
-            } else {
-                offset = len;
+            if (literal == "return") {
+                token = NEW_KWD_TOKEN(TK_RETURN);
             }
             break;
         case 'v':
-            if (!strcmp(buffer, "val")) {
-                token->type = TK_VAL;
-            } else if (!strcmp(buffer, "var")) {
-                token->type = TK_VAR;
-            } else {
-                offset = len;
+            if (literal == "val") {
+                token = NEW_KWD_TOKEN(TK_VAL);
+            } else if (literal == "var") {
+                token = NEW_KWD_TOKEN(TK_VAR);
+            }
+            break;
+        case 'w':
+            if (literal == "while") {
+                token = NEW_KWD_TOKEN(TK_WHILE);
             }
             break;
         default:
-            offset = len;
             break;
     }
-    file->seek(-offset);
-    return offset;
+    return token;
+
+#undef NEW_KWD_TOKEN
 }
 
-void tokenize(File *file, std::vector<Token *> &tokens) {
-    int offset = 0;
-    char tk_char = file->nextchar();
+bool VSTokenizer::hastoken() {
+    return this->peekchar() != EOF;
+}
 
-    while (tk_char != EOF) {
-        Token *token = new Token(file->cur_ln(), file->cur_col());
-        if (is_number(tk_char)) {
-            offset = recognize_num(file, token);
-            tokens.push_back(token);
-            goto nextchar;
+VSToken *VSTokenizer::gettoken() {
+    VSToken *old = this->peek;
+    auto literal = std::string();
+    char tk_char = this->peekchar();
+
+    if (IS_NUMBER(tk_char)) {
+        this->getnum(literal);
+        this->peek = this->reco_num(literal);
+        if (this->peek == NULL) {
+            INCREF(VS_NONE);
+            this->peek = new VSToken(TK_CONSTANT, VS_NONE, literal, this->ln, this->col);
         }
+    } else if (IS_WORD_CHAR(tk_char)) {
+        this->getword(literal);
 
+        // true or false
         if (tk_char == 't' || tk_char == 'f') {
-            offset = recognize_bool(file, token);
-            if (!offset) {
-                tokens.push_back(token);
-                goto nextchar;
+            this->peek = this->reco_bool(literal);
+            if (this->peek != NULL) {
+                goto done;
             }
         }
 
+        // none
         if (tk_char == 'n') {
-            offset = recognize_none(file, token);
-            if (!offset) {
-                tokens.push_back(token);
-                goto nextchar;
+            this->peek = this->reco_none(literal);
+            if (this->peek != NULL) {
+                goto done;
             }
         }
 
-        if (is_word(tk_char)) {
-            offset = recognize_keyword(file, token);
-            if (!offset) {
-                tokens.push_back(token);
-            } else {
-                offset = recognize_id(file, token);
-                tokens.push_back(token);
-            }
-            goto nextchar;
+        // keyword
+        this->peek = this->reco_kwd(literal);
+        if (this->peek != NULL) {
+            goto done;
         }
+
+        // identifier
+        this->peek = new VSToken(TK_IDENTIFIER, NULL, literal, this->ln, this->col);
+    } else if (IS_QUOTE(tk_char)) {
+        this->getquoted(literal);
 
         if (tk_char == '\'') {
-            offset = recognize_char(file, token);
-            if (!offset) {
-                tokens.push_back(token);
-            } else {
-                offset = file->getstr(error_buffer, offset);
-                err("line: %d, col: %d, \"%s\"\n", file->cur_ln(), file->cur_col(), error_buffer);
+            this->peek = this->reco_char(literal);
+            if (this->peek == NULL) {
+                INCREF(VS_NONE);
+                this->peek = new VSToken(TK_CONSTANT, VS_NONE, literal, this->ln, this->col);
             }
-            goto nextchar;
+        } else {
+            this->peek = this->reco_str(literal);
+            if (this->peek == NULL) {
+                INCREF(VS_NONE);
+                this->peek = new VSToken(TK_CONSTANT, VS_NONE, literal, this->ln, this->col);
+            }
         }
 
-        if (tk_char == '\"') {
-            offset = recognize_str(file, token);
-            if (!offset) {
-                tokens.push_back(token);
-            } else {
-                offset = file->getstr(error_buffer, offset);
-                err("line: %d, col: %d, \"%s\"\n", file->cur_ln(), file->cur_col(), error_buffer);
-            }
-            goto nextchar;
-        }
+    } else {
 
-        tk_char = file->getchar();
+#define NEW_SYM_TOKEN(tp) new VSToken(tp, NULL, literal, this->ln, this->col)
+
+        tk_char = this->getchar();
         switch (tk_char) {
             case '=':
-                if (file->nextchar() == '=') {
-                    file->getchar();
-                    token->type = TK_EQ;
+                if (this->peekchar() == '=') {
+                    this->getchar();
+                    this->peek = NEW_SYM_TOKEN(TK_EQ);
                 } else {
-                    token->type = TK_ASSIGN;
+                    this->peek = NEW_SYM_TOKEN(TK_ASSIGN);
                 }
-                tokens.push_back(token);
                 break;
             case '+':
-                if (file->nextchar() == '=') {
-                    file->getchar();
-                    token->type = TK_ADD_ASSIGN;
+                if (this->peekchar() == '=') {
+                    this->getchar();
+                    this->peek = NEW_SYM_TOKEN(TK_ADD_ASSIGN);
                 } else {
-                    token->type = TK_ADD;
+                    this->peek = NEW_SYM_TOKEN(TK_ADD);
                 }
-                tokens.push_back(token);
                 break;
             case '-':
-                if (file->nextchar() == '=') {
-                    file->getchar();
-                    token->type = TK_SUB_ASSIGN;
+                if (this->peekchar() == '=') {
+                    this->getchar();
+                    this->peek = NEW_SYM_TOKEN(TK_SUB_ASSIGN);
                 } else {
-                    token->type = TK_SUB;
+                    this->peek = NEW_SYM_TOKEN(TK_SUB);
                 }
-                tokens.push_back(token);
                 break;
             case '*':
-                if (file->nextchar() == '=') {
-                    file->getchar();
-                    token->type = TK_MUL_ASSIGN;
+                if (this->peekchar() == '=') {
+                    this->getchar();
+                    this->peek = NEW_SYM_TOKEN(TK_MUL_ASSIGN);
                 } else {
-                    token->type = TK_MUL;
+                    this->peek = NEW_SYM_TOKEN(TK_MUL);
                 }
-                tokens.push_back(token);
                 break;
             case '/':
-                if (file->nextchar() == '=') {
-                    file->getchar();
-                    token->type = TK_DIV_ASSIGN;
-                } else if (file->nextchar() == '/') {
-                    while (file->nextchar() != EOF && file->getchar() != '\n')
+                if (this->peekchar() == '=') {
+                    this->getchar();
+                    this->peek = NEW_SYM_TOKEN(TK_DIV_ASSIGN);
+                } else if (this->peekchar() == '/') {
+                    while (this->peekchar() != EOF && this->getchar() != '\n')
                         ;
                     break;
                 } else {
-                    token->type = TK_DIV;
+                    this->peek = NEW_SYM_TOKEN(TK_DIV);
                 }
-                tokens.push_back(token);
                 break;
             case '%':
-                if (file->nextchar() == '=') {
-                    file->getchar();
-                    token->type = TK_MOD_ASSIGN;
+                if (this->peekchar() == '=') {
+                    this->getchar();
+                    this->peek = NEW_SYM_TOKEN(TK_MOD_ASSIGN);
                 } else {
-                    token->type = TK_MOD;
+                    this->peek = NEW_SYM_TOKEN(TK_MOD);
                 }
-                tokens.push_back(token);
                 break;
             case '&':
-                if (file->nextchar() == '=') {
-                    file->getchar();
-                    token->type = TK_AND_ASSIGN;
+                if (this->peekchar() == '=') {
+                    this->getchar();
+                    this->peek = NEW_SYM_TOKEN(TK_AND_ASSIGN);
                 } else {
-                    token->type = TK_AND;
+                    this->peek = NEW_SYM_TOKEN(TK_AND);
                 }
-                tokens.push_back(token);
                 break;
             case '|':
-                if (file->nextchar() == '=') {
-                    file->getchar();
-                    token->type = TK_OR_ASSIGN;
+                if (this->peekchar() == '=') {
+                    this->getchar();
+                    this->peek = NEW_SYM_TOKEN(TK_OR_ASSIGN);
                 } else {
-                    token->type = TK_OR;
+                    this->peek = NEW_SYM_TOKEN(TK_OR);
                 }
-                tokens.push_back(token);
+                break;
+            case '^':
+                if (this->peekchar() == '=') {
+                    this->getchar();
+                    this->peek = NEW_SYM_TOKEN(TK_XOR_ASSIGN);
+                } else {
+                    this->peek = NEW_SYM_TOKEN(TK_XOR);
+                }
                 break;
             case '!':
-                if (file->nextchar() == '=') {
-                    file->getchar();
-                    token->type = TK_NEQ;
+                if (this->peekchar() == '=') {
+                    this->getchar();
+                    this->peek = NEW_SYM_TOKEN(TK_NEQ);
                 } else {
-                    token->type = TK_NOT;
+                    this->peek = NEW_SYM_TOKEN(TK_NOT);
                 }
-                tokens.push_back(token);
                 break;
             case '<':
-                if (file->nextchar() == '=') {
-                    file->getchar();
-                    token->type = TK_LE;
+                if (this->peekchar() == '=') {
+                    this->getchar();
+                    this->peek = NEW_SYM_TOKEN(TK_LE);
                 } else {
-                    token->type = TK_LT;
+                    this->peek = NEW_SYM_TOKEN(TK_LT);
                 }
-                tokens.push_back(token);
                 break;
             case '>':
-                if (file->nextchar() == '=') {
-                    file->getchar();
-                    token->type = TK_GE;
+                if (this->peekchar() == '=') {
+                    this->getchar();
+                    this->peek = NEW_SYM_TOKEN(TK_GE);
                 } else {
-                    token->type = TK_GT;
+                    this->peek = NEW_SYM_TOKEN(TK_GT);
                 }
-                tokens.push_back(token);
                 break;
             case ',':
-                token->type = TK_COMMA;
-                tokens.push_back(token);
+                this->peek = NEW_SYM_TOKEN(TK_COMMA);
+                break;
+            case '.':
+                this->peek = NEW_SYM_TOKEN(TK_DOT);
                 break;
             case ';':
-                token->type = TK_SEMICOLON;
-                tokens.push_back(token);
+                this->peek = NEW_SYM_TOKEN(TK_SEMICOLON);
+                break;
+            case ':':
+                this->peek = NEW_SYM_TOKEN(TK_COLON);
                 break;
             case '(':
-                token->type = TK_L_PAREN;
-                tokens.push_back(token);
+                this->peek = NEW_SYM_TOKEN(TK_L_PAREN);
                 break;
             case ')':
-                token->type = TK_R_PAREN;
-                tokens.push_back(token);
+                this->peek = NEW_SYM_TOKEN(TK_R_PAREN);
                 break;
             case '[':
-                token->type = TK_L_BRACK;
-                tokens.push_back(token);
+                this->peek = NEW_SYM_TOKEN(TK_L_BRACK);
                 break;
             case ']':
-                token->type = TK_R_BRACK;
-                tokens.push_back(token);
+                this->peek = NEW_SYM_TOKEN(TK_R_BRACK);
                 break;
             case '{':
-                token->type = TK_L_CURLY;
-                tokens.push_back(token);
+                this->peek = NEW_SYM_TOKEN(TK_L_CURLY);
                 break;
             case '}':
-                token->type = TK_R_CURLY;
-                tokens.push_back(token);
+                this->peek = NEW_SYM_TOKEN(TK_R_CURLY);
                 break;
             case ' ':
             case '\n':
             case '\t':
             case '\r':
                 break;
+            case EOF:
+                this->peek = NULL;
+                break;
             default:
-                err("line: %d, col: %d, illegal token: \"%c\"\n", file->cur_ln(), file->cur_col(), tk_char);
+                this->peek = NULL;
+                ERR_WITH_POS(this->ln, this->col, "illegal token: \"%c\"\n", tk_char);
                 break;
         }
 
-    nextchar:
-        tk_char = file->nextchar();
+#undef NEW_SYM_TOKEN
+
     }
+
+done:
+    return old;
+}
+
+VSToken *VSTokenizer::peektoken() {
+    if (this->peek == NULL) {
+        this->gettoken();
+    }
+    return this->peek;
 }

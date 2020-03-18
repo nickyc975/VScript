@@ -9,131 +9,6 @@
 
 typedef enum
 {
-    // constant
-    TK_CONSTANT,
-    
-    // identifier
-    TK_IDENTIFIER,
-
-    // operators
-    TK_ADD,
-    TK_ADD_ASSIGN,
-    TK_SUB,
-    TK_SUB_ASSIGN,
-    TK_MUL,
-    TK_MUL_ASSIGN,
-    TK_DIV,
-    TK_DIV_ASSIGN,
-    TK_MOD,
-    TK_MOD_ASSIGN,
-    TK_GE,
-    TK_GT,
-    TK_LE,
-    TK_LT,
-    TK_EQ,
-    TK_NEQ,
-    TK_AND,
-    TK_AND_ASSIGN,
-    TK_OR,
-    TK_OR_ASSIGN,
-    TK_NOT,
-    TK_ASSIGN,
-
-    // declaration keywords
-    TK_VAL,
-    TK_VAR,
-    TK_FUNC,
-    TK_RETURN,
-
-    // if statement keywords
-    TK_IF,
-    TK_ELIF,
-    TK_ELSE,
-    
-    // for loop
-    TK_FOR,
-
-    // while loop
-    TK_WHILE,
-    
-    // jump keywords
-    TK_BREAK,
-    TK_CONTINUE,
-    
-    // ,
-    TK_COMMA,
-
-    // ;
-    TK_SEMICOLON,
-    
-    // ()
-    TK_L_PAREN,
-    TK_R_PAREN,
-    
-    // []
-    TK_L_BRACK,
-    TK_R_BRACK,
-
-    // {}
-    TK_L_CURLY,
-    TK_R_CURLY,
-
-    // end
-    TK_NOP,
-    TK_END
-} TOKEN_TYPE;
-
-static char *TOKEN_STR[] = 
-{
-    "CONSTANT",
-    "IDENTIFIER",
-    "ADD",
-    "ADD_ASSIGN",
-    "SUB",
-    "SUB_ASSIGN",
-    "MUL",
-    "MUL_ASSIGN",
-    "DIV",
-    "DIV_ASSIGN",
-    "MOD",
-    "MOD_ASSIGN",
-    "GE",
-    "GT",
-    "LE",
-    "LT",
-    "EQ",
-    "NEQ",
-    "AND",
-    "AND_ASSIGN",
-    "OR",
-    "OR_ASSIGN",
-    "NOT",
-    "ASSIGN",
-    "VAL",
-    "VAR",
-    "FUNC",
-    "RETURN",
-    "IF",
-    "ELIF",
-    "ELSE",
-    "FOR",
-    "WHILE",
-    "BREAK",
-    "CONTINUE",
-    "COMMA",
-    "SEMICOLON",
-    "L_PAREN",
-    "R_PAREN",
-    "L_BRACK",
-    "R_BRACK",
-    "L_CURLY",
-    "R_CURLY",
-    "NOP",
-    "END"
-};
-
-typedef enum
-{
     AST_CONST,
     AST_IDENT,
     AST_LIST_VAL,
@@ -157,26 +32,6 @@ typedef enum
     AST_CPD_STMT,
     AST_PROGRAM
 } AST_NODE_TYPE;
-
-class Token : VSObject
-{
-public:
-    // token properties
-    TOKEN_TYPE type;
-    long long ln, col;
-
-    // token content
-    std::string *identifier;
-    VSValue *value;
-
-    Token(long long ln, long long col) : ln(ln), col(col)
-    {
-    }
-
-    ~Token()
-    {
-    }
-};
 
 class ASTNode
 {
@@ -306,7 +161,6 @@ public:
     }
 };
 
-void tokenize(File *file, std::vector<Token *> &tokens);
 ASTNode *parse(std::vector<Token *> *tokens, std::unordered_map<std::string, vs_addr_t> *globals);
 VSCodeObject *gencode(ASTNode *astree, std::unordered_map<std::string, vs_addr_t> *globals);
 
