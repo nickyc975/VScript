@@ -322,7 +322,7 @@ VSToken *VSTokenizer::reco_kwd(std::string &literal) {
 }
 
 bool VSTokenizer::hastoken() {
-    return this->peekchar() != EOF;
+    return this->peektoken() != NULL || this->peekchar() != EOF;
 }
 
 VSToken *VSTokenizer::gettoken() {
