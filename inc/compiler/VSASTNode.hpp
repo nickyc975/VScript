@@ -151,23 +151,16 @@ public:
 class FuncCallNode : public VSASTNode {
 public:
     VSASTNode *func;
-    std::vector<VSASTNode *> args;
+    VSASTNode *args;
 
-    FuncCallNode(VSASTNode *func) : func(func) {
+    FuncCallNode(VSASTNode *func, VSASTNode *args) : func(func), args(args) {
         this->node_type = AST_FUNC_CALL;
-        this->args = std::vector<VSASTNode *>();
         INCREF(func);
+        INCREF(args);
     }
     ~FuncCallNode() {
         DECREF_EX(this->func);
-        for (auto arg : this->args) {
-            DECREF(arg);
-        }
-    }
-
-    void add_arg(VSASTNode *arg) {
-        this->args.push_back(arg);
-        INCREF(arg);
+        DECREF_EX(this->args);
     }
 };
 

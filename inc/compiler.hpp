@@ -3,35 +3,10 @@
 
 #include "vs.hpp"
 #include "objects/VSObject.hpp"
-#include "File.hpp"
 #include "error.hpp"
 #include "SymTable.hpp"
 
-typedef enum
-{
-    AST_CONST,
-    AST_IDENT,
-    AST_LIST_VAL,
-    AST_LIST_IDX,
-    AST_FUNC_CALL,
-    AST_B_EXPR,
-    AST_U_EXPR,
-    AST_ASSIGN_EXPR,
-    AST_EXPR_LST,
-    AST_INIT_DECL,
-    AST_INIT_DECL_LIST,
-    AST_FUNC_DECL,
-    AST_ELIF_LIST,
-    AST_IF_STMT,
-    AST_WHILE_STMT,
-    AST_FOR_STMT,
-    AST_CONTINUE,
-    AST_BREAK,
-    AST_RETURN,
-    AST_STMT,
-    AST_CPD_STMT,
-    AST_PROGRAM
-} AST_NODE_TYPE;
+
 
 class ASTNode
 {
