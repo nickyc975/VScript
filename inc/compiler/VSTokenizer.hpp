@@ -201,4 +201,64 @@ public:
     VSToken *peektoken();
 };
 
+inline bool is_arith(TOKEN_TYPE opcode)
+{
+    return opcode >= TK_ADD && opcode <= TK_NEQ;
+}
+
+inline bool is_cmp(TOKEN_TYPE opcode)
+{
+    return opcode >= TK_LT && opcode <= TK_NEQ;
+}
+
+inline bool is_logic(TOKEN_TYPE opcode)
+{
+    return opcode >= TK_EQ && opcode <= TK_OR;
+}
+
+inline bool is_assign(TOKEN_TYPE opcode)
+{
+    switch (opcode)
+    {
+    case TK_ASSIGN:
+    case TK_ADD_ASSIGN:
+    case TK_SUB_ASSIGN:
+    case TK_MUL_ASSIGN:
+    case TK_DIV_ASSIGN:
+    case TK_MOD_ASSIGN:
+    case TK_AND_ASSIGN:
+    case TK_OR_ASSIGN:
+        return true;
+    default:
+        return false;
+    }
+}
+
+inline bool is_rel(TOKEN_TYPE opcode)
+{
+    switch (opcode)
+    {
+    case TK_LT:
+    case TK_LE:
+    case TK_GT:
+    case TK_GE:
+        return true;
+    default:
+        return false;
+    }
+}
+
+inline bool is_mul(TOKEN_TYPE opcode)
+{
+    switch (opcode)
+    {
+    case TK_MUL:
+    case TK_DIV:
+    case TK_MOD:
+        return true;
+    default:
+        return false;
+    }
+}
+
 #endif
