@@ -2,6 +2,7 @@
 #define VS_COMPILER_H
 
 #include "vs.hpp"
+#include "objects/VSObject.hpp"
 #include "File.hpp"
 #include "error.hpp"
 #include "SymTable.hpp"
@@ -157,7 +158,7 @@ typedef enum
     AST_PROGRAM
 } AST_NODE_TYPE;
 
-class Token
+class Token : VSObject
 {
 public:
     // token properties

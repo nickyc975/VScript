@@ -40,7 +40,7 @@ ELSE        else
 FOR         for
 WHILE       while
 CLASS       class # not used
-METH        meth
+METH        meth # not used
 FUNC        func
 VAR         var
 VAL         val

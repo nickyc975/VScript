@@ -1,21 +1,17 @@
-#include <cstring>
+#include "objects/VSTypeObject.hpp"
+#include "compiler/VSTokenizer.hpp"
 
-#include "compiler.hpp"
+VSToken::VSToken(
+    TOKEN_TYPE tk_type, VSObject *tk_value, std::string &literal, long long line, long long col) :
+    tk_type(tk_type), tk_value(tk_value), literal(literal), line(line), col(col) {
+}
 
-#define BUFFER_SIZE 128
+VSToken::~VSToken() {
+    DECREF_EX(this->tk_value);
+}
 
-#define STRING_BASE_LEN 16
-
-#define ERROR_BUFFER_SIZE 128
-
-char buffer[BUFFER_SIZE];
-
-char error_buffer[ERROR_BUFFER_SIZE];
-
-char escape(char c)
-{
-    switch (c)
-    {
+char VSTokenizer::escape(char c) {
+    switch (c) {
         case 'n':
             return '\n';
         case 't':
@@ -29,19 +25,16 @@ char escape(char c)
     }
 }
 
-int recognize_id(File *file, Token *token)
-{
+int recognize_id(File *file, Token *token) {
     int len = file->getword(buffer, BUFFER_SIZE);
     token->identifier = new std::string(buffer);
     token->type = TK_IDENTIFIER;
     return 0;
 }
 
-int recognize_none(File *file, Token *token)
-{
+int recognize_none(File *file, Token *token) {
     int len = file->getword(buffer, BUFFER_SIZE);
-    if (len == 4 && !strcmp("none", buffer))
-    {
+    if (len == 4 && !strcmp("none", buffer)) {
         token->type = TK_CONSTANT;
         token->value = VSValue::None();
         return 0;
@@ -50,22 +43,16 @@ int recognize_none(File *file, Token *token)
     return len;
 }
 
-int recognize_bool(File *file, Token *token)
-{
+int recognize_bool(File *file, Token *token) {
     int offset = 0;
     int len = file->getword(buffer, BUFFER_SIZE);
-    if (!strcmp("true", buffer))
-    {
+    if (!strcmp("true", buffer)) {
         token->type = TK_CONSTANT;
         token->value = VSValue::True();
-    }
-    else if (!strcmp("false", buffer))
-    {
+    } else if (!strcmp("false", buffer)) {
         token->type = TK_CONSTANT;
         token->value = VSValue::False();
-    }
-    else
-    {
+    } else {
         // Undo reading operation.
         file->seek(-len);
         offset = len;
@@ -73,46 +60,36 @@ int recognize_bool(File *file, Token *token)
     return offset;
 }
 
-int recognize_num(File *file, Token *token)
-{
+int recognize_num(File *file, Token *token) {
     token->type = TK_CONSTANT;
     file->getnum(buffer, BUFFER_SIZE);
-    if (strchr(buffer, '.') != NULL)
-    {
+    if (strchr(buffer, '.') != NULL) {
         token->value = new VSValue((long double)atof(buffer));
-    }
-    else
-    {
+    } else {
         token->value = new VSValue(atoll(buffer));
     }
     return 0;
 }
 
-int recognize_char(File *file, Token *token)
-{
+int recognize_char(File *file, Token *token) {
     int len = file->getstr(buffer, 5);
 
-    if (!is_quote(buffer[0])
-            || (buffer[1] == '\\' && !is_quote(buffer[3]))
-            || (buffer[1] != '\\' && !is_quote(buffer[2]))) {
+    if (!is_quote(buffer[0]) || (buffer[1] == '\\' && !is_quote(buffer[3])) || (buffer[1] != '\\' && !is_quote(buffer[2]))) {
         file->seek(-len);
         return len;
     }
-    
+
     token->type = TK_CONSTANT;
     if (buffer[1] == '\\') {
         token->value = new VSValue(escape(buffer[2]));
-    }
-    else
-    {
+    } else {
         token->value = new VSValue(buffer[1]);
         file->seek(-1);
     }
     return 0;
 }
 
-int recognize_str(File *file, Token *token)
-{
+int recognize_str(File *file, Token *token) {
     char c;
     int len = 0, offset = 0, cur_size = STRING_BASE_LEN - 1;
     char *str_buffer = (char *)malloc(STRING_BASE_LEN);
@@ -123,16 +100,14 @@ int recognize_str(File *file, Token *token)
 
     c = file->getchar();
     offset++;
-    while(str_buffer && c != EOF && c != '\n' && c != '\"') {
-        if (c == '\\')
-        {
+    while (str_buffer && c != EOF && c != '\n' && c != '\"') {
+        if (c == '\\') {
             c = escape(file->getchar());
             offset++;
         }
         str_buffer[len] = c;
         len++;
-        if (len >= cur_size)
-        {
+        if (len >= cur_size) {
             cur_size = cur_size + len / 4 + 1;
             str_buffer = (char *)realloc(str_buffer, cur_size);
             cur_size -= 1;
@@ -142,8 +117,7 @@ int recognize_str(File *file, Token *token)
     }
 
     offset += 1;
-    if (c == '\"')
-    {
+    if (c == '\"') {
         str_buffer[len] = '\0';
         token->type = TK_CONSTANT;
         token->value = new VSValue(std::string(str_buffer));
@@ -155,101 +129,70 @@ int recognize_str(File *file, Token *token)
     return offset - 1;
 }
 
-int recognize_keyword(File *file, Token *token)
-{
+int recognize_keyword(File *file, Token *token) {
     int offset = 0;
+    std::string buf;
     int len = file->getword(buffer, BUFFER_SIZE);
-    switch (buffer[0])
-    {
+    switch (buffer[0]) {
         case 'c':
-            if (!strcmp(buffer, "continue"))
-            {
+            if (!strcmp(buffer, "continue")) {
                 token->type = TK_CONTINUE;
-            }
-            else
-            {
+            } else {
                 offset = len;
             }
             break;
         case 'i':
-            if (!strcmp(buffer, "if"))
-            {
+            if (!strcmp(buffer, "if")) {
                 token->type = TK_IF;
-            }
-            else
-            {
+            } else {
                 offset = len;
             }
             break;
         case 'e':
-            if (!strcmp(buffer, "else"))
-            {
+            if (!strcmp(buffer, "else")) {
                 token->type = TK_ELSE;
-            }
-            else if (!strcmp(buffer, "elif"))
-            {
+            } else if (!strcmp(buffer, "elif")) {
                 token->type = TK_ELIF;
-            }
-            else
-            {
+            } else {
                 offset = len;
             }
             break;
         case 'w':
-            if (!strcmp(buffer, "while"))
-            {
+            if (!strcmp(buffer, "while")) {
                 token->type = TK_WHILE;
-            }
-            else
-            {
+            } else {
                 offset = len;
             }
             break;
         case 'f':
-            if (!strcmp(buffer, "for"))
-            {
+            if (!strcmp(buffer, "for")) {
                 token->type = TK_FOR;
-            }
-            else if (!strcmp(buffer, "func"))
-            {
+            } else if (!strcmp(buffer, "func")) {
                 token->type = TK_FUNC;
-            }
-            else
-            {
+            } else {
                 offset = len;
             }
             break;
         case 'r':
-            if (!strcmp(buffer, "return"))
-            {
+            if (!strcmp(buffer, "return")) {
                 token->type = TK_RETURN;
-            }
-            else
-            {
+            } else {
                 offset = len;
             }
             break;
         case 'b':
-            if (!strcmp(buffer, "break"))
-            {
+            if (!strcmp(buffer, "break")) {
                 token->type = TK_BREAK;
-            }
-            else
-            {
+            } else {
                 offset = len;
             }
             break;
         case 'v':
-            if (!strcmp(buffer, "val"))
-            {
+            if (!strcmp(buffer, "val")) {
                 token->type = TK_VAL;
-            }
-            else if (!strcmp(buffer, "var"))
-            {
+            } else if (!strcmp(buffer, "var")) {
                 token->type = TK_VAR;
-            }
-            else
-            {
+            } else {
                 offset = len;
             }
             break;
@@ -261,58 +204,46 @@ int recognize_keyword(File *file, Token *token)
     return offset;
 }
 
-void tokenize(File *file, std::vector<Token *> &tokens)
-{
+void tokenize(File *file, std::vector<Token *> &tokens) {
     int offset = 0;
     char tk_char = file->nextchar();
 
-    while (tk_char != EOF)
-    {
+    while (tk_char != EOF) {
         Token *token = new Token(file->cur_ln(), file->cur_col());
-        if (is_number(tk_char))
-        {
+        if (is_number(tk_char)) {
             offset = recognize_num(file, token);
             tokens.push_back(token);
             goto nextchar;
         }
 
-        if (tk_char == 't' || tk_char == 'f')
-        {
+        if (tk_char == 't' || tk_char == 'f') {
             offset = recognize_bool(file, token);
-            if (!offset)
-            {
+            if (!offset) {
                 tokens.push_back(token);
                 goto nextchar;
             }
         }
 
-        if (tk_char == 'n')
-        {
+        if (tk_char == 'n') {
             offset = recognize_none(file, token);
-            if (!offset)
-            {
+            if (!offset) {
                 tokens.push_back(token);
                 goto nextchar;
             }
         }
 
-        if (is_word(tk_char))
-        {
+        if (is_word(tk_char)) {
             offset = recognize_keyword(file, token);
-            if (!offset)
-            {
+            if (!offset) {
                 tokens.push_back(token);
-            }
-            else
-            {
+            } else {
                 offset = recognize_id(file, token);
                 tokens.push_back(token);
             }
             goto nextchar;
         }
 
-        if (tk_char == '\'')
-        {
+        if (tk_char == '\'') {
             offset = recognize_char(file, token);
             if (!offset) {
                 tokens.push_back(token);
@@ -323,8 +254,7 @@ void tokenize(File *file, std::vector<Token *> &tokens)
             goto nextchar;
         }
 
-        if (tk_char == '\"')
-        {
+        if (tk_char == '\"') {
             offset = recognize_str(file, token);
             if (!offset) {
                 tokens.push_back(token);
@@ -334,10 +264,9 @@ void tokenize(File *file, std::vector<Token *> &tokens)
             }
             goto nextchar;
         }
-        
+
         tk_char = file->getchar();
-        switch (tk_char)
-        {
+        switch (tk_char) {
             case '=':
                 if (file->nextchar() == '=') {
                     file->getchar();
@@ -379,7 +308,8 @@ void tokenize(File *file, std::vector<Token *> &tokens)
                     file->getchar();
                     token->type = TK_DIV_ASSIGN;
                 } else if (file->nextchar() == '/') {
-                    while (file->nextchar() != EOF && file->getchar() != '\n');
+                    while (file->nextchar() != EOF && file->getchar() != '\n')
+                        ;
                     break;
                 } else {
                     token->type = TK_DIV;

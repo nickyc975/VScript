@@ -51,5 +51,11 @@
         "inc/**/*"
     ],
 
-    "C_Cpp.default.includePath": ["inc/"]
+    "C_Cpp.default.includePath": [
+        "inc/"
+    ],
+    "cSpell.words": [
+        "numb",
+        "reco"
+    ]
 }

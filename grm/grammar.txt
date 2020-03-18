@@ -1,8 +1,14 @@
 primary_expression:CONSTANT
 primary_expression:IDENTIFIER
 primary_expression:L_PAREN logical_or_expression R_PAREN
+primary_expression:tuple_declaration
+primary_expression:list_declaration
+primary_expression:dict_declaration
+primary_expression:set_declaration
+primary_expression:anony_function_declaration
 
 postfix_expression:primary_expression
+postfix_expression:postfix_expression DOT IDENTIFIER
 postfix_expression:postfix_expression L_PAREN R_PAREN
 postfix_expression:postfix_expression L_PAREN value_list_expression R_PAREN
 postfix_expression:postfix_expression L_BRACK logical_or_expression R_BRACK

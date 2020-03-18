@@ -3,8 +3,7 @@
 
 #include <cstdio>
 #include <cstdlib>
-
-#define READ_BUFFER_SIZE 1024
+#include <string>
 
 #define is_number(c) ((c) >= '0' && (c) <= '9')
 
@@ -19,7 +18,6 @@ class File
 private:
     FILE *file;
     long long ln, col;
-    char buffer[READ_BUFFER_SIZE];
 
 public:
     File(FILE *file);
@@ -31,10 +29,10 @@ public:
     int ungetchar();
     char nextchar();
     int seek(int steps);
-    int getstr(char *str_buffer, int len);
-    int getline(char *line_buffer, int len);
-    int getword(char *word_buffer, int len);
-    int getnum(char *num_buffer, int len);
+    int getstr(std::string &str, int len);
+    int getline(std::string &str);
+    int getword(std::string &str);
+    int getnum(std::string &str);
 };
 
 #endif

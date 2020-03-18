@@ -83,37 +83,38 @@ int File::seek(int steps)
     return seeked;
 }
 
-int File::getstr(char *str_buffer, int len)
+int File::getstr(std::string &str, int len)
 {
     int i = 0;
+    auto str = std::string();
     char c = this->nextchar();
     while (i < len - 1 && c != 0)
     {
-        str_buffer[i] = this->getchar();
+        str.push_back(this->getchar());
         c = this->nextchar();
         i++;
     }
-    str_buffer[i] = 0;
-    return i;
+    return str;
 }
 
-int File::getline(char *line_buffer, int len)
+std::string File::getline()
 {
     int i = 0;
+    auto str = std::string();
     char c = this->getchar();
-    while (i < len - 1 && c != 0 && c != '\n')
+    while (c != 0 && c != '\n')
     {
-        line_buffer[i] = c;
+        str.push_back(c);
         c = this->getchar();
         i++;
     }
-    line_buffer[i] = 0;
-    return i;
+    return str;
 }
 
-int File::getword(char *word_buffer, int len)
+std::string File::getword()
 {
     int i = 0;
+    auto str = std::string();
     char next_char = this->nextchar();
 
     while (!is_word(next_char) && next_char != 0)
@@ -122,20 +123,20 @@ int File::getword(char *word_buffer, int len)
         next_char = this->nextchar();
     }
 
-    while (i < len - 1 && is_word(next_char))
+    while (is_word(next_char))
     {
-        word_buffer[i] = this->getchar();
+        str.push_back(this->getchar());
         next_char = this->nextchar();
         i++;
     }
 
-    word_buffer[i] = 0;
-    return i;
+    return str;
 }
 
-int File::getnum(char *num_buffer, int len)
+std::string File::getnum()
 {
     int i = 0;
+    auto str = std::string();
     char c = this->getchar();
 
     while (!is_number(c) && c != 0)
@@ -146,14 +147,14 @@ int File::getnum(char *num_buffer, int len)
     // number 0
     if (c == '0' && this->nextchar() != '.')
     {
-        num_buffer[i++] = c;
+        str.push_back(c);
     }
     else
     {
         // integer part of the number
-        while (i < len - 1 && is_number(c))
+        while (is_number(c))
         {
-            num_buffer[i++] = c;
+            str.push_back(c);
             c = this->getchar();
         }
 
