@@ -281,7 +281,7 @@ public:
     std::vector<VSASTNode *> args;
     VSASTNode *body;
 
-    FuncDeclNode(IdentNode *name) {
+    FuncDeclNode(IdentNode *name) : name(name) {
         this->node_type = AST_FUNC_DECL;
         this->args = std::vector<VSASTNode *>();
         this->body = NULL;
@@ -293,6 +293,17 @@ public:
         for (auto arg : this->args) {
             DECREF(arg);
         }
+    }
+
+    void add_arg(VSASTNode *arg) {
+        this->args.push_back(arg);
+        INCREF(arg);
+    }
+
+    void set_body(VSASTNode *body) {
+        DECREF_EX(this->body);
+        this->body = body;
+        INCREF(this->body);
     }
 };
 
@@ -355,7 +366,7 @@ public:
     std::vector<VSASTNode *> args;
     VSASTNode *body;
 
-    MethDeclNode(IdentNode *name) {
+    MethDeclNode(IdentNode *name) : name(name) {
         this->node_type = AST_METH_DECL;
         this->args = std::vector<VSASTNode *>();
         this->body = NULL;
@@ -368,6 +379,17 @@ public:
             DECREF(arg);
         }
     }
+
+    void add_arg(VSASTNode *arg) {
+        this->args.push_back(arg);
+        INCREF(arg);
+    }
+
+    void set_body(VSASTNode *body) {
+        DECREF_EX(this->body);
+        this->body = body;
+        INCREF(this->body);
+    }
 };
 
 class ElifListNode : public VSASTNode {
@@ -378,6 +400,7 @@ public:
     ElifListNode() {
         this->node_type = AST_ELIF_LIST;
         this->elifs = std::vector<VSASTNode *>();
+        this->elsestmt = NULL;
     }
 
     ~ElifListNode() {
@@ -493,6 +516,14 @@ public:
         this->node_type = AST_CPD_STMT;
     }
     ~CpdStmtNode() = default;
+};
+
+class ProgramNode : public ContainerNode {
+public:
+   ProgramNode() {
+        this->node_type = AST_PROGRAM;
+    }
+    ~ProgramNode() = default;
 };
 
 #endif

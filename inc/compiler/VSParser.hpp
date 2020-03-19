@@ -14,7 +14,7 @@ private:
     unsigned int inloop, infunc;
     std::stack<unsigned int> inloop_stack;
 
-    void expect(int ntypes, ...);
+    VSToken *expect(int ntypes, ...);
     VSASTNode *read_tuple_decl_or_expr();
     VSASTNode *read_list_decl();
     VSASTNode *read_dict_or_set_decl();
@@ -37,7 +37,7 @@ private:
     VSASTNode *read_func_decl();
     VSASTNode *read_class_decl();
     VSASTNode *read_meth_decl();
-    VSASTNode *read_elif();
+    VSASTNode *read_elif_stmt();
     VSASTNode *read_elif_list();
     VSASTNode *read_if_stmt();
     VSASTNode *read_while_stmt();
