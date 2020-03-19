@@ -41,10 +41,10 @@ typedef enum
     TK_NEQ,
     TK_AND,
     TK_AND_ASSIGN,
-    TK_OR,
-    TK_OR_ASSIGN,
     TK_XOR,
     TK_XOR_ASSIGN,
+    TK_OR,
+    TK_OR_ASSIGN,
     TK_NOT,
     TK_ASSIGN,
 

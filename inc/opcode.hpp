@@ -15,15 +15,16 @@ typedef enum
     OP_EQ,
     OP_NEQ,
     OP_AND,
+    OP_XOR,
     OP_OR,
     OP_NOT,
     OP_NEG,
 
-    // 1 arg, list length, create a list of objects in the stack
-    OP_BUILD_LIST,
-
     // 1 arg, tuple size, create a tuple of objects in the stack
     OP_BUILD_TUPLE,
+
+    // 1 arg, list length, create a list of objects in the stack
+    OP_BUILD_LIST,
 
     // 1 arg, pair num in map, create a map of objects in the stack
     OP_BUILD_MAP,
@@ -94,19 +95,22 @@ static char *OPCODE_STR[] =
         "EQ",
         "NEQ",
         "AND",
+        "XOR"
         "OR",
         "NOT",
         "NEG",
+        "BUILD_TUPLE",
         "BUILD_LIST",
+        "BUILD_MAP",
+        "BUILD_SET",
         "INDEX_LOAD",
         "INDEX_STORE",
         "LOAD_LOCAL",
-        "LOAD_NAME",
+        "LOAD_ATTR",
         "STORE_LOCAL",
-        "STORE_NAME",
+        "STORE_ATTR",
         "LOAD_CONST",
         "LOAD_BUILTIN",
-        "EVAL",
         "JMP",
         "JIF",
         "BREAK",
