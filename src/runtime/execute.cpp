@@ -80,7 +80,7 @@ static void find_blk_type(CODE_BLK_TYPE type)
 {
     while (cur_frame != NULL && cur_frame->code->type != type)
     {
-        leave_blk();
+        LEAVE_BLK();
     }
 
     if (cur_frame == NULL)
@@ -597,7 +597,7 @@ static void do_jif(vs_addr_t addr)
 static void do_break()
 {
     find_blk_type(LOOP_BLK);
-    leave_blk();
+    LEAVE_BLK();
 
     if (cur_frame == NULL)
     {
@@ -677,7 +677,7 @@ static void do_call_native(vs_addr_t addr)
 static void do_ret()
 {
     find_blk_type(FUNC_BLK);
-    leave_blk();
+    LEAVE_BLK();
 
     if (cur_frame == NULL)
     {
@@ -813,7 +813,7 @@ int execute(VSCodeObject *code, VSObjectList *objects, std::vector<vs_native_fun
     while (cur_frame != NULL)
     {
         eval();
-        leave_blk();
+        LEAVE_BLK();
     }
     return 0;
 }

@@ -8,7 +8,7 @@
 
 #include <stack>
 
-class VSParser : VSObject {
+class VSParser : public VSObject {
 private:
     VSTokenizer *tokenizer;
     unsigned int inloop, infunc;

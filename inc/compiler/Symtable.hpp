@@ -29,7 +29,6 @@ public:
 class Symtable : public VSObject {
 private:
     Symtable *parent;
-    std::vector<Symtable *> children;
     std::unordered_map<std::string, SymtableEntry *> table;
 
 public:
@@ -43,7 +42,6 @@ public:
     SymtableEntry *get_recur(std::string name);
     bool contains(std::string name);
     bool contains_recur(std::string name);
-    void add_child(Symtable *child);
 };
 
 #endif

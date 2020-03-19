@@ -11,9 +11,6 @@ Symtable::Symtable(Symtable *parent) : parent(parent) {
 
 Symtable::~Symtable() {
     DECREF(this->parent);
-    for (auto child : this->children) {
-        DECREF(child);
-    }
     for (auto pair : this->table) {
         DECREF(pair.second);
     }
@@ -64,12 +61,4 @@ bool Symtable::contains_recur(std::string name) {
         return this->parent->contains_recur(name);
     }
     return result;
-}
-
-
-void Symtable::add_child(Symtable *child) {
-    if (child != NULL) {
-        this->children.push_back(child);
-        INCREF(child);
-    }
 }

@@ -392,36 +392,6 @@ public:
     }
 };
 
-class ElifListNode : public VSASTNode {
-public:
-    std::vector<VSASTNode *> elifs;
-    VSASTNode *elsestmt;
-
-    ElifListNode() {
-        this->node_type = AST_ELIF_LIST;
-        this->elifs = std::vector<VSASTNode *>();
-        this->elsestmt = NULL;
-    }
-
-    ~ElifListNode() {
-        for (auto elif : this->elifs) {
-            DECREF(elif);
-        }
-        DECREF_EX(this->elsestmt);
-    }
-
-    void add_elif(VSASTNode *elif) {
-        this->elifs.push_back(elif);
-        INCREF(elif);
-    }
-
-    void set_else(VSASTNode *elsenode) {
-        DECREF_EX(this->elsestmt);
-        this->elsestmt = elsenode;
-        INCREF(this->elsestmt);
-    }
-};
-
 class IfStmtNode : public VSASTNode {
 public:
     VSASTNode *cond;
@@ -439,6 +409,36 @@ public:
         DECREF_EX(cond);
         DECREF_EX(truestmt);
         DECREF_EX(falsestmt);
+    }
+};
+
+class ElifListNode : public VSASTNode {
+public:
+    std::vector<IfStmtNode *> elifs;
+    VSASTNode *elsestmt;
+
+    ElifListNode() {
+        this->node_type = AST_ELIF_LIST;
+        this->elifs = std::vector<IfStmtNode *>();
+        this->elsestmt = NULL;
+    }
+
+    ~ElifListNode() {
+        for (auto elif : this->elifs) {
+            DECREF(elif);
+        }
+        DECREF_EX(this->elsestmt);
+    }
+
+    void add_elif(IfStmtNode *elif) {
+        this->elifs.push_back(elif);
+        INCREF(elif);
+    }
+
+    void set_else(VSASTNode *elsenode) {
+        DECREF_EX(this->elsestmt);
+        this->elsestmt = elsenode;
+        INCREF(this->elsestmt);
     }
 };
 

@@ -612,7 +612,7 @@ VSASTNode *VSParser::read_elif_list() {
     while (PEEKTOKEN()->tk_type == TK_ELIF) {
         node = this->read_elif_stmt();
         if (node != NULL) {
-            elif_list->add_elif(node);
+            elif_list->add_elif((IfStmtNode *)node);
             node = NULL;
         }
         ENSURE_TOKEN(elif_list);
