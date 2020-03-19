@@ -345,38 +345,57 @@ void VSCompiler::gen_for_stmt(VSASTNode *node) {
 }
 
 void VSCompiler::gen_func_decl(VSASTNode *node) {
-    VSCodeObject *parent = codestack.top();
+    Symtable *p_table = this->symtables.top();
+    VSCodeObject *p_code = this->codeobjects.top();
+
+    FuncDeclNode *func = (FuncDeclNode *)node;
 
     // Add function name to parent code locals.
-    std::string *name = node->func_name->name;
-    if (parent->name_to_addr.find(*name) == parent->name_to_addr.end()) {
-        parent->add_local(*name);
+    std::string name = func->name->name;
+    if (p_table->contains(name)) {
+        err("duplicated definition of name: \"%s\"", name.c_str());
+        terminate(TERM_ERROR);
     }
-    parent->add_inst(VSInst(OP_LOAD_CONST, parent->const_num));
-    parent->add_inst(VSInst(OP_STORE_LOCAL, parent->name_to_addr[*name]));
+    // create symtable entry
+    p_table->put(name, new SymtableEntry(SYM_VAR, name, p_code->nlvars, 0));
 
-    ENTER_BLK(*name, FUNC_BLK);
+    ENTER_FUNC(name);
 
+    Symtable *table = this->symtables.top();
     // Add function code to parent code consts.
-    VSCodeObject *cur = codestack.top();
-    parent->add_const(new VSObject(cur));
+    VSCodeObject *code = this->codeobjects.top();
 
     // Add function arg names to function locals.
-    for (auto arg : *node->func_params) {
-        cur->add_arg(*arg->name);
+    for (auto argnode : func->args) {
+        VSObject *argname;
+        if (argnode->node_type == AST_IDENT) {
+            IdentNode *arg = (IdentNode *)argnode;
+            argname = vs_string_from_cstring(arg->name);
+        } else {
+            InitDeclNode *arg = (InitDeclNode *)argnode;
+            argname = vs_string_from_cstring(arg->name->name);
+        }
+        std::string argstr = vs_string_to_cstring(argname);
+        table->put(argstr, new SymtableEntry(SYM_ARG, argstr, code->nlvars, 0));
+        code->add_arg(argname);
+        DECREF(argname);
     }
 
-    // for overflowed args
-    cur->add_local("...");
-
-    // this->gen function body.
-    this->gen_cpd_stmt(node->func_body);
+    // gen function body.
+    this->gen_cpd_stmt(func->body);
 
     // default return none
-    cur->add_inst(VSInst(OP_LOAD_CONST, CONST_NONE_ADDR));
-    cur->add_inst(VSInst(OP_RET));
+    code->add_inst(VSInst(OP_LOAD_CONST,0));
+    code->add_inst(VSInst(OP_RET));
 
-    LEAVE_BLK();
+    LEAVE_FUNC();
+
+    // Add instructions to make function
+    p_code->add_inst(VSInst(OP_LOAD_CONST, p_code->nconsts));
+    p_code->add_inst(VSInst(OP_STORE_LOCAL, p_code->nlvars));
+
+    p_code->add_lvar(code->name);
+    p_code->add_const(code);
 }
 
 void VSCompiler::gen_elif_list(VSASTNode *node) {
