@@ -27,6 +27,7 @@ private:
     VSASTNode *read_rel_expr();
     VSASTNode *read_eql_expr();
     VSASTNode *read_log_and_expr();
+    VSASTNode *read_log_xor_expr();
     VSASTNode *read_log_or_expr();
     VSASTNode *read_assign_expr();
     VSASTNode *read_expr_list();

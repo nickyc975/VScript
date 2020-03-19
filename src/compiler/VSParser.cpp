@@ -245,181 +245,205 @@ VSASTNode *VSParser::read_postfix_expr() {
 }
 
 VSASTNode *VSParser::read_unary_expr() {
-    Token *token = NULL;
-    ensure_token(NULL);
-    if (peek_token()->type == TK_SUB || peek_token()->type == TK_NOT) {
-        token = get_token();
+    VSToken *token = NULL;
+    ENSURE_TOKEN(NULL);
+    if (PEEKTOKEN()->tk_type == TK_SUB || PEEKTOKEN()->tk_type == TK_NOT) {
+        token = GETTOKEN();
     }
-    VSASTNode *node = read_postfix_expr();
-    if (node == NULL || !has_token())
+    VSASTNode *node = this->read_postfix_expr();
+    if (node == NULL || !HASTOKEN())
         return node;
     if (token != NULL) {
-        node = u_expr_node(token->type == TK_SUB ? TK_SUB : TK_NOT, node);
+        node = new UOPNode(token->tk_type, node);
     }
+    DECREF(token);
     return node;
 }
 
 VSASTNode *VSParser::read_mul_expr() {
-    Token *token;
-    VSASTNode *node = read_unary_expr();
-    if (node == NULL || !has_token())
+    VSToken *token = NULL;
+    VSASTNode *node = this->read_unary_expr();
+    if (node == NULL || !HASTOKEN())
         return node;
-    while (is_mul(peek_token()->type)) {
-        token = get_token();
-        VSASTNode *right = read_unary_expr();
+    while (is_mul(PEEKTOKEN()->tk_type)) {
+        token = GETTOKEN();
+        VSASTNode *right = this->read_unary_expr();
         if (right == NULL) {
-            ensure_token(node);
-            err("line: %ld, missing right value\n", peek_token()->ln);
+            ENSURE_TOKEN(node);
+            err("line: %ld, missing right value\n", PEEKTOKEN()->ln);
         }
-        node = b_expr_node(token->type, node, right);
-        ensure_token(node);
+        node = new BOPNode(token->tk_type, node, right);
+        ENSURE_TOKEN(node);
     }
+    DECREF(token);
     return node;
 }
 
 VSASTNode *VSParser::read_add_expr() {
-    Token *token;
-    VSASTNode *node = read_mul_expr();
-    if (node == NULL || !has_token())
+    VSToken *token = NULL;
+    VSASTNode *node = this->read_mul_expr();
+    if (node == NULL || !HASTOKEN())
         return node;
-    while (peek_token()->type == TK_ADD || peek_token()->type == TK_SUB) {
-        token = get_token();
-        VSASTNode *right = read_mul_expr();
+    while (PEEKTOKEN()->tk_type == TK_ADD || PEEKTOKEN()->tk_type == TK_SUB) {
+        token = GETTOKEN();
+        VSASTNode *right = this->read_mul_expr();
         if (right == NULL) {
-            ensure_token(node);
-            err("line: %ld, missing right value\n", peek_token()->ln);
+            ENSURE_TOKEN(node);
+            err("line: %ld, missing right value\n", PEEKTOKEN()->ln);
         }
-        node = b_expr_node(token->type == TK_ADD ? TK_ADD : TK_SUB, node, right);
-        ensure_token(node);
+        node = new BOPNode(token->tk_type, node, right);
+        ENSURE_TOKEN(node);
     }
+    DECREF(token);
     return node;
 }
 
 VSASTNode *VSParser::read_rel_expr() {
-    Token *token;
-    VSASTNode *node = read_add_expr();
-    if (node == NULL || !has_token())
+    VSToken *token = NULL;
+    VSASTNode *node = this->read_add_expr();
+    if (node == NULL || !HASTOKEN())
         return node;
-    while (is_rel(peek_token()->type)) {
-        token = get_token();
-        VSASTNode *right = read_add_expr();
+    while (is_rel(PEEKTOKEN()->tk_type)) {
+        token = GETTOKEN();
+        VSASTNode *right = this->read_add_expr();
         if (right == NULL) {
-            ensure_token(node);
-            err("line: %ld, missing right value\n", peek_token()->ln);
+            ENSURE_TOKEN(node);
+            err("line: %ld, missing right value\n", PEEKTOKEN()->ln);
         }
-        node = b_expr_node(token->type, node, right);
-        ensure_token(node);
+        node = new BOPNode(token->tk_type, node, right);
+        ENSURE_TOKEN(node);
     }
+    DECREF(token);
     return node;
 }
 
 VSASTNode *VSParser::read_eql_expr() {
-    Token *token;
-    VSASTNode *node = read_rel_expr();
-    if (node == NULL || !has_token())
+    VSToken *token = NULL;
+    VSASTNode *node = this->read_rel_expr();
+    if (node == NULL || !HASTOKEN())
         return node;
-    while (peek_token()->type == TK_EQ || peek_token()->type == TK_NEQ) {
-        token = get_token();
-        VSASTNode *right = read_rel_expr();
+    while (PEEKTOKEN()->tk_type == TK_EQ || PEEKTOKEN()->tk_type == TK_NEQ) {
+        token = GETTOKEN();
+        VSASTNode *right = this->read_rel_expr();
         if (right == NULL) {
-            ensure_token(node);
-            err("line: %ld, missing right value\n", peek_token()->ln);
+            ENSURE_TOKEN(node);
+            err("line: %ld, missing right value\n", PEEKTOKEN()->ln);
         }
-        node = b_expr_node(token->type == TK_EQ ? TK_EQ : TK_NEQ, node, right);
-        ensure_token(node);
+        node = new BOPNode(token->tk_type, node, right);
+        ENSURE_TOKEN(node);
     }
+    DECREF(token);
     return node;
 }
 
 VSASTNode *VSParser::read_log_and_expr() {
-    VSASTNode *node = read_eql_expr();
-    if (node == NULL || !has_token())
+    VSASTNode *node = this->read_eql_expr();
+    if (node == NULL || !HASTOKEN())
         return node;
-    while (peek_token()->type == TK_AND) {
-        expect(TK_AND);
-        VSASTNode *right = read_eql_expr();
+    while (PEEKTOKEN()->tk_type == TK_AND) {
+        this->expect(1, TK_AND);
+        VSASTNode *right = this->read_eql_expr();
         if (right == NULL) {
-            ensure_token(node);
-            err("line: %ld, missing right value\n", peek_token()->ln);
+            ENSURE_TOKEN(node);
+            err("line: %ld, missing right value\n", PEEKTOKEN()->ln);
         }
-        node = b_expr_node(TK_AND, node, right);
-        ensure_token(node);
+        node = new BOPNode(TK_AND, node, right);
+        ENSURE_TOKEN(node);
+    }
+    return node;
+}
+
+VSASTNode *VSParser::read_log_xor_expr() {
+    VSASTNode *node = this->read_log_and_expr();
+    if (node == NULL || !HASTOKEN())
+        return node;
+    while (PEEKTOKEN()->tk_type == TK_XOR) {
+        this->expect(1, TK_XOR);
+        VSASTNode *right = this->read_log_and_expr();
+        if (right == NULL) {
+            ENSURE_TOKEN(node);
+            err("line: %ld, missing right value\n", PEEKTOKEN()->ln);
+        }
+        node = new BOPNode(TK_XOR, node, right);
+        ENSURE_TOKEN(node);
     }
     return node;
 }
 
 VSASTNode *VSParser::read_log_or_expr() {
-    VSASTNode *node = read_log_and_expr();
-    if (node == NULL || !has_token())
+    VSASTNode *node = this->read_log_xor_expr();
+    if (node == NULL || !HASTOKEN())
         return node;
-    while (peek_token()->type == TK_OR) {
-        expect(TK_OR);
-        VSASTNode *right = read_log_and_expr();
+    while (PEEKTOKEN()->tk_type == TK_OR) {
+        this->expect(1, TK_OR);
+        VSASTNode *right = this->read_log_xor_expr();
         if (right == NULL) {
-            ensure_token(node);
-            err("line: %ld, missing right value\n", peek_token()->ln);
+            ENSURE_TOKEN(node);
+            err("line: %ld, missing right value\n", PEEKTOKEN()->ln);
         }
-        node = b_expr_node(TK_OR, node, right);
-        ensure_token(node);
+        node = new BOPNode(TK_OR, node, right);
+        ENSURE_TOKEN(node);
     }
     return node;
 }
 
 VSASTNode *VSParser::read_assign_expr() {
-    VSASTNode *node = read_log_or_expr();
-    if (node == NULL || !has_token())
+    VSToken *token = NULL;
+    VSASTNode *node = this->read_log_or_expr();
+    if (node == NULL || !HASTOKEN())
         return node;
-    if (is_assign(peek_token()->type)) {
-        ensure_lval(node);
-        TOKEN_TYPE assign_opcode = get_token()->type;
+    if (is_assign(PEEKTOKEN()->tk_type)) {
+        token = GETTOKEN();
+        TOKEN_TYPE assign_opcode = token->tk_type;
         if (assign_opcode == TK_ASSIGN)
             assign_opcode = TK_NOP;
         else
             assign_opcode = (TOKEN_TYPE)((int)assign_opcode - 1);
-        VSASTNode *right = read_log_or_expr();
+        VSASTNode *right = this->read_log_or_expr();
         if (right == NULL) {
-            ensure_token(node);
-            err("line: %ld, missing right value\n", peek_token()->ln);
+            ENSURE_TOKEN(node);
+            err("line: %ld, missing right value\n", PEEKTOKEN()->ln);
         }
-        node = assign_expr_node(assign_opcode, node, right);
+        node = new AssignExprNode(assign_opcode, node, right);
     }
+    DECREF(token);
     return node;
 }
 
 VSASTNode *VSParser::read_expr_list() {
-    VSASTNode *node = read_assign_expr();
-    if (!has_token() || peek_token()->type != TK_COMMA)
+    VSASTNode *node = this->read_assign_expr();
+    if (!HASTOKEN() || PEEKTOKEN()->tk_type != TK_COMMA)
         return node;
 
-    VSASTNode *expr_list = expr_list_node(new std::vector<VSASTNode *>());
+    ExprListNode *expr_list = new ExprListNode();
     if (node != NULL)
-        expr_list->expr_list->push_back(node);
+        expr_list->append(node);
 
-    while (peek_token()->type == TK_COMMA) {
-        expect(TK_COMMA);
-        node = read_assign_expr();
+    while (PEEKTOKEN()->tk_type == TK_COMMA) {
+        this->expect(1, TK_COMMA);
+        node = this->read_assign_expr();
         if (node != NULL)
-            expr_list->expr_list->push_back(node);
-        ensure_token(expr_list);
+            expr_list->append(node);
+        ENSURE_TOKEN(expr_list);
     }
     return expr_list;
 }
 
 VSASTNode *VSParser::read_expr_stmt() {
-    ensure_token(NULL);
-    if (peek_token()->type == TK_SEMICOLON) {
+    ENSURE_TOKEN(NULL);
+    if (PEEKTOKEN()->tk_type == TK_SEMICOLON) {
         expect(TK_SEMICOLON);
         return NULL;
     }
-    VSASTNode *node = read_expr_list();
+    VSASTNode *node = this->read_expr_list();
     expect(TK_SEMICOLON);
     return node;
 }
 
 VSASTNode *VSParser::read_stmt() {
     VSASTNode *node = NULL;
-    if (has_token()) {
-        switch (peek_token()->type) {
+    if (HASTOKEN()) {
+        switch (PEEKTOKEN()->tk_type) {
             case TK_FOR:
                 return read_for_stmt();
             case TK_FUNC:
@@ -434,7 +458,7 @@ VSASTNode *VSParser::read_stmt() {
             case TK_CONTINUE:
                 expect(TK_CONTINUE);
                 expect(TK_SEMICOLON);
-                ensure_in_loop();
+                ENSURE_IN_LOOP();
                 return continue_node();
             case TK_BREAK:
                 expect(TK_BREAK);
@@ -460,9 +484,9 @@ VSASTNode *VSParser::read_cpd_stmt() {
     VSASTNode *stmt = NULL;
     VSASTNode *cpd_stmt = cpd_stmt_node(new std::vector<VSASTNode *>(), cur_table);
 
-    ensure_token(cpd_stmt);
-    while (peek_token()->type != TK_R_CURLY) {
-        if (peek_token()->type == TK_VAL || peek_token()->type == TK_VAR) {
+    ENSURE_TOKEN(cpd_stmt);
+    while (PEEKTOKEN()->type != TK_R_CURLY) {
+        if (PEEKTOKEN()->type == TK_VAL || PEEKTOKEN()->type == TK_VAR) {
             stmt = read_init_decl_stmt();
         } else {
             stmt = read_stmt();
@@ -471,7 +495,7 @@ VSASTNode *VSParser::read_cpd_stmt() {
         if (stmt != NULL) {
             cpd_stmt->statements->push_back(stmt);
         }
-        ensure_token(cpd_stmt);
+        ENSURE_TOKEN(cpd_stmt);
     }
     expect(TK_R_CURLY);
     return cpd_stmt;
@@ -485,8 +509,8 @@ VSASTNode *VSParser::read_for_stmt() {
     // create new symbal table for "for" loop
     new_table();
 
-    ensure_token(NULL);
-    TOKEN_TYPE type = peek_token()->type;
+    ENSURE_TOKEN(NULL);
+    TOKEN_TYPE type = PEEKTOKEN()->type;
     VSASTNode *init = NULL, *cond = NULL, *incr = NULL;
 
     // read for init
@@ -500,8 +524,8 @@ VSASTNode *VSParser::read_for_stmt() {
     expect(TK_SEMICOLON);
 
     // read for incr
-    ensure_token(NULL);
-    if (peek_token()->type != TK_R_PAREN) {
+    ENSURE_TOKEN(NULL);
+    if (PEEKTOKEN()->type != TK_R_PAREN) {
         incr = read_expr_list();
     }
     expect(TK_R_PAREN);
@@ -517,7 +541,7 @@ VSASTNode *VSParser::read_for_stmt() {
 
 VSASTNode *VSParser::read_func_decl() {
     expect(TK_FUNC);
-    Token *token = expect(TK_IDENTIFIER);
+    VSToken *token = expect(TK_IDENTIFIER);
     expect(TK_L_PAREN);
 
     if (cur_table->contains(*token->identifier) || global_table->contains(*token->identifier)) {
@@ -536,21 +560,21 @@ VSASTNode *VSParser::read_func_decl() {
     std::vector<VSASTNode *> *func_params = new std::vector<VSASTNode *>();
 
     // read func args
-    ensure_token(NULL);
-    if (peek_token()->type != TK_R_PAREN) {
+    ENSURE_TOKEN(NULL);
+    if (PEEKTOKEN()->type != TK_R_PAREN) {
         std::string *arg_name = expect(TK_IDENTIFIER)->identifier;
         VSASTNode *arg_ident = ident_node(arg_name, true);
         func_params->push_back(arg_ident);
         cur_table->put(*arg_name, arg_ident);
 
-        ensure_token(NULL);
-        while (peek_token()->type == TK_COMMA) {
+        ENSURE_TOKEN(NULL);
+        while (PEEKTOKEN()->type == TK_COMMA) {
             expect(TK_COMMA);
             arg_name = expect(TK_IDENTIFIER)->identifier;
             arg_ident = ident_node(arg_name, true);
             func_params->push_back(arg_ident);
             cur_table->put(*arg_name, arg_ident);
-            ensure_token(NULL);
+            ENSURE_TOKEN(NULL);
         }
     }
     expect(TK_R_PAREN);
@@ -560,8 +584,8 @@ VSASTNode *VSParser::read_func_decl() {
     // read func body
     VSASTNode *func_body = read_cpd_stmt();
     if (func_body == NULL) {
-        ensure_token(NULL);
-        err("line: %ld, missing function body\n", peek_token()->ln);
+        ENSURE_TOKEN(NULL);
+        err("line: %ld, missing function body\n", PEEKTOKEN()->ln);
     }
     func->func_body = func_body;
 
@@ -597,18 +621,18 @@ VSASTNode *VSParser::read_elif_list() {
     VSASTNode *node = NULL;
     std::vector<VSASTNode *> *elif_list = new std::vector<VSASTNode *>();
 
-    ensure_token(elif_lst_node(elif_list, node));
-    while (peek_token()->type == TK_ELIF) {
+    ENSURE_TOKEN(elif_lst_node(elif_list, node));
+    while (PEEKTOKEN()->type == TK_ELIF) {
         node = read_elif_stmt();
         if (node != NULL) {
             elif_list->push_back(node);
             node = NULL;
         }
-        ensure_token(elif_lst_node(elif_list, node));
+        ENSURE_TOKEN(elif_lst_node(elif_list, node));
     }
 
-    ensure_token(elif_lst_node(elif_list, node));
-    if (peek_token()->type == TK_ELSE) {
+    ENSURE_TOKEN(elif_lst_node(elif_list, node));
+    if (PEEKTOKEN()->type == TK_ELSE) {
         expect(TK_ELSE);
 
         // create new table for else statement
@@ -634,15 +658,15 @@ VSASTNode *VSParser::read_if_stmt() {
     VSASTNode *true_stmt = read_cpd_stmt(), *false_stmt = NULL;
     restore_table();
 
-    ensure_token(if_stmt_node(cond, true_stmt, false_stmt));
-    if (peek_token()->type == TK_ELIF || peek_token()->type == TK_ELSE)
+    ENSURE_TOKEN(if_stmt_node(cond, true_stmt, false_stmt));
+    if (PEEKTOKEN()->type == TK_ELIF || PEEKTOKEN()->type == TK_ELSE)
         false_stmt = read_elif_list();
     return if_stmt_node(cond, true_stmt, false_stmt);
 }
 
 VSASTNode *VSParser::read_init_decl(bool is_mutable) {
     VSASTNode *init = NULL;
-    Token *token = expect(TK_IDENTIFIER);
+    VSToken *token = expect(TK_IDENTIFIER);
     if (cur_table->contains(*token->identifier) || global_table->contains(*token->identifier)) {
         err("line: %ld, duplicated definition of \"%s\"\n", token->ln, token->identifier->c_str());
     }
@@ -650,35 +674,35 @@ VSASTNode *VSParser::read_init_decl(bool is_mutable) {
     VSASTNode *ident = ident_node(token->identifier, is_mutable);
     cur_table->put(*ident->name, ident);
 
-    ensure_token(init_decl_node(ident, init));
-    if (peek_token()->type == TK_ASSIGN) {
+    ENSURE_TOKEN(init_decl_node(ident, init));
+    if (PEEKTOKEN()->type == TK_ASSIGN) {
         expect(TK_ASSIGN);
         init = read_log_or_expr();
     }
 
     if (!is_mutable && init == NULL) {
-        ensure_token(init_decl_node(ident, init));
-        err("line: %ld, val declaration must have a initializer\n", peek_token()->ln);
+        ENSURE_TOKEN(init_decl_node(ident, init));
+        err("line: %ld, val declaration must have a initializer\n", PEEKTOKEN()->ln);
     }
 
     return init_decl_node(ident, init);
 }
 
 VSASTNode *VSParser::read_init_decl_stmt() {
-    Token *token = expect2(TK_VAR, TK_VAL);
+    VSToken *token = expect2(TK_VAR, TK_VAL);
     VSASTNode *decl_list = init_decl_list_node(new std::vector<VSASTNode *>());
     bool is_mutable = token->type == TK_VAR;
     VSASTNode *decl = read_init_decl(is_mutable);
     if (decl != NULL)
         decl_list->decl_list->push_back(decl);
 
-    ensure_token(decl_list);
-    while (peek_token()->type == TK_COMMA) {
+    ENSURE_TOKEN(decl_list);
+    while (PEEKTOKEN()->type == TK_COMMA) {
         expect(TK_COMMA);
         decl = read_init_decl(is_mutable);
         if (decl != NULL)
             decl_list->decl_list->push_back(decl);
-        ensure_token(decl_list);
+        ENSURE_TOKEN(decl_list);
     }
     expect(TK_SEMICOLON);
     return decl_list;
@@ -709,9 +733,9 @@ VSASTNode *VSParser::read_while_stmt() {
 VSASTNode *VSParser::read_program() {
     cur_table = new SymTable<VSASTNode *>(NULL);
     VSASTNode *program = program_node(new std::vector<VSASTNode *>(), cur_table);
-    while (has_token()) {
+    while (HASTOKEN()) {
         VSASTNode *stmt = NULL;
-        switch (peek_token()->type) {
+        switch (PEEKTOKEN()->type) {
             case TK_FOR:
                 stmt = read_for_stmt();
                 break;
@@ -747,7 +771,7 @@ VSASTNode *VSParser::read_program() {
     return program;
 }
 
-VSASTNode *VSParser::parse(std::vector<Token *> *tokens, std::unordered_map<std::string, vs_addr_t> *globals) {
+VSASTNode *VSParser::parse(std::vector<VSToken *> *tokens, std::unordered_map<std::string, vs_addr_t> *globals) {
     tk_idx = 0;
     tks = tokens;
     global_table = new SymTable<VSASTNode *>(NULL);
