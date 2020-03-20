@@ -3,6 +3,7 @@
 #include "objects/VSIntObject.hpp"
 #include "objects/VSStringObject.hpp"
 #include "objects/VSTupleObject.hpp"
+#include "objects/VSListObject.hpp"
 
 #include <cstdarg>
 
@@ -181,6 +182,21 @@ int vs_tuple_unpack(VSObject *tupleobj, vs_size_t nitems, ...)
     }
     va_end(args);
     return 0;
+}
+
+VSObject *vs_tuple_to_list(VSObject *tupleobj) {
+    VSTypeObject *type = VS_TYPEOF(tupleobj);
+    VS_ENSURE_TYPE(type, T_LIST, "tuple to list");
+
+    VSTupleObject *tuple = (VSTupleObject *)tupleobj;
+
+    vs_size_t len = TUPLE_LEN(tuple);
+    VSListObject *list = new VSListObject(len);
+    for (vs_size_t i = 0; i < len; i++) {
+        VSObject *item = TUPLE_GET(tuple, i);
+        LIST_SET(list, i, item);
+    }
+    INCREF_RET(list);
 }
 
 NumberFuncs *tuple_number_funcs = new NumberFuncs(

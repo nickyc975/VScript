@@ -50,7 +50,7 @@ void VSCodeObject::add_inst(VSInst inst)
 
 void VSCodeObject::add_const(VSObject *object)
 {
-    VSObject::appenditem(this->consts, object);
+    LIST_APPEND(this->consts, object);
     this->nconsts++;
 }
 
@@ -62,13 +62,13 @@ void VSCodeObject::add_arg(VSObject *name)
 
 void VSCodeObject::add_lvar(VSObject *name)
 {
-    VSObject::appenditem(this->lvars, name);
+    LIST_APPEND(this->lvars, name);
     this->nlvars++;
 }
 
 void VSCodeObject::add_freevar(VSObject *name)
 {
-    VSObject::appenditem(this->freevars, name);
+    LIST_APPEND(this->freevars, name);
     this->nfreevars++;
 }
 
@@ -83,7 +83,7 @@ VSObject *vs_code_new(VSObject *typeobj, VSObject *args, VSObject *)
     VSObject *name;
     if (!vs_tuple_unpack(args, 1, &name))
     {
-        err("code.__new__() expected 1 arg but got %lld\n", VSObject::c_getlen(args));
+        err("code.__new__() expected 1 arg but got %lld\n", TUPLE_LEN(args));
         return NULL;
     }
 

@@ -4,6 +4,8 @@
 #include "VSObject.hpp"
 #include "VSTypeObject.hpp"
 
+#include <unordered_map>
+
 extern VSTypeObject *VSMapType;
 
 class VSMapObject : public VSObject {

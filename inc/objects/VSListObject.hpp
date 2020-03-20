@@ -4,6 +4,8 @@
 #include "VSObject.hpp"
 #include "VSTypeObject.hpp"
 
+#include <vector>
+
 extern VSTypeObject *VSListType;
 
 class VSListObject : public VSObject {
@@ -25,6 +27,7 @@ public:
 
 extern VSObject *vs_list_pack(vs_size_t nitems, ...);
 extern int vs_list_unpack(VSObject *listobj, vs_size_t nitems, ...);
+extern VSObject *vs_list_to_tuple(VSObject *listobj);
 
 // convinient macros for list operations
 #define AS_LIST(obj) ((VSListObject *)obj)

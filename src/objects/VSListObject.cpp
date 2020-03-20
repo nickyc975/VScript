@@ -6,7 +6,6 @@
 #include "objects/VSTupleObject.hpp"
 
 #include <cstdarg>
-#include <vector>
 
 VSObject *vs_list_new(VSObject *typeobj, VSObject *args, VSObject *)
 {
@@ -259,6 +258,21 @@ int vs_list_unpack(VSObject *listobj, vs_size_t nitems, ...)
     }
     va_end(args);
     return 0;
+}
+
+VSObject *vs_list_to_tuple(VSObject *listobj) {
+    VSTypeObject *type = VS_TYPEOF(listobj);
+    VS_ENSURE_TYPE(type, T_LIST, "list to tuple");
+
+    VSListObject *list = (VSListObject *)listobj;
+
+    vs_size_t len = LIST_LEN(list);
+    VSTupleObject *tuple = new VSTupleObject(len);
+    for (vs_size_t i = 0; i < len; i++) {
+        VSObject *item = LIST_GET(list, i);
+        TUPLE_SET(tuple, i, item);
+    }
+    INCREF_RET(tuple);
 }
 
 NumberFuncs *list_number_funcs = new NumberFuncs(

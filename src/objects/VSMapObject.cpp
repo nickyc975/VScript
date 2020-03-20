@@ -1,5 +1,3 @@
-#include <unordered_map>
-
 #include "error.hpp"
 #include "objects/VSBoolObject.hpp"
 #include "objects/VSIntObject.hpp"
