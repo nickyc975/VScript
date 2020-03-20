@@ -8,14 +8,6 @@
 
 #include <cassert>
 
-VSCellObject::VSCellObject(VSObject *item) {
-    this->mut = true;
-    this->item = item;
-    this->type = VSCellType;
-    INCREF(item);
-    INCREF(VSCellType);
-}
-
 VSObject *vs_cell_new(VSObject *typeobj, VSObject *args, VSObject *) {
     assert(typeobj != NULL);
     VS_ENSURE_TYPE(VS_TYPEOF(typeobj), T_TYPE, "as type");
@@ -25,7 +17,7 @@ VSObject *vs_cell_new(VSObject *typeobj, VSObject *args, VSObject *) {
         INCREF_RET(new VSCellObject(VS_NONE));
     }
 
-    vs_size_t len = VSObject::c_getlen(args);
+    vs_size_t len = TUPLE_LEN(args);
     if (len == 0) {
         INCREF_RET(new VSCellObject(VS_NONE));
     } else if (len > 1) {
@@ -78,7 +70,7 @@ VSObject *vs_cell_eq(const VSObject *a, const VSObject *b) {
     VS_ENSURE_TYPE(VS_TYPEOF(a), T_CELL, "cell.__eq__()");
     VS_ENSURE_TYPE(VS_TYPEOF(b), T_CELL, "cell.__eq__()");
 
-    return vs_bool_from_cbool((cbool_t)(a == b));
+    INCREF_RET(C_BOOL_TO_BOOL(a == b));
 }
 
 VSObject *vs_cell_str(VSObject *cellobj) {

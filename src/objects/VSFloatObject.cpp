@@ -4,15 +4,7 @@
 #include "objects/VSCharObject.hpp"
 #include "objects/VSStringObject.hpp"
 #include "objects/VSFloatObject.hpp"
-
-class VSFloatObject : public VSObject
-{
-public:
-    cfloat_t _value;
-
-    VSFloatObject() : _value(0.0L) { this->type = VSFloatType; }
-    VSFloatObject(cfloat_t val) : _value(val) { this->type = VSFloatType; }
-};
+#include "objects/VSTupleObject.hpp"
 
 VSObject *vs_float_new(VSObject *typeobj, VSObject *args, VSObject *)
 {
@@ -22,7 +14,7 @@ VSObject *vs_float_new(VSObject *typeobj, VSObject *args, VSObject *)
     VSTypeObject *type = VS_AS_TYPE(typeobj);
     VS_ENSURE_TYPE(type, T_FLOAT, "float new");
 
-    vs_size_t len = VSObject::c_getlen(args);
+    vs_size_t len = TUPLE_LEN(args);
     if (len == 0)
     {
         INCREF_RET(VS_AS_OBJECT(new VSFloatObject()));
@@ -33,7 +25,7 @@ VSObject *vs_float_new(VSObject *typeobj, VSObject *args, VSObject *)
         terminate(TERM_ERROR);
     }
 
-    VSObject *init_val = VSObject::getitem_at(args, VS_INT_ZERO);
+    VSObject *init_val = TUPLE_GET(args, 0);
     VSTypeObject *init_type = VS_TYPEOF(init_val);
     if (init_type->_number_funcs == NULL || init_type->_number_funcs->__float__ == NULL)
     {

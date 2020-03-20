@@ -11,7 +11,14 @@ public:
     bool mut;
     VSObject *item;
 
-    VSCellObject(VSObject *item);
+    VSCellObject(VSObject *item) {
+        this->mut = true;
+        this->item = item;
+        this->type = VSCellType;
+        INCREF(item);
+        INCREF(VSCellType);
+    }
+
     ~VSCellObject() = default;
 };
 

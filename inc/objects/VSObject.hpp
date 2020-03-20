@@ -33,19 +33,6 @@ public:
         this->type = NULL;
         this->refcnt = 0;
     }
-
-    // wrappers for container functions
-    static VSObject *getlen(VSObject *obj);
-    static vs_size_t c_getlen(VSObject *obj);
-
-    static VSObject *getitem_at(VSObject *container, VSObject *key);
-    static void setitem_at(VSObject *container, VSObject *key, VSObject *value);
-    static VSObject *hasitem_at(VSObject *container, VSObject *key);
-    static void removeitem_at(VSObject *container, VSObject *key);
-
-    static void appenditem(VSObject *container, VSObject *item);
-    static VSObject *hasitem(VSObject *container, VSObject *item);
-    static void removeitem(VSObject *container, VSObject *item);
 };
 
 typedef VSObject *(*unaryfunc)(VSObject *);

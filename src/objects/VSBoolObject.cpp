@@ -4,18 +4,7 @@
 #include "objects/VSBoolObject.hpp"
 #include "objects/VSFloatObject.hpp"
 #include "objects/VSStringObject.hpp"
-
-class VSBoolObject : public VSObject
-{
-public:
-    cbool_t _value;
-
-    VSBoolObject() : _value(0) { this->type = VSBoolType; }
-    VSBoolObject(cbool_t val) : _value(val ? 1 : 0) { this->type = VSBoolType; }
-};
-
-VSObject *VS_TRUE = VS_AS_OBJECT(new VSBoolObject(1));
-VSObject *VS_FALSE = VS_AS_OBJECT(new VSBoolObject(0));
+#include "objects/VSTupleObject.hpp"
 
 VSObject *vs_bool_new(VSObject *typeobj, VSObject *args, VSObject *)
 {
@@ -25,7 +14,7 @@ VSObject *vs_bool_new(VSObject *typeobj, VSObject *args, VSObject *)
     VSTypeObject *type = VS_AS_TYPE(typeobj);
     VS_ENSURE_TYPE(type, T_BOOL, "bool new");
 
-    vs_size_t len = VSObject::c_getlen(args);
+    vs_size_t len = TUPLE_LEN(args);
     if (len == 0)
     {
         INCREF_RET(VS_FALSE);
@@ -36,7 +25,7 @@ VSObject *vs_bool_new(VSObject *typeobj, VSObject *args, VSObject *)
         terminate(TERM_ERROR);
     }
 
-    VSObject *init_val = VSObject::getitem_at(args, VS_INT_ZERO);
+    VSObject *init_val = TUPLE_GET(args, 0);
     VSTypeObject *init_type = VS_TYPEOF(init_val);
     if (init_type->_number_funcs == NULL || init_type->_number_funcs->__bool__ == NULL)
     {
@@ -61,7 +50,11 @@ void vs_bool_init(VSObject *, VSObject *, VSObject *)
 
 VSObject *vs_bool_copy(const VSObject *boolobj)
 {
-    return vs_bool_from_cbool(is_true(const_cast<VSObject *>(boolobj)));
+    VSTypeObject *type = VS_TYPEOF(boolobj);
+
+    VS_ENSURE_TYPE(type, T_BOOL, "bool copy");
+
+    INCREF_RET(const_cast<VSObject *>(boolobj));
 }
 
 VSObject *vs_bool_hash(const VSObject *obj)
@@ -70,7 +63,7 @@ VSObject *vs_bool_hash(const VSObject *obj)
 
     VS_ENSURE_TYPE(type, T_BOOL, "bool hash");
 
-    return vs_int_from_cint(((VSBoolObject *)obj)->_value);
+    return vs_int_from_cint((cint_t)BOOL_TO_C_BOOL(obj));
 }
 
 VSObject *vs_bool_lt(const VSObject *a, const VSObject *b)
@@ -84,7 +77,7 @@ VSObject *vs_bool_lt(const VSObject *a, const VSObject *b)
     VS_ENSURE_TYPE(b_type, T_BOOL, "bool lt");
 
     bool res = ((VSBoolObject *)a)->_value < ((VSBoolObject *)b)->_value;
-    INCREF_RET(res ? VS_TRUE : VS_FALSE);
+    INCREF_RET(C_BOOL_TO_BOOL(res));
 }
 
 VSObject *vs_bool_eq(const VSObject *a, const VSObject *b)
@@ -98,7 +91,7 @@ VSObject *vs_bool_eq(const VSObject *a, const VSObject *b)
     VS_ENSURE_TYPE(b_type, T_BOOL, "bool eq");
 
     bool res = ((VSBoolObject *)a)->_value == ((VSBoolObject *)b)->_value;
-    INCREF_RET(res ? VS_TRUE : VS_FALSE);
+    INCREF_RET(C_BOOL_TO_BOOL(res));
 }
 
 VSObject *vs_bool_str(VSObject *obj)
@@ -106,7 +99,7 @@ VSObject *vs_bool_str(VSObject *obj)
     VSTypeObject *type = VS_TYPEOF(obj);
     VS_ENSURE_TYPE(type, T_BOOL, "bool to str");
 
-    return vs_string_from_cstring(is_true(obj) ? "true" : "false");
+    return vs_string_from_cstring(BOOL_TO_C_BOOL(obj) ? "true" : "false");
 }
 
 VSObject *vs_bool_bytes(VSObject *obj)
@@ -123,7 +116,9 @@ VSObject *vs_bool_not(VSObject *boolobj)
     VSTypeObject *type = VS_TYPEOF(boolobj);
     VS_ENSURE_TYPE(type, T_BOOL, "not");
 
-    INCREF_RET(is_true(boolobj) ? VS_FALSE : VS_TRUE);
+    INCREF_RET(
+        C_BOOL_TO_BOOL(
+            !BOOL_TO_C_BOOL(boolobj)));
 }
 
 VSObject *vs_bool_and(VSObject *a, VSObject *b)
@@ -136,7 +131,10 @@ VSObject *vs_bool_and(VSObject *a, VSObject *b)
 
     VS_ENSURE_TYPE(b_type, T_BOOL, "and");
 
-    return vs_bool_from_cbool(is_true(a) && is_true(b));
+    VSBoolObject *boola = (VSBoolObject *)a;
+    VSBoolObject *boolb = (VSBoolObject *)b;
+
+    INCREF_RET(C_BOOL_TO_BOOL(boola->_value && boolb->_value));
 }
 
 VSObject *vs_bool_or(VSObject *a, VSObject *b)
@@ -149,7 +147,10 @@ VSObject *vs_bool_or(VSObject *a, VSObject *b)
 
     VS_ENSURE_TYPE(b_type, T_BOOL, "and");
 
-    return vs_bool_from_cbool(is_true(a) || is_true(b));
+    VSBoolObject *boola = (VSBoolObject *)a;
+    VSBoolObject *boolb = (VSBoolObject *)b;
+
+    INCREF_RET(C_BOOL_TO_BOOL(boola->_value || boolb->_value));
 }
 
 VSObject *vs_bool_bool(VSObject *boolobj)
@@ -165,7 +166,7 @@ VSObject *vs_bool_char(VSObject *boolobj)
     VSTypeObject *type = VS_TYPEOF(boolobj);
     VS_ENSURE_TYPE(type, T_BOOL, "__char__()");
 
-    return vs_char_from_cchar((cchar_t)vs_bool_to_cbool(boolobj));
+    return vs_char_from_cchar((cchar_t)BOOL_TO_C_BOOL(boolobj));
 }
 
 VSObject *vs_bool_int(VSObject *boolobj, VSObject *base)
@@ -179,7 +180,7 @@ VSObject *vs_bool_int(VSObject *boolobj, VSObject *base)
         terminate(TERM_ERROR);
     }
 
-    return vs_int_from_cint((cint_t)vs_bool_to_cbool(boolobj));
+    return vs_int_from_cint((cint_t)BOOL_TO_C_BOOL(boolobj));
 }
 
 VSObject *vs_bool_float(VSObject *boolobj)
@@ -187,26 +188,7 @@ VSObject *vs_bool_float(VSObject *boolobj)
     VSTypeObject *type = VS_TYPEOF(boolobj);
     VS_ENSURE_TYPE(type, T_BOOL, "__float__()");
 
-    return vs_float_from_cfloat((cfloat_t)vs_bool_to_cbool(boolobj));
-}
-
-inline cbool_t vs_bool_to_cbool(VSObject *boolobj)
-{
-    VSTypeObject *type = VS_TYPEOF(boolobj);
-    VS_ENSURE_TYPE(type, T_BOOL, "to c bool");
-    return ((VSBoolObject *)boolobj)->_value;
-}
-
-inline VSObject *vs_bool_from_cbool(cbool_t boolval)
-{
-    INCREF_RET(boolval ? VS_TRUE : VS_FALSE);
-}
-
-inline cbool_t is_true(VSObject *obj)
-{
-    VSTypeObject *type = VS_TYPEOF(obj);
-    VS_ENSURE_TYPE(type, T_BOOL, "is true");
-    return (cbool_t)(obj == VS_TRUE);
+    return vs_float_from_cfloat((cfloat_t)BOOL_TO_C_BOOL(boolobj));
 }
 
 NumberFuncs *bool_number_funcs = new NumberFuncs(

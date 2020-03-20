@@ -3,29 +3,10 @@
 #include "objects/VSIntObject.hpp"
 #include "objects/VSStringObject.hpp"
 #include "objects/VSListObject.hpp"
+#include "objects/VSTupleObject.hpp"
 
 #include <cstdarg>
 #include <vector>
-
-class VSListObject : public VSObject
-{
-public:
-    std::vector<VSObject *> items;
-
-    VSListObject()
-    {
-        this->type = VSListType;
-        this->items = std::vector<VSObject *>();
-    }
-
-    VSListObject(vs_size_t nitems)
-    {
-        this->type = VSListType;
-        this->items = std::vector<VSObject *>(nitems);
-    }
-
-    ~VSListObject() = default;
-};
 
 VSObject *vs_list_new(VSObject *typeobj, VSObject *args, VSObject *)
 {
@@ -35,15 +16,13 @@ VSObject *vs_list_new(VSObject *typeobj, VSObject *args, VSObject *)
     VSTypeObject *type = (VSTypeObject *)typeobj;
     VS_ENSURE_TYPE(type, T_LIST, "list.__new__()");
 
-    vs_size_t nargs = VSObject::c_getlen(args);
+    vs_size_t nargs = TUPLE_LEN(args);
     VSListObject *list = new VSListObject(nargs);
     for (vs_size_t i = 0; i < nargs; i++)
     {
-        VSObject *idx = vs_int_from_cint(i);
-        VSObject *item = VSObject::getitem_at(args, idx);
+        VSObject *item = TUPLE_GET(args, i);
         list->items[i] = item;
         INCREF(item);
-        DECREF(idx);
     }
     INCREF_RET(VS_AS_OBJECT(list));
 }

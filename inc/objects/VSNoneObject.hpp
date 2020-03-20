@@ -4,10 +4,24 @@
 #include "VSObject.hpp"
 #include "VSTypeObject.hpp"
 
-class VSNoneObject;
-
 extern VSTypeObject *VSNoneType;
 
-extern VSObject *VS_NONE;
+class VSNoneObject : public VSObject
+{
+private:
+    static VSNoneObject *_VS_NONE;
+
+    VSNoneObject() { this->type = VSNoneType; }
+
+public:
+    static inline VSObject *NONE() {
+        if (_VS_NONE == NULL) {
+            _VS_NONE = new VSNoneObject();
+        }
+        return _VS_NONE;
+    }
+};
+
+#define VS_NONE VSNoneObject::NONE()
 
 #endif

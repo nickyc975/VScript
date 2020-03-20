@@ -4,15 +4,7 @@
 #include "objects/VSBoolObject.hpp"
 #include "objects/VSFloatObject.hpp"
 #include "objects/VSStringObject.hpp"
-
-class VSStringObject : public VSObject
-{
-public:
-    std::string _value;
-
-    VSStringObject() : _value("") { this->type = VSStringType; }
-    VSStringObject(std::string val) : _value(val) { this->type = VSStringType; }
-};
+#include "objects/VSTupleObject.hpp"
 
 VSObject *vs_string_new(VSObject *typeobj, VSObject *args, VSObject *)
 {
@@ -22,7 +14,7 @@ VSObject *vs_string_new(VSObject *typeobj, VSObject *args, VSObject *)
     VSTypeObject *type = VS_AS_TYPE(typeobj);
     VS_ENSURE_TYPE(type, T_STR, "str new");
 
-    vs_size_t len = VSObject::c_getlen(args);
+    vs_size_t len = TUPLE_LEN(args);
     if (len == 0)
     {
         INCREF_RET(VS_AS_OBJECT(new VSStringObject()));
@@ -33,7 +25,7 @@ VSObject *vs_string_new(VSObject *typeobj, VSObject *args, VSObject *)
         terminate(TERM_ERROR);
     }
 
-    VSObject *init_val = VSObject::getitem_at(args, VS_INT_ZERO);
+    VSObject *init_val = TUPLE_GET(args, 0);
     VSTypeObject *init_type = VS_TYPEOF(init_val);
     if (init_type->__str__ == NULL)
     {
@@ -141,7 +133,7 @@ VSObject *vs_string_bool(VSObject *strobj)
     VSTypeObject *type = VS_TYPEOF(strobj);
     VS_ENSURE_TYPE(type, T_STR, "str.__bool__");
 
-    vs_size_t len = VSObject::c_getlen(strobj);
+    vs_size_t len = STRING_LEN(strobj);
     INCREF_RET(len ? VS_TRUE : VS_FALSE);
 }
 

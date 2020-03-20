@@ -3,12 +3,6 @@
 #include "objects/VSBoolObject.hpp"
 #include "objects/VSStringObject.hpp"
 
-class VSNoneObject : public VSObject
-{
-public:
-    VSNoneObject() { this->type = VSNoneType; }
-};
-
 VSObject *vs_none_new(VSObject *typeobj, VSObject *args, VSObject *)
 {
     INCREF_RET(VS_NONE);
@@ -77,5 +71,3 @@ VSTypeObject *VSNoneType = new VSTypeObject(
     NULL,                    // _number_funcs
     NULL                     // _container_funcs
 );
-
-VSObject *VS_NONE = VS_AS_OBJECT(new VSNoneObject());

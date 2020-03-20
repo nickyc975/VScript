@@ -6,35 +6,6 @@
 
 #include <cstdarg>
 
-class VSTupleObject : public VSObject
-{
-public:
-    vs_size_t nitems;
-    VSObject **items;
-
-    VSTupleObject(vs_size_t nitems)
-    {
-        this->type = VSTupleType;
-
-        this->nitems = nitems;
-        this->items = (VSObject **)malloc(sizeof(VSObject *) * nitems);
-        if (items == NULL)
-        {
-            err("unable to malloc memory of size: %llu\n", sizeof(VSObject *) * nitems);
-            terminate(TERM_ERROR);
-        }
-    }
-
-    ~VSTupleObject()
-    {
-        for (vs_size_t i = 0; i < this->nitems; i++)
-        {
-            DECREF(this->items[i]);
-        }
-        free(this->items);
-    }
-};
-
 VSObject *vs_tuple_new(VSObject *typeobj, VSObject *args, VSObject *)
 {
     VSTypeObject *typetype = VS_TYPEOF(typeobj);
@@ -43,15 +14,13 @@ VSObject *vs_tuple_new(VSObject *typeobj, VSObject *args, VSObject *)
     VSTypeObject *type = (VSTypeObject *)typeobj;
     VS_ENSURE_TYPE(type, T_TUPLE, "tuple.__new__()");
 
-    vs_size_t nargs = VSObject::c_getlen(args);
+    vs_size_t nargs = TUPLE_LEN(args);
     VSTupleObject *tuple = new VSTupleObject(nargs);
     for (vs_size_t i = 0; i < nargs; i++)
     {
-        VSObject *idx = vs_int_from_cint(i);
-        VSObject *item = VSObject::getitem_at(args, idx);
+        VSObject *item = TUPLE_GET(args, i);
         tuple->items[i] = item;
         INCREF(item);
-        DECREF(idx);
     }
     INCREF_RET(VS_AS_OBJECT(tuple));
 }

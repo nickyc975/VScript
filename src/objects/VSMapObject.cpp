@@ -6,33 +6,6 @@
 #include "objects/VSStringObject.hpp"
 #include "objects/VSMapObject.hpp"
 
-size_t hash(const VSObject *obj)
-{
-    VSObject *res = VS_TYPEOF(obj)->__hash__(obj);
-    size_t h = (size_t)vs_int_to_cint(res);
-    DECREF_EX(res);
-    return h;
-}
-
-bool equal_to(const VSObject *a, const VSObject *b)
-{
-    if (VS_TYPEOF(a) != VS_TYPEOF(b))
-    {
-        return false;
-    }
-
-    VSTypeObject *type = VS_TYPEOF(a);
-    return (bool)vs_bool_to_cbool(type->__eq__(a, b));
-}
-
-class VSMapObject : public VSObject
-{
-public:
-    std::unordered_map<VSObject *, VSObject *, decltype(&hash), decltype(&equal_to)> _map;
-
-    VSMapObject() { this->type = VSMapType; }
-};
-
 VSObject *vs_map_new(VSObject *typeobj, VSObject *args, VSObject *)
 {
     INCREF_RET(VS_AS_OBJECT(new VSMapObject()));
@@ -134,7 +107,7 @@ VSObject *vs_map_has_at(VSObject *obj, VSObject *key)
 
     VSMapObject *map = (VSMapObject *)obj;
     auto iter = map->_map.find(key);
-    return vs_bool_from_cbool(iter != map->_map.end());
+    INCREF_RET(C_BOOL_TO_BOOL(iter != map->_map.end()));
 }
 
 void vs_map_remove_at(VSObject *obj, VSObject *key)

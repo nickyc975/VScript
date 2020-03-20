@@ -4,15 +4,7 @@
 #include "objects/VSIntObject.hpp"
 #include "objects/VSFloatObject.hpp"
 #include "objects/VSStringObject.hpp"
-
-class VSIntObject : public VSObject
-{
-public:
-    cint_t _value;
-
-    VSIntObject() : _value(0) { this->type = VSIntType; }
-    VSIntObject(cint_t val) : _value(val) { this->type = VSIntType; }
-};
+#include "objects/VSTupleObject.hpp"
 
 VSObject *vs_int_new(VSObject *typeobj, VSObject *args, VSObject *)
 {
@@ -22,7 +14,7 @@ VSObject *vs_int_new(VSObject *typeobj, VSObject *args, VSObject *)
     VSTypeObject *type = VS_AS_TYPE(typeobj);
     VS_ENSURE_TYPE(type, T_INT, "int new");
 
-    vs_size_t len = VSObject::c_getlen(args);
+    vs_size_t len = TUPLE_LEN(args);
     if (len == 0)
     {
         INCREF_RET(VS_AS_OBJECT(new VSIntObject()));
@@ -33,7 +25,7 @@ VSObject *vs_int_new(VSObject *typeobj, VSObject *args, VSObject *)
         terminate(TERM_ERROR);
     }
 
-    VSObject *init_val = VSObject::getitem_at(args, VS_INT_ZERO);
+    VSObject *init_val = TUPLE_GET(args, 0);
     VSTypeObject *init_type = VS_TYPEOF(init_val);
     if (init_type->_number_funcs == NULL || init_type->_number_funcs->__int__ == NULL)
     {
@@ -44,7 +36,7 @@ VSObject *vs_int_new(VSObject *typeobj, VSObject *args, VSObject *)
     VSObject *base = NULL;
     if (len == 2)
     {
-        base = VSObject::getitem_at(args, VS_INT_ONE);
+        base = TUPLE_GET(args, 1);
     }
 
     VSObject *val = init_type->_number_funcs->__int__(init_val, base);
@@ -297,6 +289,3 @@ VSTypeObject *VSIntType = new VSTypeObject(
     int_number_funcs, // _number_funcs
     NULL              // _container_funcs
 );
-
-VSObject *VS_INT_ZERO = VS_AS_OBJECT(new VSIntObject(0));
-VSObject *VS_INT_ONE = VS_AS_OBJECT(new VSIntObject(1));
