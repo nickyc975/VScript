@@ -3,6 +3,8 @@
 
 #include "VSObject.hpp"
 #include "VSTypeObject.hpp"
+#include "objects/VSBoolObject.hpp"
+#include "objects/VSIntObject.hpp"
 
 #include <unordered_map>
 
@@ -36,19 +38,20 @@ public:
 #define AS_MAP(obj) ((VSMapObject *)obj)
 #define MAP_LEN(obj) (AS_MAP(obj)->_map.size())
 #define MAP_GET(obj, key) (AS_MAP(obj)->_map[key])
+#define MAP_HAS(obj, key) (AS_MAP(obj)->_map.find(key) != AS_MAP(obj)->_map.end())
 
-#define MAP_SET(obj, key, val)                           \
-    do {                                                 \
-        auto _key = (key);                               \
-        auto _val = (val);                               \
-        auto _map = AS_MAP(obj);                         \
-        if (_map->_map.find(_key) == _map->_map.end()) { \
-            INCREF(_key);                                \
-        } else {                                         \
-            DECREF(_map->_map[_key]);                    \
-        }                                                \
-        _map->_map[_key] = _val;                         \
-        INCREF(_val);                                    \
+#define MAP_SET(obj, key, val)        \
+    do {                              \
+        auto _key = (key);            \
+        auto _val = (val);            \
+        auto _map = AS_MAP(obj);      \
+        if (MAP_HAS(obj, _key)) {     \
+            DECREF(_map->_map[_key]); \
+        } else {                      \
+            INCREF(_key);             \
+        }                             \
+        _map->_map[_key] = _val;      \
+        INCREF(_val);                 \
     } while (0);
 
 #endif

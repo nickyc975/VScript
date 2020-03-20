@@ -1,6 +1,4 @@
 #include "error.hpp"
-#include "objects/VSBoolObject.hpp"
-#include "objects/VSIntObject.hpp"
 #include "objects/VSStringObject.hpp"
 #include "objects/VSMapObject.hpp"
 
