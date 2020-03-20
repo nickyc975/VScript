@@ -160,9 +160,9 @@ public:
     long long ln, col;
     TOKEN_TYPE tk_type;
     VSObject *tk_value;
-    std::string literal;
+    VSObject *literal;
 
-    VSToken(TOKEN_TYPE tk_type, VSObject *tk_value, std::string &literal, long long ln, long long col);
+    VSToken(TOKEN_TYPE tk_type, VSObject *tk_value, VSObject *literal, long long ln, long long col);
     ~VSToken();
 };
 

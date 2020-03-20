@@ -2,10 +2,7 @@
 #define VS_SYMTABLE_H
 
 #include "objects/VSObject.hpp"
-
-#include <string>
-#include <unordered_map>
-#include <vector>
+#include "objects/VSMapObject.hpp"
 
 typedef enum {
     SYM_VAR,
@@ -18,18 +15,18 @@ typedef enum {
 
 class SymtableEntry : public VSObject {
 public:
+    VSObject *symbol;
     SYM_TYPE sym_type;
-    std::string symbol;
     int index, parent_index;
 
-    SymtableEntry(SYM_TYPE sym_type, std::string symbol, int index, int parent_index);
-    ~SymtableEntry() = default;
+    SymtableEntry(SYM_TYPE sym_type, VSObject *symbol, int index, int parent_index);
+    ~SymtableEntry();
 };
 
 class Symtable : public VSObject {
 private:
     Symtable *parent;
-    std::unordered_map<std::string, SymtableEntry *> table;
+    VSMapObject *table;
 
 public:
     Symtable(Symtable *parent);
@@ -37,11 +34,11 @@ public:
 
     bool has_parent();
     Symtable *get_parent();
-    void put(std::string name, SymtableEntry *entry);
-    SymtableEntry *get(std::string name);
-    SymtableEntry *get_recur(std::string name);
-    bool contains(std::string name);
-    bool contains_recur(std::string name);
+    void put(VSObject *name, SymtableEntry *entry);
+    SymtableEntry *get(VSObject *name);
+    SymtableEntry *get_recur(VSObject *name);
+    bool contains(VSObject *name);
+    bool contains_recur(VSObject *name);
 };
 
 #endif

@@ -45,12 +45,14 @@ public:
 
 class IdentNode : public VSASTNode {
 public:
-    std::string name;
+    VSObject *name;
 
-    IdentNode(std::string name) : name(name) {
+    IdentNode(VSObject *name) : name(name) {
         this->node_type = AST_IDENT;
     }
-    ~IdentNode() = default;
+    ~IdentNode() {
+        DECREF_EX(this->name);
+    }
 };
 
 class ConstNode : public VSASTNode {

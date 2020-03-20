@@ -12,12 +12,14 @@
 #define ERR_WITH_POS(ln, col, msg, ...) err("line: %ld, col: %d, " msg, ln, col, __VA_ARGS__)
 
 VSToken::VSToken(
-    TOKEN_TYPE tk_type, VSObject *tk_value, std::string &literal, long long ln, long long col) : tk_type(tk_type), tk_value(tk_value), literal(literal), ln(ln), col(col) {
+    TOKEN_TYPE tk_type, VSObject *tk_value, VSObject *literal, long long ln, long long col) : tk_type(tk_type), tk_value(tk_value), literal(literal), ln(ln), col(col) {
         this->refcnt = 1;
+        INCREF(literal);
 }
 
 VSToken::~VSToken() {
     DECREF_EX(this->tk_value);
+    DECREF_EX(this->literal);
 }
 
 VSTokenizer::VSTokenizer(FILE *file) {
@@ -179,7 +181,7 @@ int VSTokenizer::getstr(std::string &str, int len) {
 VSToken *VSTokenizer::reco_none(std::string &literal) {
     if (literal.length() == 4 && literal == "none") {
         INCREF(VS_NONE);
-        return new VSToken(TK_CONSTANT, VS_NONE, literal, this->ln, this->col);
+        return new VSToken(TK_CONSTANT, VS_NONE, C_STRING_TO_STRING(literal), this->ln, this->col);
     }
     return NULL;
 }
@@ -189,10 +191,10 @@ VSToken *VSTokenizer::reco_bool(std::string &literal) {
     int len = literal.length();
     if (len == 4 && literal == "true") {
         INCREF(VS_TRUE);
-        token = new VSToken(TK_CONSTANT, VS_TRUE, literal, this->ln, this->col);
+        token = new VSToken(TK_CONSTANT, VS_TRUE, C_STRING_TO_STRING(literal), this->ln, this->col);
     } else if (len == 5 && literal == "false") {
         INCREF(VS_FALSE);
-        token = new VSToken(TK_CONSTANT, VS_FALSE, literal, this->ln, this->col);
+        token = new VSToken(TK_CONSTANT, VS_FALSE, C_STRING_TO_STRING(literal), this->ln, this->col);
     }
     return token;
 }
@@ -207,10 +209,10 @@ VSToken *VSTokenizer::reco_char(std::string &literal) {
     VSToken *token = NULL;
     if (literal[1] == '\\') {
         token = new VSToken(
-            TK_CONSTANT, vs_char_from_cchar(escape(literal[2])), literal, this->ln, this->col);
+            TK_CONSTANT, vs_char_from_cchar(escape(literal[2])), C_STRING_TO_STRING(literal), this->ln, this->col);
     } else {
         token = new VSToken(
-            TK_CONSTANT, vs_char_from_cchar(literal[1]), literal, this->ln, this->col);
+            TK_CONSTANT, vs_char_from_cchar(literal[1]), C_STRING_TO_STRING(literal), this->ln, this->col);
     }
     return token;
 }
@@ -229,7 +231,7 @@ VSToken *VSTokenizer::reco_num(std::string &literal) {
             ERR_WITH_POS(this->ln, this->col, "invalid float literal: \"%s\"", literal.c_str());
             return NULL;
         }
-        return new VSToken(TK_CONSTANT, vs_float_from_cfloat(float_val), literal, this->ln, this->col);
+        return new VSToken(TK_CONSTANT, vs_float_from_cfloat(float_val), C_STRING_TO_STRING(literal), this->ln, this->col);
     } else {
         char *end = NULL;
         cint_t int_val = std::strtoll(literal.c_str(), &end, 0);
@@ -243,7 +245,7 @@ VSToken *VSTokenizer::reco_num(std::string &literal) {
             ERR_WITH_POS(this->ln, this->col, "invalid int literal: \"%s\"", literal.c_str());
             return NULL;
         }
-        return new VSToken(TK_CONSTANT, vs_float_from_cfloat(int_val), literal, this->ln, this->col);
+        return new VSToken(TK_CONSTANT, vs_float_from_cfloat(int_val), C_STRING_TO_STRING(literal), this->ln, this->col);
     }
 }
 
@@ -252,11 +254,12 @@ VSToken *VSTokenizer::reco_str(std::string &literal) {
         ERR_WITH_POS(this->ln, this->col, "invalid string literal: \"%s\"", literal.c_str());
         return NULL;
     }
-    return new VSToken(TK_CONSTANT, vs_string_from_cstring(literal), literal, this->ln, this->col);
+    VSObject *strobj = vs_string_from_cstring(literal);
+    return new VSToken(TK_CONSTANT, strobj, strobj, this->ln, this->col);
 }
 
 VSToken *VSTokenizer::reco_kwd(std::string &literal) {
-#define NEW_KWD_TOKEN(tp) new VSToken(tp, NULL, literal, this->ln, this->col)
+#define NEW_KWD_TOKEN(tp) new VSToken(tp, NULL, C_STRING_TO_STRING(literal), this->ln, this->col)
 
     VSToken *token = NULL;
     switch (literal[0]) {
@@ -335,7 +338,7 @@ VSToken *VSTokenizer::gettoken() {
         this->peek = this->reco_num(literal);
         if (this->peek == NULL) {
             INCREF(VS_NONE);
-            this->peek = new VSToken(TK_CONSTANT, VS_NONE, literal, this->ln, this->col);
+            this->peek = new VSToken(TK_CONSTANT, VS_NONE, C_STRING_TO_STRING(literal), this->ln, this->col);
         }
     } else if (IS_WORD_CHAR(tk_char)) {
         this->getword(literal);
@@ -363,7 +366,7 @@ VSToken *VSTokenizer::gettoken() {
         }
 
         // identifier
-        this->peek = new VSToken(TK_IDENTIFIER, NULL, literal, this->ln, this->col);
+        this->peek = new VSToken(TK_IDENTIFIER, NULL, C_STRING_TO_STRING(literal), this->ln, this->col);
     } else if (IS_QUOTE(tk_char)) {
         this->getquoted(literal);
 
@@ -371,19 +374,19 @@ VSToken *VSTokenizer::gettoken() {
             this->peek = this->reco_char(literal);
             if (this->peek == NULL) {
                 INCREF(VS_NONE);
-                this->peek = new VSToken(TK_CONSTANT, VS_NONE, literal, this->ln, this->col);
+                this->peek = new VSToken(TK_CONSTANT, VS_NONE, C_STRING_TO_STRING(literal), this->ln, this->col);
             }
         } else {
             this->peek = this->reco_str(literal);
             if (this->peek == NULL) {
                 INCREF(VS_NONE);
-                this->peek = new VSToken(TK_CONSTANT, VS_NONE, literal, this->ln, this->col);
+                this->peek = new VSToken(TK_CONSTANT, VS_NONE, C_STRING_TO_STRING(literal), this->ln, this->col);
             }
         }
 
     } else {
 
-#define NEW_SYM_TOKEN(tp) new VSToken(tp, NULL, literal, this->ln, this->col)
+#define NEW_SYM_TOKEN(tp) new VSToken(tp, NULL, C_STRING_TO_STRING(literal), this->ln, this->col)
 
         tk_char = this->getchar();
         switch (tk_char) {

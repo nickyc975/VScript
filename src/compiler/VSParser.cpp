@@ -1,5 +1,6 @@
 #include "error.hpp"
 #include "compiler/VSParser.hpp"
+#include "objects/VSStringObject.hpp"
 
 #include <cstdarg>
 
@@ -84,7 +85,7 @@ VSToken *VSParser::expect(int ntypes, ...) {
     va_end(types);
 
     if (!res) {
-        err("line: %ld, col: %ld, unexpected token: \"%s\"", token->ln, token->col, token->literal.c_str());
+        err("line: %ld, col: %ld, unexpected token: \"%s\"", token->ln, token->col, STRING_TO_C_STRING(token->literal).c_str());
         DECREF_EX(token);
     }
 
