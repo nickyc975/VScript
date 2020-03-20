@@ -8,18 +8,21 @@ typedef enum {
     SYM_VAR,
     SYM_VAL,
     SYM_ARG,
-    SYM_CLOSURE,
-    SYM_ATTR_NAME,
-    SYM_BUILTIN
+    SYM_FREE,
+    SYM_BUILTIN,
+    SYM_UNDEFINED
 } SYM_TYPE;
+
+#define IS_LOCAL(tp) (tp == SYM_VAR || tp == SYM_VAL || tp == SYM_ARG)
 
 class SymtableEntry : public VSObject {
 public:
     VSObject *symbol;
     SYM_TYPE sym_type;
-    int index, parent_index;
+    bool is_cell;
+    int index, cell_index;
 
-    SymtableEntry(SYM_TYPE sym_type, VSObject *symbol, int index, int parent_index);
+    SymtableEntry(SYM_TYPE sym_type, VSObject *symbol, int index, int cell_index);
     ~SymtableEntry();
 };
 

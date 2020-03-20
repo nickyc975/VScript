@@ -32,28 +32,46 @@ typedef enum
     // 1 arg, set size, create a set of objects in the stack
     OP_BUILD_SET,
 
-    // no arg, load the value at index in the list
+    // no arg, load the value at index (stack top) of object (following top)
     OP_INDEX_LOAD,
 
-    // no arg, store the value at index of the list
+    // no arg, store the value at index (stack top) of object (following top)
     OP_INDEX_STORE,
 
     // 1 arg, load the local object indicated by the arg
     OP_LOAD_LOCAL,
 
-    // 1 arg, load the object with the name indicated by the arg
+    // 1 arg, load the closure object indicated by the arg
+    OP_LOAD_FREE,
+
+    // 1 arg, load the cell of cell var at arg
+    OP_LOAD_CELL,
+
+    // 1 arg, load the cell of local var at arg
+    OP_LOAD_LOCAL_CELL,
+
+    // 1 arg, load the cell of free var at arg
+    OP_LOAD_FREE_CELL,
+
+    // 1 arg, load the attr (name indicated by the arg) of the stack top
     OP_LOAD_ATTR,
 
     // 1 arg, store stack top to local indicated by the arg
     OP_STORE_LOCAL,
 
-    // 1 arg, store stack top to name indicated by the arg
+    // 1 arg, store stack top to closure at arg
+    OP_STORE_FREE,
+
+    // 1 arg, store cell at arg
+    OP_STORE_CELL,
+
+    // 1 arg, store stack top to the attr (name indicated by arg) of the obj following top
     OP_STORE_ATTR,
 
     // 1 arg, load the object at index in the const vector
     OP_LOAD_CONST,
 
-    // 1 arg, load the global object indicated by the arg
+    // 1 arg, load the builtin object indicated by the arg
     OP_LOAD_BUILTIN,
 
     // 1 arg, jump to point in current block
@@ -106,8 +124,12 @@ static char *OPCODE_STR[] =
         "INDEX_LOAD",
         "INDEX_STORE",
         "LOAD_LOCAL",
+        "LOAD_FREE",
+        "LOAD_CELL",
         "LOAD_ATTR",
         "STORE_LOCAL",
+        "STORE_FREE",
+        "STORE_CELL",
         "STORE_ATTR",
         "LOAD_CONST",
         "LOAD_BUILTIN",

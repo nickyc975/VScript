@@ -1,5 +1,6 @@
-#include "error.hpp"
 #include "compiler/VSCompiler.hpp"
+#include "error.hpp"
+#include "objects/VSListObject.hpp"
 #include "objects/VSStringObject.hpp"
 
 #define ENTER_BLK()                                                                  \
@@ -16,13 +17,13 @@
         DECREF_EX(curtable);                        \
     } while (0);
 
-#define ENTER_FUNC(name)                                   \
-    do {                                                   \
-        VSObject *nameobj = vs_string_from_cstring(name);  \
-        this->codeobjects.push(new VSCodeObject(nameobj)); \
-        this->conststack.push(new name_addr_map());        \
-        DECREF_EX(nameobj);                                \
-        ENTER_BLK();                                       \
+#define ENTER_FUNC(name)                                \
+    do {                                                \
+        this->codeobjects.push(new VSCodeObject(name)); \
+        this->conststack.push(new name_addr_map());     \
+        auto _consts = this->conststack.top();          \
+        (*_consts)["__vs_none__"] = 0;                  \
+        ENTER_BLK();                                    \
     } while (0);
 
 #define LEAVE_FUNC()                          \
@@ -344,6 +345,35 @@ void VSCompiler::gen_for_stmt(VSASTNode *node) {
     LEAVE_BLK();
 }
 
+void VSCompiler::gen_build_func(VSCodeObject *code) {
+    Symtable *p_table = this->symtables.top();
+    VSCodeObject *p_code = this->codeobjects.top();
+
+    for (vs_size_t i = 0; i < code->nfreevars; i++) {
+        SymtableEntry *entry;
+        VSObject *freevar = LIST_GET(code->freevars, i);
+        if (p_table->contains(freevar)) {
+            entry = p_table->get(freevar);
+            if (!entry->is_cell) {
+                entry->cell_index = p_code->ncellvars;
+                p_code->add_cellvar(freevar);
+                entry->is_cell = true;
+            }
+        } else {
+            entry = new SymtableEntry(SYM_UNDEFINED, freevar, 0, p_code->ncellvars);
+            p_table->put(freevar, entry);
+            p_code->add_cellvar(freevar);
+            entry->is_cell = true;
+        }
+        p_code->add_inst(VSInst(OP_LOAD_CELL, entry->cell_index));
+    }
+
+    p_code->add_inst(VSInst(OP_BUILD_TUPLE, code->nfreevars));
+    p_code->add_inst(VSInst(OP_LOAD_CONST, p_code->nconsts));
+    p_code->add_inst(VSInst(OP_BUILD_FUNC));
+    p_code->add_inst(VSInst(OP_STORE_LOCAL, p_code->nlvars));
+}
+
 void VSCompiler::gen_func_decl(VSASTNode *node) {
     Symtable *p_table = this->symtables.top();
     VSCodeObject *p_code = this->codeobjects.top();
@@ -351,9 +381,9 @@ void VSCompiler::gen_func_decl(VSASTNode *node) {
     FuncDeclNode *func = (FuncDeclNode *)node;
 
     // Add function name to parent code locals.
-    std::string name = func->name->name;
+    VSObject *name = func->name->name;
     if (p_table->contains(name)) {
-        err("duplicated definition of name: \"%s\"", name.c_str());
+        err("duplicated definition of name: \"%s\"", STRING_TO_C_STRING(name).c_str());
         terminate(TERM_ERROR);
     }
     // create symtable entry
@@ -369,30 +399,55 @@ void VSCompiler::gen_func_decl(VSASTNode *node) {
     for (auto argnode : func->args) {
         VSObject *argname;
         if (argnode->node_type == AST_IDENT) {
-            IdentNode *arg = (IdentNode *)argnode;
-            argname = vs_string_from_cstring(arg->name);
+            argname = ((IdentNode *)argnode)->name;
         } else {
-            InitDeclNode *arg = (InitDeclNode *)argnode;
-            argname = vs_string_from_cstring(arg->name->name);
+            argname = ((InitDeclNode *)argnode)->name->name;
         }
-        std::string argstr = vs_string_to_cstring(argname);
-        table->put(argstr, new SymtableEntry(SYM_ARG, argstr, code->nlvars, 0));
+        table->put(argname, new SymtableEntry(SYM_ARG, argname, code->nlvars, 0));
         code->add_arg(argname);
-        DECREF(argname);
     }
+    
+    // should set up cell vars first, so jump.
+    vs_size_t start_pos = code->ninsts;
+    code->add_inst(VSInst(OP_JMP, 0));
 
     // gen function body.
     this->gen_cpd_stmt(func->body);
 
     // default return none
-    code->add_inst(VSInst(OP_LOAD_CONST,0));
+    code->add_inst(VSInst(OP_LOAD_CONST, 0));
     code->add_inst(VSInst(OP_RET));
+
+    // set up cell vars
+    code->code[start_pos].operand = code->ninsts;
+    for (vs_size_t i = 0; i < code->ncellvars; i++) {
+        VSObject *cellvar = LIST_GET(code->cellvars, i);
+        if (!table->contains(cellvar)) {
+            err("internal error: cellvar used by not defined");
+            terminate(TERM_ERROR);
+        }
+
+        SymtableEntry *entry = table->get(cellvar);
+        if (IS_LOCAL(entry->sym_type)) {
+            code->add_inst(VSInst(OP_LOAD_LOCAL_CELL, entry->index));
+        } else if (entry->sym_type == SYM_FREE) {
+            code->add_inst(VSInst(OP_LOAD_FREE_CELL, entry->index));
+        } else {
+            entry->sym_type = SYM_FREE;
+            entry->index = code->nfreevars;
+            code->add_freevar(cellvar);
+            code->add_inst(VSInst(OP_LOAD_FREE_CELL, entry->index));
+        }
+        code->add_inst(VSInst(OP_STORE_CELL, i));
+    }
+
+    // jump back to the function body start point
+    code->add_inst(VSInst(OP_JMP, start_pos + 1));
 
     LEAVE_FUNC();
 
-    // Add instructions to make function
-    p_code->add_inst(VSInst(OP_LOAD_CONST, p_code->nconsts));
-    p_code->add_inst(VSInst(OP_STORE_LOCAL, p_code->nlvars));
+    // Add instructions to build function
+    gen_build_func(code);
 
     p_code->add_lvar(code->name);
     p_code->add_const(code);
@@ -414,7 +469,7 @@ void VSCompiler::gen_elif_list(VSASTNode *node) {
         cur->add_inst(VSInst(OP_NOT));
 
         vs_addr_t jif_pos = cur->ninsts;
-        cur->add_inst(VSInst(OP_JIF,  0));
+        cur->add_inst(VSInst(OP_JIF, 0));
 
         ENTER_BLK();
         this->gen_cpd_stmt(child->truestmt);
@@ -433,7 +488,7 @@ void VSCompiler::gen_elif_list(VSASTNode *node) {
     }
 
     for (auto pos : jmp_pos) {
-         cur->code[pos].operand =  cur-> ninsts;
+        cur->code[pos].operand = cur->ninsts;
     }
 }
 
@@ -548,7 +603,7 @@ VSCodeObject *VSCompiler::compile(std::string filename) {
 
     INCREF(parser);
 
-    ENTER_FUNC("__main__");
+    ENTER_FUNC(C_STRING_TO_STRING("__main__"));
 
     this->gen_cpd_stmt(parser->parse());
 

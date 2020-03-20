@@ -1,8 +1,9 @@
 #include "objects/VSTypeObject.hpp"
 #include "compiler/Symtable.hpp"
 
-SymtableEntry::SymtableEntry(SYM_TYPE sym_type, VSObject *symbol, int index, int parent_index) : 
-    sym_type(sym_type), symbol(symbol), index(index), parent_index(parent_index) {
+SymtableEntry::SymtableEntry(SYM_TYPE sym_type, VSObject *symbol, int index, int cell_index) : 
+    sym_type(sym_type), symbol(symbol), index(index), cell_index(cell_index) {
+        this->is_cell = NULL;
         INCREF(symbol);
 }
 

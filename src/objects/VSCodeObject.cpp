@@ -31,10 +31,12 @@ VSCodeObject::VSCodeObject(VSObject *name)
     this->nconsts = 0;
     this->nargs = 0;
     this->nlvars = 0;
+    this->ncellvars = 0;
     this->nfreevars = 0;
 
     this->consts = vs_list_pack(0);
     this->lvars = vs_list_pack(0);
+    this->cellvars = vs_list_pack(0);
     this->freevars = vs_list_pack(0);
     this->code = std::vector<VSInst>();
 
@@ -64,6 +66,11 @@ void VSCodeObject::add_lvar(VSObject *name)
 {
     LIST_APPEND(this->lvars, name);
     this->nlvars++;
+}
+
+void VSCodeObject::add_cellvar(VSObject *name) {
+    LIST_APPEND(this->cellvars, name);
+    this->ncellvars++;
 }
 
 void VSCodeObject::add_freevar(VSObject *name)

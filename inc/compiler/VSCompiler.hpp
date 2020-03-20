@@ -42,6 +42,8 @@ private:
     void gen_if_stmt(VSASTNode *node);
     void gen_while_stmt(VSASTNode *node);
 
+    void gen_build_func(VSCodeObject *code);
+
     static OPCODE get_b_op(TOKEN_TYPE tk);
     static std::string get_key(VSObject *value);
 
