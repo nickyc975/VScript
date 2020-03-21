@@ -10,19 +10,26 @@
 
 #include <stack>
 #include <unordered_map>
+#include <vector>
 
 class VSCompiler : public VSObject {
 private:
     name_addr_map *builtins;
     std::stack<Symtable *> symtables;
     std::stack<VSCodeObject *> codeobjects;
+    std::stack<name_addr_map *> namestack;
     std::stack<name_addr_map *> conststack;
+    std::stack<std::vector<vs_addr_t> *> breakposes;
+    std::stack<std::vector<vs_addr_t> *> continueposes;
 
+    void do_store(OPCODE opcode, VSASTNode *lval);
+    void fill_back_break_continue(vs_addr_t loop_start);
+    void gen_build_func(VSCodeObject *code);
     void gen_const(VSASTNode *node);
     void gen_ident(VSASTNode *node);
     void gen_tuple_decl(VSASTNode *node);
     void gen_list_decl(VSASTNode *node);
-    void gen_map_decl(VSASTNode *node);
+    void gen_dict_decl(VSASTNode *node);
     void gen_set_decl(VSASTNode *node);
     void gen_b_expr(VSASTNode *node);
     void gen_u_expr(VSASTNode *node);
@@ -41,8 +48,6 @@ private:
     void gen_elif_list(VSASTNode *node);
     void gen_if_stmt(VSASTNode *node);
     void gen_while_stmt(VSASTNode *node);
-
-    void gen_build_func(VSCodeObject *code);
 
     static OPCODE get_b_op(TOKEN_TYPE tk);
     static std::string get_key(VSObject *value);

@@ -21,9 +21,11 @@
     do {                                                \
         this->codeobjects.push(new VSCodeObject(name)); \
         this->conststack.push(new name_addr_map());     \
+        this->namestack.push(new name_addr_map());      \
+        this->symtables.push(new Symtable(NULL));       \
         auto _consts = this->conststack.top();          \
         (*_consts)["__vs_none__"] = 0;                  \
-        ENTER_BLK();                                    \
+        INCREF(this->symtables.top());                  \
     } while (0);
 
 #define LEAVE_FUNC()                          \
@@ -32,13 +34,19 @@
         auto consts = this->conststack.top(); \
         this->conststack.pop();               \
         delete consts;                        \
+        auto names = this->namestack.top();   \
+        this->namestack.pop();                \
+        delete names;                         \
         LEAVE_BLK();                          \
     } while (0);
 
 VSCompiler::VSCompiler(name_addr_map *builtins) : builtins(builtins) {
     this->symtables = std::stack<Symtable *>();
     this->codeobjects = std::stack<VSCodeObject *>();
+    this->namestack = std::stack<name_addr_map *>();
     this->conststack = std::stack<name_addr_map *>();
+    this->breakposes = std::stack<std::vector<vs_addr_t> *>();
+    this->continueposes = std::stack<std::vector<vs_addr_t> *>();
 }
 
 VSCompiler::~VSCompiler() {
@@ -103,89 +111,147 @@ std::string VSCompiler::get_key(VSObject *value) {
     }
 }
 
-// static void do_store(OPCODE opcode, VSASTNode *assign_var)
-// {
-//     VSCodeObject *cur = codestack.top();
-//     auto nonlocals = nonlocalstack.top();
+void VSCompiler::do_store(OPCODE opcode, VSASTNode *lval) {
+    Symtable *table = this->symtables.top();
+    name_addr_map *names = this->namestack.top();
+    VSCodeObject *code = this->codeobjects.top();
 
-//     if (opcode != OP_NOP)
-//     {
-//         this->gen_expr(assign_var);
-//         cur->add_inst(VSInst(opcode));
-//     }
+    if (opcode != OP_NOP) {
+        this->gen_expr(lval);
+        code->add_inst(VSInst(opcode));
+    }
 
-//     if (assign_var->type == AST_IDENT)
-//     {
-//         std::string *name = assign_var->name;
-//         if (cur->name_to_addr.find(*name) != cur->name_to_addr.end())
-//         {
-//             cur->add_inst(VSInst(OP_STORE_LOCAL, cur->name_to_addr[*name]));
-//         }
-//         else
-//         {
-//             if (nonlocals->find(*name) == nonlocals->end())
-//             {
-//                 cur->add_non_local(*name);
-//                 (*nonlocals)[*name] = cur->nlvar_num - 1;
-//             }
-//             cur->add_inst(VSInst(OP_STORE_NAME, (*nonlocals)[*name]));
-//         }
-//     }
-//     else if (assign_var->type == AST_LIST_IDX)
-//     {
-//         this->gen_expr(assign_var->list_index);
-//         this->gen_expr(assign_var->list_name);
-//         cur->add_inst(VSInst(OP_INDEX_STORE));
-//     }
-// }
+    switch (lval->node_type) {
+        case AST_IDENT: {
+            IdentNode *name = (IdentNode *)lval;
+            if (!table->contains_recur(name->name)) {
+                err("name \"%s\" is not defined locally, so can not be assigned.", 
+                    STRING_TO_C_STRING(name->name).c_str());
+                terminate(TERM_ERROR);
+            }
+            SymtableEntry *entry = table->get_recur(name->name);
+            if (!IS_LOCAL(entry->sym_type) || entry->sym_type == SYM_VAL) {
+                err("name \"%s\" is not defined locally or is immutable, so can not be assigned.", 
+                    STRING_TO_C_STRING(name->name).c_str());
+                terminate(TERM_ERROR);
+            }
+            code->add_inst(VSInst(OP_STORE_LOCAL, entry->index));
+            break;
+        }
+        case AST_IDX_EXPR: {
+            IdxExprNode *idx_expr = (IdxExprNode *)lval;
+            this->gen_expr(idx_expr->index);
+            this->gen_expr(idx_expr->obj);
+            code->add_inst(VSInst(OP_INDEX_STORE));
+            break;
+        }
+        case AST_DOT_EXPR: {
+            DotExprNode *dot_expr = (DotExprNode *)lval;
+            this->gen_expr(dot_expr->obj);
+
+            vs_size_t idx;
+            std::string &attrname = STRING_TO_C_STRING(dot_expr->attrname->name);
+            auto idx_iter = names->find(attrname);
+            if (idx_iter == names->end()) {
+                idx = code->nnames;
+                (*names)[attrname] = code->nnames;
+                code->add_name(dot_expr->attrname->name);
+            } else {
+                idx = idx_iter->second;
+            }
+            code->add_inst(VSInst(OP_STORE_ATTR, idx));
+            break;
+        }
+        default:
+            err("invalid left value");
+            terminate(TERM_ERROR);
+            break;
+    }
+}
+
+void VSCompiler::fill_back_break_continue(vs_addr_t loop_start) {
+    VSCodeObject *code = this->codeobjects.top();
+    std::vector<vs_addr_t> *breaks = this->breakposes.top();
+    for (auto break_pos : *breaks)
+    {
+        code->code[break_pos].operand = code->ninsts;
+    }
+    this->breakposes.pop();
+    delete breaks;
+
+    std::vector<vs_addr_t> *continues = this->continueposes.top();
+    for (auto continue_pos : *continues)
+    {
+        code->code[continue_pos].operand = loop_start;
+    }
+    this->continueposes.pop();
+    delete continues;
+}
 
 void VSCompiler::gen_const(VSASTNode *node) {
     VSObject *value = ((ConstNode *)node)->value;
     auto consts = conststack.top();
-    VSCodeObject *cur = codeobjects.top();
+    VSCodeObject *code = codeobjects.top();
     std::string const_key = get_key(value);
     if (consts->find(const_key) == consts->end()) {
-        (*consts)[const_key] = cur->nconsts;
-        cur->add_const(value);
+        (*consts)[const_key] = code->nconsts;
+        code->add_const(value);
     }
     vs_addr_t index = (*consts)[const_key];
-    cur->add_inst(VSInst(OP_LOAD_CONST, index));
+    code->add_inst(VSInst(OP_LOAD_CONST, index));
 }
 
 void VSCompiler::gen_ident(VSASTNode *node) {
-    VSCodeObject *cur = codestack.top();
-    auto nonlocals = nonlocalstack.top();
+    Symtable *table = this->symtables.top();
+    VSCodeObject *code = this->codeobjects.top();
 
-    std::string *name = node->name;
-    if (globalsyms->find(*name) != globalsyms->end()) {
-        cur->add_inst(VSInst(OP_LOAD_GLOBAL, (*globalsyms)[*name]));
-    } else if (cur->name_to_addr.find(*name) != cur->name_to_addr.end()) {
-        cur->add_inst(VSInst(OP_LOAD_LOCAL, cur->name_to_addr[*name]));
-    } else {
-        if (nonlocals->find(*name) == nonlocals->end()) {
-            cur->add_non_local(*name);
-            (*nonlocals)[*name] = cur->nlvar_num - 1;
+    IdentNode *ident = (IdentNode *)node;
+    if (table->contains_recur(ident->name)) {
+        SymtableEntry *entry = table->get_recur(ident->name);
+        if (IS_LOCAL(entry->sym_type)) {
+            code->add_inst(VSInst(OP_LOAD_LOCAL, entry->index));
+        } else if (entry->sym_type == SYM_FREE) {
+            code->add_inst(VSInst(OP_LOAD_FREE, entry->index));
+        } else if (entry->sym_type == SYM_BUILTIN) {
+            code->add_inst(VSInst(OP_LOAD_BUILTIN, entry->index));
+        } else {
+            entry->sym_type = SYM_FREE;
+            entry->index = code->nfreevars;
+            code->add_inst(VSInst(OP_LOAD_FREE, entry->index));
         }
-        cur->add_inst(VSInst(OP_LOAD_NAME, (*nonlocals)[*name]));
+    } else {
+        SymtableEntry *entry;
+        auto idx_iter = this->builtins->find(STRING_TO_C_STRING(ident->name));
+        if (idx_iter != this->builtins->end()) {
+            entry = new SymtableEntry(SYM_BUILTIN, ident->name, idx_iter->second, 0);
+            code->add_inst(VSInst(OP_LOAD_BUILTIN, entry->index));
+        } else {
+            entry = new SymtableEntry(SYM_FREE, ident->name, code->nfreevars, 0);
+            code->add_inst(VSInst(OP_LOAD_FREE, entry->index));
+            code->add_freevar(ident->name);
+        }
+        table->put(ident->name, entry);
     }
 }
 
 void VSCompiler::gen_b_expr(VSASTNode *node) {
-    VSCodeObject *cur = codestack.top();
-    this->gen_expr(node->r_operand);
-    this->gen_expr(node->l_operand);
-    cur->add_inst(VSInst(get_b_op(node->b_opcode)));
+    VSCodeObject *code = this->codeobjects.top();
+    BOPNode *bop_expr = (BOPNode *)node;
+    this->gen_expr(bop_expr->r_operand);
+    this->gen_expr(bop_expr->l_operand);
+    code->add_inst(VSInst(get_b_op(bop_expr->opcode)));
 }
 
 void VSCompiler::gen_u_expr(VSASTNode *node) {
-    VSCodeObject *cur = codestack.top();
-    this->gen_expr(node->operand);
-    switch (node->u_opcode) {
+    VSCodeObject *code = this->codeobjects.top();
+    UOPNode *uop_expr = (UOPNode *)node;
+    this->gen_expr(uop_expr->operand);
+    switch (uop_expr->opcode) {
         case TK_SUB:
-            cur->add_inst(VSInst(OP_NEG));
+            code->add_inst(VSInst(OP_NEG));
             break;
         case TK_NOT:
-            cur->add_inst(VSInst(OP_NOT));
+            code->add_inst(VSInst(OP_NOT));
             break;
         default:
             break;
@@ -193,72 +259,142 @@ void VSCompiler::gen_u_expr(VSASTNode *node) {
 }
 
 void VSCompiler::gen_idx_expr(VSASTNode *node) {
-    VSCodeObject *cur = codestack.top();
-    this->gen_expr(node->list_index);
-    this->gen_expr(node->list_name);
-    cur->add_inst(VSInst(OP_INDEX_LOAD));
+    VSCodeObject *code = this->codeobjects.top();
+    IdxExprNode *idx_expr = (IdxExprNode *)node;
+    this->gen_expr(idx_expr->index);
+    this->gen_expr(idx_expr->obj);
+    code->add_inst(VSInst(OP_INDEX_LOAD));
+}
+
+void VSCompiler::gen_tuple_decl(VSASTNode *node) {
+    VSCodeObject *code = this->codeobjects.top();
+    TupleDeclNode *tuple = (TupleDeclNode *)node;
+
+    // tranverse the tuple from end to start
+    int index = tuple->values.size() - 1;
+    while (index >= 0) {
+        this->gen_expr(tuple->values[index]);
+        index--;
+    }
+    code->add_inst(VSInst(OP_BUILD_TUPLE, tuple->values.size()));
 }
 
 void VSCompiler::gen_list_decl(VSASTNode *node) {
-    VSCodeObject *cur = codestack.top();
+    VSCodeObject *code = this->codeobjects.top();
+    ListDeclNode *list = (ListDeclNode *)node;
+
     // tranverse the list from end to start
-    int index = node->list_val->size() - 1;
+    int index = list->values.size() - 1;
     while (index >= 0) {
-        this->gen_expr(node->list_val->at(index));
+        this->gen_expr(list->values[index]);
         index--;
     }
-    cur->add_inst(VSInst(OP_BUILD_LIST, node->list_val->size()));
+    code->add_inst(VSInst(OP_BUILD_LIST, list->values.size()));
+}
+
+void VSCompiler::gen_dict_decl(VSASTNode *node) {
+    VSCodeObject *code = this->codeobjects.top();
+    DictDeclNode *dict = (DictDeclNode *)node;
+
+    for (auto value : dict->values) {
+        PairExprNode *pair_expr = (PairExprNode *)value;
+        this->gen_expr(pair_expr->value);
+        this->gen_expr(pair_expr->key);
+        code->add_inst(VSInst(OP_BUILD_TUPLE, 2));
+    }
+    code->add_inst(VSInst(OP_BUILD_DICT, dict->values.size()));
+}
+
+void VSCompiler::gen_set_decl(VSASTNode *node) {
+    VSCodeObject *code = this->codeobjects.top();
+    SetDeclNode *set = (SetDeclNode *)node;
+
+    // tranverse the list from end to start
+    for (auto value : set->values) {
+        this->gen_expr(value);
+    }
+    code->add_inst(VSInst(OP_BUILD_SET, set->values.size()));
 }
 
 void VSCompiler::gen_func_call(VSASTNode *node) {
-    VSCodeObject *cur = codestack.top();
-    this->gen_list_val(node->arg_list);
-    this->gen_expr(node->func);
-    cur->add_inst(VSInst(OP_CALL));
+    VSCodeObject *code = this->codeobjects.top();
+    FuncCallNode *funccall = (FuncCallNode *)node;
+    
+    if (funccall->args->node_type == NULL) {
+        err("internal error: func->args is NULL");
+        terminate(TERM_ERROR);
+    }
+    if (funccall->args->node_type != AST_TUPLE_DECL) {
+        this->gen_expr(funccall->args);
+        code->add_inst(VSInst(OP_BUILD_TUPLE, 1));
+    } else {
+        this->gen_tuple_decl(funccall->args);
+    }
+    this->gen_expr(funccall->func);
+    code->add_inst(VSInst(OP_CALL_FUNC));
 }
 
 void VSCompiler::gen_return(VSASTNode *node) {
-    VSCodeObject *cur = codestack.top();
+    VSCodeObject *code = this->codeobjects.top();
+    ReturnStmtNode *ret = (ReturnStmtNode *)node;
+
     // set none as the default return value
-    if (node->ret_val == NULL)
-        cur->add_inst(VSInst(OP_LOAD_CONST, CONST_NONE_ADDR));
-    else
-        this->gen_expr(node->ret_val);
-    cur->add_inst(VSInst(OP_RET));
+    if (ret->retval == NULL) {
+        code->add_inst(VSInst(OP_LOAD_CONST, 0));
+    } else {
+        this->gen_expr(ret->retval);
+    }
+    code->add_inst(VSInst(OP_RET));
 }
 
 void VSCompiler::gen_break(VSASTNode *node) {
-    VSCodeObject *cur = codestack.top();
-    cur->add_inst(VSInst(OP_BREAK));
+    VSCodeObject *code = this->codeobjects.top();
+    auto breaks = this->breakposes.top();
+    breaks->push_back(code->ninsts);
+    code->add_inst(VSInst(OP_JMP, 0));
 }
 
 void VSCompiler::gen_continue(VSASTNode *node) {
-    VSCodeObject *cur = codestack.top();
-    cur->add_inst(VSInst(OP_CONTINUE));
+    VSCodeObject *code = this->codeobjects.top();
+    auto continues = this->continueposes.top();
+    continues->push_back(code->ninsts);
+    code->add_inst(VSInst(OP_JMP, 0));
 }
 
 void VSCompiler::gen_expr(VSASTNode *node) {
-    switch (node->type) {
+    switch (node->node_type) {
         case AST_CONST:
             this->gen_const(node);
             break;
         case AST_IDENT:
             this->gen_ident(node);
             break;
-        case AST_LIST_VAL:
-            this->gen_list_val(node);
+        case AST_TUPLE_DECL:
+            this->gen_tuple_decl(node);
             break;
-        case AST_LIST_IDX:
-            this->gen_list_idx(node);
+        case AST_LIST_DECL:
+            this->gen_list_decl(node);
+            break;
+        case AST_DICT_DECL:
+            this->gen_dict_decl(node);
+            break;
+        case AST_SET_DECL:
+            this->gen_set_decl(node);
+            break;
+        case AST_IDX_EXPR:
+            this->gen_idx_expr(node);
             break;
         case AST_FUNC_CALL:
             this->gen_func_call(node);
             break;
-        case AST_B_EXPR:
+        case AST_B_OP_EXPR:
             this->gen_b_expr(node);
             break;
-        case AST_U_EXPR:
+        case AST_U_OP_EXPR:
             this->gen_u_expr(node);
+            break;
+        case AST_FUNC_DECL:
+            this->gen_func_decl(node);
             break;
         default:
             break;
@@ -266,8 +402,9 @@ void VSCompiler::gen_expr(VSASTNode *node) {
 }
 
 void VSCompiler::gen_expr_list(VSASTNode *node) {
-    if (node->type == AST_EXPR_LST) {
-        for (auto expr : *node->expr_list) {
+    if (node->node_type == AST_EXPR_LST) {
+        ExprListNode *expr_list = (ExprListNode *)node;
+        for (auto expr : expr_list->values) {
             this->gen_assign_expr(expr);
         }
         return;
@@ -276,41 +413,65 @@ void VSCompiler::gen_expr_list(VSASTNode *node) {
 }
 
 void VSCompiler::gen_decl_stmt(VSASTNode *node) {
-    VSCodeObject *cur = codeobjects.top();
-    Symtable *symtable = symtables.top();
+    Symtable *table = this->symtables.top();
+    VSCodeObject *code = this->codeobjects.top();
 
     InitDeclListNode *decl_list = (InitDeclListNode *)node;
+    SYM_TYPE sym_type = decl_list->specifier == TK_VAR ? SYM_VAR : SYM_VAL;
+
     // "child" is decl node, contains ident and init
-    for (auto child : decl_list->decls) {
-        std::string name = child->name->name;
-        if (cur->name_to_addr.find(name) == cur->name_to_addr.end()) {
-            cur->add_local(*name);
+    for (auto decl : decl_list->decls) {
+        std::string &name_str = STRING_TO_C_STRING(decl->name);
+
+        SymtableEntry *entry;
+        if (table->contains(decl->name)) {
+            entry = table->get(decl->name);
+            if (entry->sym_type != SYM_UNDEFINED) {
+                err("duplicated definition of name: \"%s\"", name_str.c_str());
+                terminate(TERM_ERROR);
+            }
+            entry->sym_type = sym_type;
+            entry->index = code->nlvars;
+        } else {
+            entry = new SymtableEntry(sym_type, decl->name, code->nlvars, 0);
+            table->put(decl->name, entry);
         }
 
+        if (decl_list->specifier == TK_VAL && decl->init_val == NULL) {
+            err("name: \"%s\" is defined as val but not assigned with any value", name_str.c_str());
+            terminate(TERM_ERROR);
+        }
+
+        code->add_lvar(decl->name);
         // Assign value.
-        if (child->init_val != NULL) {
-            this->gen_expr(child->init_val);
-            cur->add_inst(VSInst(OP_STORE_LOCAL, cur->name_to_addr[*name]));
+        if (decl->init_val != NULL) {
+            this->gen_expr(decl->init_val);
+            code->add_inst(VSInst(OP_STORE_LOCAL, entry->index));
         }
     }
 }
 
 void VSCompiler::gen_assign_expr(VSASTNode *node) {
-    if (node->type == AST_ASSIGN_EXPR) {
-        this->gen_expr(node->assign_val);
-        do_store(get_b_op(node->assign_opcode), node->assign_var);
+    if (node->node_type == AST_ASSIGN_EXPR) {
+        AssignExprNode *assign = (AssignExprNode *)node;
+        this->gen_expr(assign->rval);
+        do_store(get_b_op(assign->opcode), assign->lval);
     } else {
         this->gen_expr(node);
-        VSCodeObject *cur = codestack.top();
-        cur->add_inst(VSInst(OP_POP));
+        VSCodeObject *code = codeobjects.top();
+        code->add_inst(VSInst(OP_POP));
     }
 }
 
 void VSCompiler::gen_for_stmt(VSASTNode *node) {
-    VSCodeObject *cur = codeobjects.top();
+    VSCodeObject *code = codeobjects.top();
     ForStmtNode *for_stmt = (ForStmtNode *)node;
 
     ENTER_BLK();
+
+    this->breakposes.push(new std::vector<vs_addr_t>());
+    this->continueposes.push(new std::vector<vs_addr_t>());
+
     if (for_stmt->init != NULL) {
         if (for_stmt->init->node_type == AST_INIT_DECL_LIST) {
             this->gen_decl_stmt(for_stmt->init);
@@ -319,7 +480,7 @@ void VSCompiler::gen_for_stmt(VSASTNode *node) {
         }
     }
 
-    vs_addr_t loop_start = cur->ninsts;
+    vs_addr_t loop_start = code->ninsts;
 
     if (for_stmt->cond != NULL) {
         this->gen_expr(for_stmt->cond);
@@ -328,9 +489,9 @@ void VSCompiler::gen_for_stmt(VSASTNode *node) {
         terminate(TERM_ERROR);
     }
 
-    vs_addr_t jif_pos = cur->ninsts;
-    cur->add_inst(VSInst(OP_JIF, jif_pos + 2));
-    cur->add_inst(VSInst(OP_JMP, 0));
+    vs_addr_t jif_pos = code->ninsts;
+    code->add_inst(VSInst(OP_JIF, jif_pos + 2));
+    code->add_inst(VSInst(OP_JMP, 0));
 
     this->gen_cpd_stmt(for_stmt->body);
 
@@ -338,9 +499,11 @@ void VSCompiler::gen_for_stmt(VSASTNode *node) {
         this->gen_expr_list(for_stmt->incr);
     }
 
-    cur->add_inst(VSInst(OP_JMP, loop_start));
+    code->add_inst(VSInst(OP_JMP, loop_start));
     // jmp is the following inst of jif, so jif + 1 is the pos of jmp.
-    cur->code[jif_pos + 1].operand = cur->ninsts;
+    code->code[jif_pos + 1].operand = code->ninsts;
+
+    this->fill_back_break_continue(loop_start);
 
     LEAVE_BLK();
 }
@@ -375,13 +538,15 @@ void VSCompiler::gen_build_func(VSCodeObject *code) {
 }
 
 void VSCompiler::gen_func_decl(VSASTNode *node) {
+    static VSObject *ANONYMOUS_FUNC_NAME = C_STRING_TO_STRING("<__anonymous_func__>");
+
     Symtable *p_table = this->symtables.top();
     VSCodeObject *p_code = this->codeobjects.top();
 
     FuncDeclNode *func = (FuncDeclNode *)node;
 
     // Add function name to parent code locals.
-    VSObject *name = func->name->name;
+    VSObject *name = func->name != NULL ? func->name->name : ANONYMOUS_FUNC_NAME;
     if (p_table->contains(name)) {
         err("duplicated definition of name: \"%s\"", STRING_TO_C_STRING(name).c_str());
         terminate(TERM_ERROR);
@@ -406,7 +571,7 @@ void VSCompiler::gen_func_decl(VSASTNode *node) {
         table->put(argname, new SymtableEntry(SYM_ARG, argname, code->nlvars, 0));
         code->add_arg(argname);
     }
-    
+
     // should set up cell vars first, so jump.
     vs_size_t start_pos = code->ninsts;
     code->add_inst(VSInst(OP_JMP, 0));
@@ -454,7 +619,7 @@ void VSCompiler::gen_func_decl(VSASTNode *node) {
 }
 
 void VSCompiler::gen_elif_list(VSASTNode *node) {
-    VSCodeObject *cur = codeobjects.top();
+    VSCodeObject *code = codeobjects.top();
     auto jmp_pos = std::vector<vs_size_t>();
     ElifListNode *elif_list = (ElifListNode *)node;
 
@@ -466,19 +631,19 @@ void VSCompiler::gen_elif_list(VSASTNode *node) {
             terminate(TERM_ERROR);
         }
 
-        cur->add_inst(VSInst(OP_NOT));
+        code->add_inst(VSInst(OP_NOT));
 
-        vs_addr_t jif_pos = cur->ninsts;
-        cur->add_inst(VSInst(OP_JIF, 0));
+        vs_addr_t jif_pos = code->ninsts;
+        code->add_inst(VSInst(OP_JIF, 0));
 
         ENTER_BLK();
         this->gen_cpd_stmt(child->truestmt);
         LEAVE_BLK();
 
-        jmp_pos.push_back(cur->ninsts);
-        cur->add_inst(VSInst(OP_JMP, 0));
+        jmp_pos.push_back(code->ninsts);
+        code->add_inst(VSInst(OP_JMP, 0));
 
-        cur->code[jif_pos].operand = cur->ninsts;
+        code->code[jif_pos].operand = code->ninsts;
     }
 
     if (elif_list->elsestmt != NULL) {
@@ -488,12 +653,12 @@ void VSCompiler::gen_elif_list(VSASTNode *node) {
     }
 
     for (auto pos : jmp_pos) {
-        cur->code[pos].operand = cur->ninsts;
+        code->code[pos].operand = code->ninsts;
     }
 }
 
 void VSCompiler::gen_if_stmt(VSASTNode *node) {
-    VSCodeObject *cur = codeobjects.top();
+    VSCodeObject *code = codeobjects.top();
     IfStmtNode *if_stmt = (IfStmtNode *)node;
 
     if (if_stmt->cond != NULL) {
@@ -505,31 +670,31 @@ void VSCompiler::gen_if_stmt(VSASTNode *node) {
 
     // if cond is true, do not jump to elif or else
     // if cond is false, jump to elif or else
-    cur->add_inst(VSInst(OP_NOT));
+    code->add_inst(VSInst(OP_NOT));
 
-    vs_size_t jif_pos = cur->ninsts;
-    cur->add_inst(VSInst(OP_JIF, 0));
+    vs_size_t jif_pos = code->ninsts;
+    code->add_inst(VSInst(OP_JIF, 0));
 
     ENTER_BLK();
     this->gen_cpd_stmt(if_stmt->truestmt);
     LEAVE_BLK();
 
     // finished true stmt of if, jump to end of if-elif-else stmt
-    vs_size_t jmp_pos = cur->ninsts;
-    cur->add_inst(VSInst(OP_JMP, 0));
+    vs_size_t jmp_pos = code->ninsts;
+    code->add_inst(VSInst(OP_JMP, 0));
 
     // here is the begaining of elif and else
-    cur->code[jif_pos].operand = cur->ninsts;
+    code->code[jif_pos].operand = code->ninsts;
 
     if (if_stmt->falsestmt != NULL) {
         this->gen_elif_list(if_stmt->falsestmt);
     }
 
-    cur->code[jmp_pos].operand = cur->ninsts;
+    code->code[jmp_pos].operand = code->ninsts;
 }
 
 void VSCompiler::gen_while_stmt(VSASTNode *node) {
-    VSCodeObject *cur = codeobjects.top();
+    VSCodeObject *code = codeobjects.top();
     WhileStmtNode *while_stmt = (WhileStmtNode *)node;
 
     int loop_start = 0;
@@ -540,16 +705,18 @@ void VSCompiler::gen_while_stmt(VSASTNode *node) {
         terminate(TERM_ERROR);
     }
 
-    vs_addr_t jif_pos = cur->ninsts;
-    cur->add_inst(VSInst(OP_JIF, jif_pos + 2));
-    cur->add_inst(VSInst(OP_JMP, 0));
+    vs_addr_t jif_pos = code->ninsts;
+    code->add_inst(VSInst(OP_JIF, jif_pos + 2));
+    code->add_inst(VSInst(OP_JMP, 0));
 
     ENTER_BLK();
     this->gen_cpd_stmt(while_stmt->body);
     LEAVE_BLK();
 
-    cur->add_inst(VSInst(OP_JMP, loop_start));
-    cur->code[jif_pos + 1].operand = cur->ninsts;
+    code->add_inst(VSInst(OP_JMP, loop_start));
+    code->code[jif_pos + 1].operand = code->ninsts;
+
+    this->fill_back_break_continue(loop_start);
 }
 
 void VSCompiler::gen_cpd_stmt(VSASTNode *node) {

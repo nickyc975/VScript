@@ -26,16 +26,22 @@ typedef enum
     // 1 arg, list length, create a list of objects in the stack
     OP_BUILD_LIST,
 
-    // 1 arg, pair num in map, create a map of objects in the stack
-    OP_BUILD_MAP,
+    // 1 arg, pair num in dict, create a dict of pairs in the stack
+    OP_BUILD_DICT,
 
     // 1 arg, set size, create a set of objects in the stack
     OP_BUILD_SET,
 
+    // |  obj  |
+    // | index |
     // no arg, load the value at index (stack top) of object (following top)
     OP_INDEX_LOAD,
 
-    // no arg, store the value at index (stack top) of object (following top)
+    /* |  obj  |
+     * | index |
+     * | value |
+     * no arg, store the value at index (stack top) of object (following top)
+     */
     OP_INDEX_STORE,
 
     // 1 arg, load the local object indicated by the arg
@@ -53,6 +59,7 @@ typedef enum
     // 1 arg, load the cell of free var at arg
     OP_LOAD_FREE_CELL,
 
+    // |  obj  |
     // 1 arg, load the attr (name indicated by the arg) of the stack top
     OP_LOAD_ATTR,
 
@@ -65,6 +72,9 @@ typedef enum
     // 1 arg, store cell at arg
     OP_STORE_CELL,
 
+    /* |  obj  |
+     * | value |
+     */
     // 1 arg, store stack top to the attr (name indicated by arg) of the obj following top
     OP_STORE_ATTR,
 
@@ -79,12 +89,6 @@ typedef enum
 
     // 1 arg, jump to point in current block if stack top is true
     OP_JIF,
-
-    // break current loop
-    OP_BREAK,
-
-    // goto loop_start of current loop
-    OP_CONTINUE,
 
     // build VScript function
     OP_BUILD_FUNC,
@@ -135,8 +139,6 @@ static char *OPCODE_STR[] =
         "LOAD_BUILTIN",
         "JMP",
         "JIF",
-        "BREAK",
-        "CONTINUE",
         "BUILD_FUNC",
         "CALL_FUNC",
         "RET",
