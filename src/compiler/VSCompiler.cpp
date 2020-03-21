@@ -715,7 +715,7 @@ void VSCompiler::gen_while_stmt(VSASTNode *node) {
     this->breakposes.push(new std::vector<vs_addr_t>());
     this->continueposes.push(new std::vector<vs_addr_t>());
 
-    int loop_start = 0;
+    int loop_start = code->ninsts;
     if (while_stmt->cond != NULL) {
         this->gen_expr(while_stmt->cond);
     } else {
