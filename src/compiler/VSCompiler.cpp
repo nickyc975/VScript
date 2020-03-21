@@ -509,7 +509,7 @@ void VSCompiler::gen_for_stmt(VSASTNode *node) {
     LEAVE_BLK();
 }
 
-void VSCompiler::gen_build_func(VSCodeObject *code) {
+void VSCompiler::gen_build_func(VSCodeObject *code, bool anonymous) {
     Symtable *p_table = this->symtables.top();
     VSCodeObject *p_code = this->codeobjects.top();
 
@@ -537,19 +537,22 @@ void VSCompiler::gen_build_func(VSCodeObject *code) {
     p_code->add_inst(VSInst(OP_BUILD_TUPLE, code->nfreevars));
     p_code->add_inst(VSInst(OP_LOAD_CONST, p_code->nconsts));
     p_code->add_inst(VSInst(OP_BUILD_FUNC));
-    p_code->add_inst(VSInst(OP_STORE_LOCAL, p_code->nlvars));
+    if (!anonymous) {
+        p_code->add_inst(VSInst(OP_STORE_LOCAL, p_code->nlvars));
+    }
 }
 
 void VSCompiler::gen_func_decl(VSASTNode *node) {
-    static VSObject *ANONYMOUS_FUNC_NAME = C_STRING_TO_STRING("<__anonymous_func__>");
+    static VSObject *ANONYMOUS_FUNC_NAME = C_STRING_TO_STRING("<__anonymous_function__>");
 
     Symtable *p_table = this->symtables.top();
     VSCodeObject *p_code = this->codeobjects.top();
 
     FuncDeclNode *func = (FuncDeclNode *)node;
 
+    bool anonymous = func->name == NULL;
     // Add function name to parent code locals.
-    VSObject *name = func->name != NULL ? func->name->name : ANONYMOUS_FUNC_NAME;
+    VSObject *name = anonymous ? ANONYMOUS_FUNC_NAME : func->name->name;
     if (p_table->contains(name)) {
         err("duplicated definition of name: \"%s\"", STRING_TO_C_STRING(name).c_str());
         terminate(TERM_ERROR);
@@ -621,9 +624,11 @@ void VSCompiler::gen_func_decl(VSASTNode *node) {
     LEAVE_FUNC();
 
     // Add instructions to build function
-    gen_build_func(code);
+    gen_build_func(code, anonymous);
 
-    p_code->add_lvar(code->name);
+    if (!anonymous) {
+        p_code->add_lvar(code->name);
+    }
     p_code->add_const(code);
 }
 
