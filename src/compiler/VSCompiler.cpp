@@ -468,10 +468,10 @@ void VSCompiler::gen_for_stmt(VSASTNode *node) {
     VSCodeObject *code = codeobjects.top();
     ForStmtNode *for_stmt = (ForStmtNode *)node;
 
-    ENTER_BLK();
-
     this->breakposes.push(new std::vector<vs_addr_t>());
     this->continueposes.push(new std::vector<vs_addr_t>());
+
+    ENTER_BLK();
 
     if (for_stmt->init != NULL) {
         if (for_stmt->init->node_type == AST_INIT_DECL_LIST) {
@@ -697,6 +697,9 @@ void VSCompiler::gen_if_stmt(VSASTNode *node) {
 void VSCompiler::gen_while_stmt(VSASTNode *node) {
     VSCodeObject *code = codeobjects.top();
     WhileStmtNode *while_stmt = (WhileStmtNode *)node;
+
+    this->breakposes.push(new std::vector<vs_addr_t>());
+    this->continueposes.push(new std::vector<vs_addr_t>());
 
     int loop_start = 0;
     if (while_stmt->cond != NULL) {
