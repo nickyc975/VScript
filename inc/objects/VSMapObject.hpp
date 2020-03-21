@@ -12,26 +12,33 @@ extern VSTypeObject *VSMapType;
 
 class VSMapObject : public VSObject {
 private:
-    static size_t hash(const VSObject *obj) {
-        VSObject *res = VS_TYPEOF(obj)->__hash__(obj);
-        size_t h = (size_t)INT_TO_C_INT(res);
-        DECREF_EX(res);
-        return h;
-    }
-
-    static bool equal_to(const VSObject *a, const VSObject *b) {
-        if (VS_TYPEOF(a) != VS_TYPEOF(b)) {
-            return false;
+    struct __map_hash__ {
+        std::size_t operator() (const VSObject *o) const {
+            VSObject *res = VS_TYPEOF(o)->__hash__(o);
+            std::size_t h = (std::size_t)INT_TO_C_INT(res);
+            DECREF_EX(res);
+            return h;
         }
+    };
 
-        VSTypeObject *type = VS_TYPEOF(a);
-        return (bool)BOOL_TO_C_BOOL(type->__eq__(a, b));
-    }
+    struct __map_equal_to__ {
+        bool operator() (const VSObject *a, const VSObject *b) const {
+            if (VS_TYPEOF(a) != VS_TYPEOF(b)) {
+                return false;
+            }
+
+            VSTypeObject *type = VS_TYPEOF(a);
+            return (bool)BOOL_TO_C_BOOL(type->__eq__(a, b));
+        }
+    };
 
 public:
-    std::unordered_map<VSObject *, VSObject *, decltype(&hash), decltype(&equal_to)> _map;
+    std::unordered_map<VSObject *, VSObject *, __map_hash__, __map_equal_to__> _map;
 
-    VSMapObject() { this->type = VSMapType; }
+    VSMapObject() {
+        this->type = VSMapType;
+        this->_map = std::unordered_map<VSObject *, VSObject *, __map_hash__, __map_equal_to__>();
+    }
 };
 
 // convinient macros for map operations

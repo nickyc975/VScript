@@ -144,7 +144,7 @@ inline VSObject *_NEW_REF(VSObject *obj) {
     return obj;
 }
 
-#define VS_TYPEOF(obj) ((VSTypeObject *)obj->type)
+#define VS_TYPEOF(obj) ((VSTypeObject *)(obj->type))
 
 #define VS_AS_OBJECT(obj) ((VSObject *)obj)
 
