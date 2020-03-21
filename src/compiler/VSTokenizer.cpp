@@ -28,6 +28,7 @@ VSTokenizer::VSTokenizer(FILE *file) {
     this->ln = 1;
     this->col = 1;
     this->refcnt = 1;
+    this->gettoken();
 }
 
 VSTokenizer::~VSTokenizer() {
@@ -67,8 +68,9 @@ int VSTokenizer::ungetchar() {
 
 char VSTokenizer::peekchar() {
     char c = fgetc(this->file);
-    if (c != EOF)
+    if (c != EOF) {
         fseek(this->file, -1, SEEK_CUR);
+    }
     return c;
 }
 
@@ -133,7 +135,7 @@ int VSTokenizer::getword(std::string &str) {
     int i = 0;
     char c = this->peekchar();
 
-    while (!IS_WORD_CHAR(c) && c != 0) {
+    while (!IS_WORD_CHAR(c) && c != EOF) {
         this->getchar();
         c = this->peekchar();
     }
@@ -331,6 +333,8 @@ bool VSTokenizer::hastoken() {
 VSToken *VSTokenizer::gettoken() {
     VSToken *old = this->peek;
     auto literal = std::string();
+
+begain:
     char tk_char = this->peekchar();
 
     if (IS_NUMBER(tk_char)) {
@@ -429,7 +433,7 @@ VSToken *VSTokenizer::gettoken() {
                 } else if (this->peekchar() == '/') {
                     while (this->peekchar() != EOF && this->getchar() != '\n')
                         ;
-                    break;
+                    goto begain;
                 } else {
                     this->peek = NEW_SYM_TOKEN(TK_DIV);
                 }
@@ -524,7 +528,7 @@ VSToken *VSTokenizer::gettoken() {
             case '\n':
             case '\t':
             case '\r':
-                break;
+                goto begain;
             case EOF:
                 this->peek = NULL;
                 break;
@@ -543,8 +547,5 @@ done:
 }
 
 VSToken *VSTokenizer::peektoken() {
-    if (this->peek == NULL) {
-        this->gettoken();
-    }
     return this->peek;
 }
