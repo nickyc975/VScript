@@ -49,6 +49,7 @@ public:
 
     IdentNode(VSObject *name) : name(name) {
         this->node_type = AST_IDENT;
+        INCREF(name);
     }
     ~IdentNode() {
         DECREF_EX(this->name);
@@ -63,7 +64,10 @@ public:
         this->node_type = AST_CONST;
         INCREF(value);
     }
-    ~ConstNode() = default;
+
+    ~ConstNode() {
+        DECREF_EX(this->value);
+    }
 };
 
 class ContainerNode : public VSASTNode {

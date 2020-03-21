@@ -14,6 +14,7 @@
 VSToken::VSToken(
     TOKEN_TYPE tk_type, VSObject *tk_value, VSObject *literal, long long ln, long long col) : tk_type(tk_type), tk_value(tk_value), literal(literal), ln(ln), col(col) {
         this->refcnt = 1;
+        INCREF(tk_value);
         INCREF(literal);
 }
 
@@ -32,13 +33,7 @@ VSTokenizer::VSTokenizer(FILE *file) {
 }
 
 VSTokenizer::~VSTokenizer() {
-    if (this->peek != NULL) {
-        this->peek->refcnt--;
-        if (this->peek->refcnt == 0) {
-            delete this->peek;
-            this->peek = NULL;
-        }
-    }
+    DECREF_EX(this->peek);
     fclose(this->file);
 }
 
@@ -543,6 +538,14 @@ begain:
     }
 
 done:
+    // if (this->peek == NULL) {
+    //     note("peek token is null");
+    // } else {
+    //     note("got token: %s, %s", TOKEN_STR[this->peek->tk_type], STRING_TO_C_STRING(this->peek->literal).c_str());
+    //     if (this->peek->tk_type == TK_CONSTANT) {
+    //         note("constant type: %s", VS_TYPEOF(this->peek->tk_value)->__name__.c_str());
+    //     }
+    // }
     return old;
 }
 

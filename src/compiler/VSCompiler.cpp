@@ -419,13 +419,14 @@ void VSCompiler::gen_decl_stmt(VSASTNode *node) {
     InitDeclListNode *decl_list = (InitDeclListNode *)node;
     SYM_TYPE sym_type = decl_list->specifier == TK_VAR ? SYM_VAR : SYM_VAL;
 
-    // "child" is decl node, contains ident and init
+    // "decl" is decl node, contains ident and init
     for (auto decl : decl_list->decls) {
-        std::string &name_str = STRING_TO_C_STRING(decl->name);
-
         SymtableEntry *entry;
-        if (table->contains(decl->name)) {
-            entry = table->get(decl->name);
+        VSObject *name_obj = decl->name->name;
+        std::string &name_str = STRING_TO_C_STRING(name_obj);
+
+        if (table->contains(name_obj)) {
+            entry = table->get(name_obj);
             if (entry->sym_type != SYM_UNDEFINED) {
                 err("duplicated definition of name: \"%s\"", name_str.c_str());
                 terminate(TERM_ERROR);
@@ -433,8 +434,8 @@ void VSCompiler::gen_decl_stmt(VSASTNode *node) {
             entry->sym_type = sym_type;
             entry->index = code->nlvars;
         } else {
-            entry = new SymtableEntry(sym_type, decl->name, code->nlvars, 0);
-            table->put(decl->name, entry);
+            entry = new SymtableEntry(sym_type, name_obj, code->nlvars, 0);
+            table->put(name_obj, entry);
         }
 
         if (decl_list->specifier == TK_VAL && decl->init_val == NULL) {
@@ -442,7 +443,7 @@ void VSCompiler::gen_decl_stmt(VSASTNode *node) {
             terminate(TERM_ERROR);
         }
 
-        code->add_lvar(decl->name);
+        code->add_lvar(name_obj);
         // Assign value.
         if (decl->init_val != NULL) {
             this->gen_expr(decl->init_val);
@@ -772,7 +773,8 @@ VSCodeObject *VSCompiler::compile(std::string filename) {
 
     ENTER_FUNC(C_STRING_TO_STRING("__main__"));
 
-    this->gen_cpd_stmt(parser->parse());
+    VSASTNode *astree = parser->parse();
+    this->gen_cpd_stmt(astree);
 
     auto program = codeobjects.top();
 
