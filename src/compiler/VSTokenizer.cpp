@@ -13,9 +13,9 @@
 
 VSToken::VSToken(
     TOKEN_TYPE tk_type, VSObject *tk_value, VSObject *literal, long long ln, long long col) : tk_type(tk_type), tk_value(tk_value), literal(literal), ln(ln), col(col) {
-        this->refcnt = 1;
-        INCREF(tk_value);
-        INCREF(literal);
+    this->refcnt = 1;
+    INCREF(tk_value);
+    INCREF(literal);
 }
 
 VSToken::~VSToken() {
@@ -99,11 +99,12 @@ char VSTokenizer::escape(char c) {
     }
 }
 
-#define APPEND_CHAR(str, c, i)          \
-    do {                                \
-        str.push_back(this->getchar()); \
-        c = this->peekchar();           \
-        i++;                            \
+#define APPEND_CHAR(str, c, i) \
+    do {                       \
+        str.push_back(c);      \
+        this->getchar();       \
+        c = this->peekchar();  \
+        i++;                   \
     } while (0);
 
 int VSTokenizer::getnum(std::string &str) {
@@ -153,7 +154,7 @@ int VSTokenizer::getquoted(std::string &str) {
     while (c != EOF && !IS_QUOTE(c)) {
         if (c == '\\') {
             this->getchar();
-            c = escape(this->peekchar());
+            c = this->escape(this->peekchar());
         }
         APPEND_CHAR(str, c, i);
     }
@@ -167,7 +168,7 @@ int VSTokenizer::getquoted(std::string &str) {
 int VSTokenizer::getstr(std::string &str, int len) {
     int i = 0;
     char c = this->peekchar();
-    while (i < len - 1 && c != 0) {
+    while (i < len - 1 && c != EOF) {
         APPEND_CHAR(str, c, i);
     }
     return i;
@@ -384,7 +385,6 @@ begain:
         }
 
     } else {
-
 #define NEW_SYM_TOKEN(tp, literal) new VSToken(tp, NULL, C_STRING_TO_STRING(literal), this->ln, this->col)
 
         tk_char = this->getchar();
@@ -534,7 +534,6 @@ begain:
         }
 
 #undef NEW_SYM_TOKEN
-
     }
 
 done:
