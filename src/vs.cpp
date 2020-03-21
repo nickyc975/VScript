@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "vs.hpp"
+#include "printers.hpp"
 #include "compiler/VSCompiler.hpp"
 
 
@@ -46,13 +47,13 @@ int main(int argc, char **argv)
         // fprint_astree(f, astree);
         fclose(f);
     }
-
+    init_printer();
     VSCompiler *compiler = new VSCompiler(new name_addr_map());
     VSCodeObject *program = compiler->compile(*argv);
     if (show_gen)
     {
         FILE *f = fopen("instructions.txt", "w");
-        // fprint_code(f, program);
+        fprint_code(f, program);
         fclose(f);
     }
     // execute(program, objects, func_addrs);
