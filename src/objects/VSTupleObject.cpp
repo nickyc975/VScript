@@ -52,7 +52,7 @@ VSObject *vs_tuple_str(VSObject *tupleobj)
     VSTypeObject *type = VS_TYPEOF(tupleobj);
     VS_ENSURE_TYPE(type, T_TUPLE, "tuple.__str__()");
 
-    return vs_string_from_cstring("tuple");
+    INCREF_RET(C_STRING_TO_STRING("tuple"));
 }
 
 VSObject *vs_tuple_bytes(VSObject *tupleobj)
@@ -69,7 +69,7 @@ VSObject *vs_tuple_len(VSObject *tupleobj)
     VS_ENSURE_TYPE(type, T_TUPLE, "tuple.__len__()");
 
     cint_t len = ((VSTupleObject *)tupleobj)->nitems;
-    return vs_int_from_cint(len);
+    INCREF_RET(C_INT_TO_INT(len));
 }
 
 VSObject *vs_tuple_get(VSObject *tupleobj, VSObject *idxobj)
@@ -81,7 +81,7 @@ VSObject *vs_tuple_get(VSObject *tupleobj, VSObject *idxobj)
     VS_ENSURE_TYPE(idxtype, T_INT, "as tuple index");
 
     VSTupleObject *tuple = (VSTupleObject *)tupleobj;
-    vs_size_t idx = (vs_size_t)vs_int_to_cint(idxobj);
+    vs_size_t idx = (vs_size_t)INT_TO_C_INT(idxobj);
     if (idx >= tuple->nitems)
     {
         INDEX_OUT_OF_BOUND(idx, tuple->nitems);
@@ -109,7 +109,7 @@ VSObject *vs_tuple_has_at(VSObject *tupleobj, VSObject *idxobj)
     VS_ENSURE_TYPE(idxtype, T_INT, "as tuple index");
 
     VSTupleObject *tuple = (VSTupleObject *)tupleobj;
-    vs_size_t idx = (vs_size_t)vs_int_to_cint(idxobj);
+    vs_size_t idx = (vs_size_t)INT_TO_C_INT(idxobj);
 
     INCREF_RET(idx < tuple->nitems ? VS_TRUE : VS_FALSE);
 }

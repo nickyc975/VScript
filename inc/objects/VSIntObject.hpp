@@ -31,10 +31,11 @@ public:
     }
 };
 
-extern cint_t vs_int_to_cint(VSObject *intobj);
-extern VSObject *vs_int_from_cint(cint_t intval);
-
 #define VS_ZERO VSIntObject::ZERO()
 #define VS_ONE VSIntObject::ONE()
+
+#define AS_INT(obj) ((VSIntObject *)obj)
+#define INT_TO_C_INT(obj) (AS_INT(obj)->_value)
+#define C_INT_TO_INT(val) (new VSIntObject(val))
 
 #endif

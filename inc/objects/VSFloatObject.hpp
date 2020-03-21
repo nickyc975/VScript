@@ -15,7 +15,8 @@ public:
     VSFloatObject(cfloat_t val) : _value(val) { this->type = VSFloatType; }
 };
 
-extern cfloat_t vs_float_to_cfloat(VSObject *floatobj);
-extern VSObject *vs_float_from_cfloat(cfloat_t floatval);
+#define AS_FLOAT(obj) ((VSFloatObject *)obj)
+#define FLOAT_TO_C_FLOAT(obj) (AS_FLOAT(obj)->_value)
+#define C_FLOAT_TO_FLOAT(val) (new VSFloatObject(val))
 
 #endif

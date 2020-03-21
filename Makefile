@@ -4,12 +4,11 @@ vpath %.cpp src src/compiler src/runtime src/tools src/objects
 CXX=g++
 CXXFLAGS=-I inc -g -Wall -Wextra -Wno-write-strings
 
-# SRCS=vslexer.cpp vsparser.cpp gencode.cpp printers.cpp error.cpp File.cpp VSObject.cpp \
-	 VSObjectList.cpp VSCodeObject.cpp VSValue.cpp VSCallStackFrame.cpp global.cpp \
-	 execute.cpp vs.cpp
 SRCS=error.cpp VSBoolObject.cpp VSCharObject.cpp VSFloatObject.cpp VSIntObject.cpp \
 	 VSMapObject.cpp VSNoneObject.cpp VSObject.cpp VSStringObject.cpp VSTypeObject.cpp \
-	 VSTupleObject.cpp VSListObject.cpp
+	 VSTupleObject.cpp VSListObject.cpp VSSetObject.cpp VSCodeObject.cpp Symtable.cpp \
+	 VSTokenizer.cpp VSParser.cpp VSCompiler.cpp vs.cpp
+
 OBJECTS=$(SRCS:.cpp=.o)
 
 OUTPUT_DIR=build

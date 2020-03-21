@@ -61,7 +61,7 @@ void vs_cell_clear(VSObject *cellobj) {
 VSObject *vs_cell_hash(const VSObject *cellobj) {
     assert(cellobj != NULL);
     VS_ENSURE_TYPE(VS_TYPEOF(cellobj), T_CELL, "cell.__hash__()");
-    return vs_int_from_cint((cint_t)cellobj);
+    INCREF_RET(C_INT_TO_INT((cint_t)cellobj));
 }
 
 VSObject *vs_cell_eq(const VSObject *a, const VSObject *b) {
@@ -76,37 +76,13 @@ VSObject *vs_cell_eq(const VSObject *a, const VSObject *b) {
 VSObject *vs_cell_str(VSObject *cellobj) {
     assert(cellobj != NULL);
     VS_ENSURE_TYPE(VS_TYPEOF(cellobj), T_CELL, "cell.__str__()");
-    return vs_string_from_cstring("cell");
+    INCREF_RET(C_STRING_TO_STRING("cell"));
 }
 
 VSObject *vs_cell_bytes(VSObject *cellobj) {
     assert(cellobj != NULL);
     VS_ENSURE_TYPE(VS_TYPEOF(cellobj), T_CELL, "cell.__bytes__()");
     INCREF_RET(VS_NONE);
-}
-
-inline VSObject *vs_cell_get(VSObject *cellobj) {
-    assert(cellobj != NULL);
-    VS_ENSURE_TYPE(VS_TYPEOF(cellobj), T_CELL, "cell get");
-
-    VSCellObject *cell = AS_CELL(cellobj);
-    INCREF_RET(cell->item);
-}
-
-inline int vs_cell_set(VSObject *cellobj, VSObject *item) {
-    assert(cellobj != NULL);
-    assert(item != NULL);
-    VS_ENSURE_TYPE(VS_TYPEOF(cellobj), T_CELL, "cell set");
-
-    VSCellObject *cell = AS_CELL(cellobj);
-    if (!cell->mut) {
-        err("modifying immutable cell at %p", cell);
-        return;
-    }
-
-    DECREF(cell->item);
-    cell->item = item;
-    INCREF(cell->item);
 }
 
 VSTypeObject *VSCellType = new VSTypeObject(

@@ -263,6 +263,7 @@ public:
 
     InitDeclListNode(TOKEN_TYPE specifier) {
         this->node_type = AST_INIT_DECL_LIST;
+        this->specifier = specifier;
         this->decls = std::vector<InitDeclNode *>();
     }
     ~InitDeclListNode() {

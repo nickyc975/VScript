@@ -59,7 +59,9 @@ void vs_type_init(VSObject *typeobj, VSObject *args, VSObject *)
 VSObject *vs_type_str(VSObject *typeobj)
 {
     VS_ENSURE_TYPE(VS_TYPEOF(typeobj), T_TYPE, "type.__str__()");
-    return vs_string_from_cstring(((VSTypeObject *)typeobj)->__name__);
+    INCREF_RET(
+        C_STRING_TO_STRING(
+            ((VSTypeObject *)typeobj)->__name__));
 }
 
 VSTypeObject VSTypeTypeStruct = VSTypeObject(

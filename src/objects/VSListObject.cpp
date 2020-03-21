@@ -52,7 +52,7 @@ VSObject *vs_list_str(VSObject *listobj)
     VSTypeObject *type = VS_TYPEOF(listobj);
     VS_ENSURE_TYPE(type, T_LIST, "list.__str__()");
 
-    return vs_string_from_cstring("list");
+    INCREF_RET(C_STRING_TO_STRING("list"));
 }
 
 VSObject *vs_list_bytes(VSObject *listobj)
@@ -83,7 +83,7 @@ VSObject *vs_list_len(VSObject *listobj)
 
     VSListObject *list = (VSListObject *)listobj;
 
-    return vs_int_from_cint((cint_t)list->items.size());
+    INCREF_RET(C_INT_TO_INT((cint_t)list->items.size()));
 }
 
 VSObject *vs_list_get(VSObject *listobj, VSObject *idxobj)
@@ -95,7 +95,7 @@ VSObject *vs_list_get(VSObject *listobj, VSObject *idxobj)
     VS_ENSURE_TYPE(idxtype, T_INT, "as list index");
 
     VSListObject *list = (VSListObject *)listobj;
-    vs_size_t idx = (vs_size_t)vs_int_to_cint(idxobj);
+    vs_size_t idx = (vs_size_t)INT_TO_C_INT(idxobj);
     if (idx >= list->items.size())
     {
         INDEX_OUT_OF_BOUND(idx, list->items.size());
@@ -114,7 +114,7 @@ void vs_list_set(VSObject *listobj, VSObject *idxobj, VSObject *item)
     VS_ENSURE_TYPE(idxtype, T_INT, "as list index");
 
     VSListObject *list = (VSListObject *)listobj;
-    vs_size_t idx = (vs_size_t)vs_int_to_cint(idxobj);
+    vs_size_t idx = (vs_size_t)INT_TO_C_INT(idxobj);
     if (idx >= list->items.size())
     {
         INDEX_OUT_OF_BOUND(idx, list->items.size());
@@ -154,7 +154,7 @@ VSObject *vs_list_has_at(VSObject *listobj, VSObject *idxobj)
     VS_ENSURE_TYPE(idxtype, T_INT, "as list index");
 
     VSListObject *list = (VSListObject *)listobj;
-    vs_size_t idx = (vs_size_t)vs_int_to_cint(idxobj);
+    vs_size_t idx = (vs_size_t)INT_TO_C_INT(idxobj);
 
     INCREF_RET(idx < list->items.size() ? VS_TRUE : VS_FALSE);
 }
@@ -177,7 +177,7 @@ void vs_list_remove_at(VSObject *listobj, VSObject *idxobj)
     VS_ENSURE_TYPE(idxtype, T_INT, "as list index");
 
     VSListObject *list = (VSListObject *)listobj;
-    vs_size_t idx = (vs_size_t)vs_int_to_cint(idxobj);
+    vs_size_t idx = (vs_size_t)INT_TO_C_INT(idxobj);
 
     if (idx >= list->items.size())
     {

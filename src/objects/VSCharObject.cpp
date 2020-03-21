@@ -64,7 +64,7 @@ VSObject *vs_char_hash(const VSObject *charobj)
 
     VS_ENSURE_TYPE(type, T_CHAR, "char hash");
 
-    return vs_int_from_cint(((VSCharObject *)charobj)->_value);
+    INCREF_RET(C_INT_TO_INT((((VSCharObject *)charobj)->_value)));
 }
 
 VSObject *vs_char_lt(const VSObject *a, const VSObject *b)
@@ -102,7 +102,7 @@ VSObject *vs_char_str(VSObject *charobj)
 
     auto str = std::string();
     str.push_back(((VSCharObject *)charobj)->_value);
-    return vs_string_from_cstring(str);
+    INCREF_RET(C_STRING_TO_STRING((str)));
 }
 
 VSObject *vs_char_bytes(VSObject *charobj)
@@ -120,7 +120,7 @@ VSObject *vs_char_neg(VSObject *charobj)
     VS_ENSURE_TYPE(type, T_CHAR, "char.__neg__()");
 
     cchar_t res = -((VSCharObject *)charobj)->_value;
-    return vs_char_from_cchar(res);
+    INCREF_RET(C_CHAR_TO_CHAR(res));
 }
 
 VSObject *vs_char_add(VSObject *a, VSObject *b)
@@ -132,7 +132,7 @@ VSObject *vs_char_add(VSObject *a, VSObject *b)
     VS_ENSURE_TYPE(btype, T_CHAR, "char.__add__()");
 
     cchar_t res = ((VSCharObject *)a)->_value + ((VSCharObject *)b)->_value;
-    return vs_char_from_cchar(res);
+    INCREF_RET(C_CHAR_TO_CHAR(res));
 }
 
 VSObject *vs_char_sub(VSObject *a, VSObject *b)
@@ -144,7 +144,7 @@ VSObject *vs_char_sub(VSObject *a, VSObject *b)
     VS_ENSURE_TYPE(btype, T_CHAR, "char.__sub__()");
 
     cchar_t res = ((VSCharObject *)a)->_value - ((VSCharObject *)b)->_value;
-    return vs_char_from_cchar(res);
+    INCREF_RET(C_CHAR_TO_CHAR(res));
 }
 
 VSObject *vs_char_mul(VSObject *a, VSObject *b)
@@ -156,7 +156,7 @@ VSObject *vs_char_mul(VSObject *a, VSObject *b)
     VS_ENSURE_TYPE(btype, T_CHAR, "char.__mul__()");
 
     cchar_t res = ((VSCharObject *)a)->_value * ((VSCharObject *)b)->_value;
-    return vs_char_from_cchar(res);
+    INCREF_RET(C_CHAR_TO_CHAR(res));
 }
 
 VSObject *vs_char_div(VSObject *a, VSObject *b)
@@ -174,7 +174,7 @@ VSObject *vs_char_div(VSObject *a, VSObject *b)
     }
 
     cchar_t res = ((VSCharObject *)a)->_value / ((VSCharObject *)b)->_value;
-    return vs_char_from_cchar(res);
+    INCREF_RET(C_CHAR_TO_CHAR(res));
 }
 
 VSObject *vs_char_mod(VSObject *a, VSObject *b)
@@ -192,7 +192,7 @@ VSObject *vs_char_mod(VSObject *a, VSObject *b)
     }
 
     cchar_t res = ((VSCharObject *)a)->_value % ((VSCharObject *)b)->_value;
-    return vs_char_from_cchar(res);
+    INCREF_RET(C_CHAR_TO_CHAR(res));
 }
 
 VSObject *vs_char_bool(VSObject *charobj)
@@ -223,7 +223,7 @@ VSObject *vs_char_int(VSObject *charobj, VSObject *base)
         terminate(TERM_ERROR);
     }
 
-    return vs_int_from_cint((cint_t)vs_char_to_cchar(charobj));
+    INCREF_RET(C_INT_TO_INT((cint_t)CHAR_TO_C_CHAR(charobj)));
 }
 
 VSObject *vs_char_float(VSObject *charobj)
@@ -231,20 +231,7 @@ VSObject *vs_char_float(VSObject *charobj)
     VSTypeObject *type = VS_TYPEOF(charobj);
     VS_ENSURE_TYPE(type, T_CHAR, "__float__()");
 
-    return vs_float_from_cfloat((cfloat_t)vs_char_to_cchar(charobj));
-}
-
-inline cchar_t vs_char_to_cchar(VSObject *charobj)
-{
-    VSTypeObject *type = VS_TYPEOF(charobj);
-    VS_ENSURE_TYPE(type, T_CHAR, "cchar_t to cchar");
-
-    return ((VSCharObject *)charobj)->_value;
-}
-
-inline VSObject *vs_char_from_cchar(cchar_t charval)
-{
-    INCREF_RET(VS_AS_OBJECT(new VSCharObject(charval)));
+    INCREF_RET(C_FLOAT_TO_FLOAT(((cfloat_t)CHAR_TO_C_CHAR(charobj))));
 }
 
 NumberFuncs *char_number_funcs = new NumberFuncs(

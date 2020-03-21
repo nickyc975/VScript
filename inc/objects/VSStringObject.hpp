@@ -16,9 +16,6 @@ public:
     VSStringObject(std::string val) : _value(val) { this->type = VSStringType; }
 };
 
-extern std::string vs_string_to_cstring(VSObject *strobj);
-extern VSObject *vs_string_from_cstring(std::string strval);
-
 #define AS_STRING(obj) ((VSStringObject *)obj)
 #define C_STRING_TO_STRING(str) (new VSStringObject(str))
 #define STRING_TO_C_STRING(obj) (AS_STRING(obj)->_value)

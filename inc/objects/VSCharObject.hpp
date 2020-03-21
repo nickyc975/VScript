@@ -15,7 +15,8 @@ public:
     VSCharObject(cchar_t val) : _value(val) { this->type = VSCharType; }
 };
 
-extern cchar_t vs_char_to_cchar(VSObject * charobj);
-extern VSObject *vs_char_from_cchar(cchar_t charval);
+#define AS_CHAR(obj) ((VSCharObject *)obj)
+#define CHAR_TO_C_CHAR(obj) (AS_CHAR(obj)->_value)
+#define C_CHAR_TO_CHAR(val) (new VSCharObject(val))
 
 #endif

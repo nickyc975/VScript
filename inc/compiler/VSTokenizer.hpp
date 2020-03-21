@@ -157,10 +157,10 @@ static char *TOKEN_STR[] =
 
 class VSToken : public VSObject {
 public:
-    long long ln, col;
     TOKEN_TYPE tk_type;
     VSObject *tk_value;
     VSObject *literal;
+    long long ln, col;
 
     VSToken(TOKEN_TYPE tk_type, VSObject *tk_value, VSObject *literal, long long ln, long long col);
     ~VSToken();

@@ -51,7 +51,9 @@ VSObject *vs_map_len(VSObject *obj)
 
     VS_ENSURE_TYPE(type, T_MAP, "map len");
 
-    return vs_int_from_cint(((VSMapObject *)obj)->_map.size());
+    INCREF_RET(
+        C_INT_TO_INT(
+            ((VSMapObject *)obj)->_map.size()));
 }
 
 VSObject *vs_map_get(VSObject *obj, VSObject *key)
@@ -68,7 +70,7 @@ VSObject *vs_map_get(VSObject *obj, VSObject *key)
     }
     else
     {
-        err("key \"%s\" not found.", vs_string_to_cstring(VS_TYPEOF(key)->__str__(key)).c_str());
+        err("key \"%s\" not found.", STRING_TO_C_STRING(VS_TYPEOF(key)->__str__(key)).c_str());
         terminate(TERM_ERROR);
     }
     return NULL;
@@ -128,7 +130,7 @@ VSObject *vs_map_str(VSObject *obj)
 
     VS_ENSURE_TYPE(type, T_MAP, "map to str");
 
-    return vs_string_from_cstring("map");
+    INCREF_RET(C_STRING_TO_STRING("map"));
 }
 
 VSObject *vs_map_bytes(VSObject *obj)

@@ -90,7 +90,7 @@ OPCODE VSCompiler::get_b_op(TOKEN_TYPE tk) {
 std::string VSCompiler::get_key(VSObject *value) {
     VSTypeObject *type = VS_TYPEOF(value);
     VSObject *value_strobj = type->__str__(value);
-    std::string value_str = vs_string_to_cstring(value_strobj);
+    std::string value_str = STRING_TO_C_STRING(value_strobj);
     DECREF(value_strobj);
 
     switch (type->t_type) {

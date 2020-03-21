@@ -1,16 +1,11 @@
 #include <stdio.h>
 
 #include "vs.hpp"
-#include "global.hpp"
-#include "compiler.hpp"
-#include "runtime.hpp"
-#include "printers.hpp"
-#include "File.hpp"
+#include "compiler/VSCompiler.hpp"
+
 
 int main(int argc, char **argv)
 {
-    File *file;
-    std::vector<Token *> token_list;
     int show_lex = 0, show_parse = 0, show_gen = 0;
     argc--;
     argv++;
@@ -37,34 +32,29 @@ int main(int argc, char **argv)
         printf("usage: vsc [-l] [-p] [-s] file ...\n");
         return -1;
     }
-    file = new File(fopen(*argv, "r"));
-    tokenize(file, token_list);
-    delete file;
+    
     if (show_lex)
     {
         FILE *f = fopen("tokens.txt", "w");
-        fprint_tokens(f, token_list);
+        // fprint_tokens(f, token_list);
         fclose(f);
     }
 
-    auto globals = global_symbols();
-    auto objects = global_objects();
-    auto func_addrs = native_func_addrs();
-
-    ASTNode *astree = parse(&token_list, globals);
     if (show_parse)
     {
         FILE *f = fopen("astree.txt", "w");
-        fprint_astree(f, astree);
+        // fprint_astree(f, astree);
         fclose(f);
     }
-    VSCodeObject *program = gencode(astree, globals);
+
+    VSCompiler *compiler = new VSCompiler(new name_addr_map());
+    VSCodeObject *program = compiler->compile(*argv);
     if (show_gen)
     {
         FILE *f = fopen("instructions.txt", "w");
-        fprint_code(f, program);
+        // fprint_code(f, program);
         fclose(f);
     }
-    execute(program, objects, func_addrs);
+    // execute(program, objects, func_addrs);
     return 0;
 }

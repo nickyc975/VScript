@@ -68,7 +68,7 @@ VSParser::~VSParser() {
 }
 
 VSToken *VSParser::expect(int ntypes, ...) {
-    ENSURE_TOKEN();
+    ENSURE_TOKEN(NULL);
 
     bool res = false;
     VSToken *token = GETTOKEN();

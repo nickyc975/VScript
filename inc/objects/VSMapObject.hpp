@@ -14,7 +14,7 @@ class VSMapObject : public VSObject {
 private:
     static size_t hash(const VSObject *obj) {
         VSObject *res = VS_TYPEOF(obj)->__hash__(obj);
-        size_t h = (size_t)vs_int_to_cint(res);
+        size_t h = (size_t)INT_TO_C_INT(res);
         DECREF_EX(res);
         return h;
     }

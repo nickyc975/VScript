@@ -6,6 +6,9 @@
 #include "objects/VSStringObject.hpp"
 #include "objects/VSTupleObject.hpp"
 
+VSIntObject *VSIntObject::_VS_ZERO = NULL;
+VSIntObject *VSIntObject::_VS_ONE = NULL;
+
 VSObject *vs_int_new(VSObject *typeobj, VSObject *args, VSObject *)
 {
     VSTypeObject *ttype = VS_TYPEOF(typeobj);
@@ -107,7 +110,7 @@ VSObject *vs_int_str(VSObject *obj)
     VS_ENSURE_TYPE(type, T_INT, "int to str");
 
     cint_t val = ((VSIntObject *)obj)->_value;
-    return vs_string_from_cstring(std::to_string(val));
+    INCREF_RET(C_STRING_TO_STRING(std::to_string(val)));
 }
 
 VSObject *vs_int_bytes(VSObject *obj)
@@ -124,7 +127,7 @@ VSObject *vs_int_neg(VSObject *intobj)
     VS_ENSURE_TYPE(type, T_INT, "int.__neg__()");
 
     cint_t res = -((VSIntObject *)intobj)->_value;
-    return vs_int_from_cint(res);
+    INCREF_RET(C_INT_TO_INT(res));
 }
 
 VSObject *vs_int_add(VSObject *a, VSObject *b)
@@ -136,7 +139,7 @@ VSObject *vs_int_add(VSObject *a, VSObject *b)
     VS_ENSURE_TYPE(btype, T_INT, "int.__add__()");
 
     cint_t res = ((VSIntObject *)a)->_value + ((VSIntObject *)b)->_value;
-    return vs_int_from_cint(res);
+    INCREF_RET(C_INT_TO_INT(res));
 }
 
 VSObject *vs_int_sub(VSObject *a, VSObject *b)
@@ -148,7 +151,7 @@ VSObject *vs_int_sub(VSObject *a, VSObject *b)
     VS_ENSURE_TYPE(btype, T_INT, "int.__sub__()");
 
     cint_t res = ((VSIntObject *)a)->_value - ((VSIntObject *)b)->_value;
-    return vs_int_from_cint(res);
+    INCREF_RET(C_INT_TO_INT(res));
 }
 
 VSObject *vs_int_mul(VSObject *a, VSObject *b)
@@ -160,7 +163,7 @@ VSObject *vs_int_mul(VSObject *a, VSObject *b)
     VS_ENSURE_TYPE(btype, T_INT, "int.__mul__()");
 
     cint_t res = ((VSIntObject *)a)->_value * ((VSIntObject *)b)->_value;
-    return vs_int_from_cint(res);
+    INCREF_RET(C_INT_TO_INT(res));
 }
 
 VSObject *vs_int_div(VSObject *a, VSObject *b)
@@ -178,7 +181,7 @@ VSObject *vs_int_div(VSObject *a, VSObject *b)
     }
 
     cint_t res = ((VSIntObject *)a)->_value / ((VSIntObject *)b)->_value;
-    return vs_int_from_cint(res);
+    INCREF_RET(C_INT_TO_INT(res));
 }
 
 VSObject *vs_int_mod(VSObject *a, VSObject *b)
@@ -196,7 +199,7 @@ VSObject *vs_int_mod(VSObject *a, VSObject *b)
     }
 
     cint_t res = ((VSIntObject *)a)->_value % ((VSIntObject *)b)->_value;
-    return vs_int_from_cint(res);
+    INCREF_RET(C_INT_TO_INT(res));
 }
 
 VSObject *vs_int_bool(VSObject *intobj)
@@ -214,7 +217,7 @@ VSObject *vs_int_char(VSObject *intobj)
     VS_ENSURE_TYPE(type, T_INT, "int.__char__()");
 
     cbool_t res = ((VSIntObject *)intobj)->_value;
-    return vs_char_from_cchar((cchar_t)res);
+    INCREF_RET(C_CHAR_TO_CHAR((cchar_t)res));
 }
 
 VSObject *vs_int_int(VSObject *intobj, VSObject *base)
@@ -237,18 +240,7 @@ VSObject *vs_int_float(VSObject *intobj)
     VS_ENSURE_TYPE(type, T_INT, "int.__float__()");
 
     cbool_t res = ((VSIntObject *)intobj)->_value;
-    return vs_float_from_cfloat((cfloat_t)res);
-}
-
-inline cint_t vs_int_to_cint(VSObject *intobj)
-{
-    VS_ENSURE_TYPE(VS_TYPEOF(intobj), T_INT, "to c int");
-    return ((VSIntObject *)intobj)->_value;
-}
-
-inline VSObject *vs_int_from_cint(cint_t intval)
-{
-    INCREF_RET(new VSIntObject(intval));
+    INCREF_RET(C_FLOAT_TO_FLOAT((cfloat_t)res));
 }
 
 NumberFuncs *int_number_funcs = new NumberFuncs(

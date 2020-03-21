@@ -65,7 +65,7 @@ VSObject *vs_float_hash(const VSObject *floatobj)
 
     cfloat_t val = ((VSFloatObject *)floatobj)->_value;
     std::size_t hash = std::hash<cfloat_t>{}(val);
-    return vs_int_from_cint(hash);
+    INCREF_RET(C_INT_TO_INT(hash));
 }
 
 VSObject *vs_float_lt(const VSObject *a, const VSObject *b)
@@ -102,7 +102,7 @@ VSObject *vs_float_neg(VSObject *floatobj)
     VS_ENSURE_TYPE(type, T_FLOAT, "float.__neg__()");
 
     cfloat_t res = -((VSFloatObject *)floatobj)->_value;
-    return vs_float_from_cfloat(res);
+    INCREF_RET(C_FLOAT_TO_FLOAT(res));
 }
 
 VSObject *vs_float_add(VSObject *a, VSObject *b)
@@ -114,7 +114,7 @@ VSObject *vs_float_add(VSObject *a, VSObject *b)
     VS_ENSURE_TYPE(btype, T_FLOAT, "float.__add__()");
 
     cfloat_t res = ((VSFloatObject *)a)->_value + ((VSFloatObject *)b)->_value;
-    return vs_float_from_cfloat(res);
+    INCREF_RET(C_FLOAT_TO_FLOAT(res));
 }
 
 VSObject *vs_float_sub(VSObject *a, VSObject *b)
@@ -126,7 +126,7 @@ VSObject *vs_float_sub(VSObject *a, VSObject *b)
     VS_ENSURE_TYPE(btype, T_FLOAT, "float.__sub__()");
 
     cfloat_t res = ((VSFloatObject *)a)->_value - ((VSFloatObject *)b)->_value;
-    return vs_float_from_cfloat(res);
+    INCREF_RET(C_FLOAT_TO_FLOAT(res));
 }
 
 VSObject *vs_float_mul(VSObject *a, VSObject *b)
@@ -138,7 +138,7 @@ VSObject *vs_float_mul(VSObject *a, VSObject *b)
     VS_ENSURE_TYPE(btype, T_FLOAT, "float.__mul__()");
 
     cfloat_t res = ((VSFloatObject *)a)->_value * ((VSFloatObject *)b)->_value;
-    return vs_float_from_cfloat(res);
+    INCREF_RET(C_FLOAT_TO_FLOAT(res));
 }
 
 VSObject *vs_float_div(VSObject *a, VSObject *b)
@@ -156,7 +156,7 @@ VSObject *vs_float_div(VSObject *a, VSObject *b)
     }
 
     cfloat_t res = ((VSFloatObject *)a)->_value / ((VSFloatObject *)b)->_value;
-    return vs_float_from_cfloat(res);
+    INCREF_RET(C_FLOAT_TO_FLOAT(res));
 }
 
 VSObject *vs_float_bool(VSObject *floatobj)
@@ -174,7 +174,7 @@ VSObject *vs_float_char(VSObject *floatobj)
     VS_ENSURE_TYPE(type, T_FLOAT, "float.__char__()");
 
     cbool_t res = ((VSFloatObject *)floatobj)->_value;
-    return vs_char_from_cchar((cchar_t)res);
+    INCREF_RET(C_CHAR_TO_CHAR(res));
 }
 
 VSObject *vs_float_int(VSObject *floatobj, VSObject *base)
@@ -189,7 +189,7 @@ VSObject *vs_float_int(VSObject *floatobj, VSObject *base)
     }
 
     cbool_t res = ((VSFloatObject *)floatobj)->_value;
-    return vs_int_from_cint((cint_t)res);
+    INCREF_RET(C_INT_TO_INT((cint_t)res));
 }
 
 VSObject *vs_float_float(VSObject *floatobj)
@@ -206,7 +206,7 @@ VSObject *vs_float_str(VSObject *floatobj)
     VS_ENSURE_TYPE(type, T_FLOAT, "float str");
 
     cfloat_t val = ((VSFloatObject *)floatobj)->_value;
-    return vs_string_from_cstring(std::to_string(val));
+    INCREF_RET(C_STRING_TO_STRING(std::to_string(val)));
 }
 
 VSObject *vs_float_bytes(VSObject *floatobj)
@@ -215,19 +215,6 @@ VSObject *vs_float_bytes(VSObject *floatobj)
     VS_ENSURE_TYPE(type, T_FLOAT, "float bytes");
 
     return NULL;
-}
-
-inline cfloat_t vs_float_to_cfloat(VSObject *floatobj)
-{
-    VSTypeObject *type = VS_TYPEOF(floatobj);
-    VS_ENSURE_TYPE(type, T_FLOAT, "float to cfloat");
-
-    return ((VSFloatObject *)floatobj)->_value;
-}
-
-inline VSObject *vs_float_from_cfloat(cfloat_t floatval)
-{
-    INCREF_RET(VS_AS_OBJECT(new VSFloatObject(floatval)));
 }
 
 NumberFuncs *float_number_funcs = new NumberFuncs(

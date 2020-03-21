@@ -209,10 +209,10 @@ VSToken *VSTokenizer::reco_char(std::string &literal) {
     VSToken *token = NULL;
     if (literal[1] == '\\') {
         token = new VSToken(
-            TK_CONSTANT, vs_char_from_cchar(escape(literal[2])), C_STRING_TO_STRING(literal), this->ln, this->col);
+            TK_CONSTANT, C_CHAR_TO_CHAR(escape(literal[2])), C_STRING_TO_STRING(literal), this->ln, this->col);
     } else {
         token = new VSToken(
-            TK_CONSTANT, vs_char_from_cchar(literal[1]), C_STRING_TO_STRING(literal), this->ln, this->col);
+            TK_CONSTANT, C_CHAR_TO_CHAR(literal[1]), C_STRING_TO_STRING(literal), this->ln, this->col);
     }
     return token;
 }
@@ -231,7 +231,7 @@ VSToken *VSTokenizer::reco_num(std::string &literal) {
             ERR_WITH_POS(this->ln, this->col, "invalid float literal: \"%s\"", literal.c_str());
             return NULL;
         }
-        return new VSToken(TK_CONSTANT, vs_float_from_cfloat(float_val), C_STRING_TO_STRING(literal), this->ln, this->col);
+        return new VSToken(TK_CONSTANT, C_FLOAT_TO_FLOAT(float_val), C_STRING_TO_STRING(literal), this->ln, this->col);
     } else {
         char *end = NULL;
         cint_t int_val = std::strtoll(literal.c_str(), &end, 0);
@@ -245,7 +245,7 @@ VSToken *VSTokenizer::reco_num(std::string &literal) {
             ERR_WITH_POS(this->ln, this->col, "invalid int literal: \"%s\"", literal.c_str());
             return NULL;
         }
-        return new VSToken(TK_CONSTANT, vs_float_from_cfloat(int_val), C_STRING_TO_STRING(literal), this->ln, this->col);
+        return new VSToken(TK_CONSTANT, C_INT_TO_INT(int_val), C_STRING_TO_STRING(literal), this->ln, this->col);
     }
 }
 
@@ -254,7 +254,7 @@ VSToken *VSTokenizer::reco_str(std::string &literal) {
         ERR_WITH_POS(this->ln, this->col, "invalid string literal: \"%s\"", literal.c_str());
         return NULL;
     }
-    VSObject *strobj = vs_string_from_cstring(literal);
+    VSObject *strobj = C_STRING_TO_STRING(literal);
     return new VSToken(TK_CONSTANT, strobj, strobj, this->ln, this->col);
 }
 

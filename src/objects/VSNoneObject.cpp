@@ -3,6 +3,8 @@
 #include "objects/VSBoolObject.hpp"
 #include "objects/VSStringObject.hpp"
 
+VSNoneObject *VSNoneObject::_VS_NONE = NULL;
+
 VSObject *vs_none_new(VSObject *typeobj, VSObject *args, VSObject *)
 {
     INCREF_RET(VS_NONE);
@@ -37,7 +39,7 @@ VSObject *vs_none_str(VSObject *obj)
     VSTypeObject *type = VS_TYPEOF(obj);
     VS_ENSURE_TYPE(type, T_NONE, "none to str");
 
-    return vs_string_from_cstring("None");
+    INCREF_RET(C_STRING_TO_STRING("None"));
 }
 
 VSObject *vs_none_bytes(VSObject *obj)

@@ -22,9 +22,6 @@ public:
     ~VSCellObject() = default;
 };
 
-extern VSObject *vs_cell_get(VSObject *cellobj);
-extern int vs_cell_set(VSObject *cellobj, VSObject *item);
-
 #define AS_CELL(obj) ((VSCellObject *)obj)
 #define VS_CELL_GET(cell) NEW_REF(VSObject *, AS_CELL(cell)->item)
 #define VS_CELL_SET(cell, value)                          \

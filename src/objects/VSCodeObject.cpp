@@ -127,7 +127,7 @@ VSObject *vs_code_str(VSObject *codeobj)
     VSTypeObject *type = VS_TYPEOF(codeobj);
     VS_ENSURE_TYPE(type, T_CODE, "code.__str__()");
 
-    return vs_string_from_cstring("code");
+    INCREF_RET(C_STRING_TO_STRING("code"));
 }
 
 VSObject *vs_code_bytes(VSObject *codeobj)
