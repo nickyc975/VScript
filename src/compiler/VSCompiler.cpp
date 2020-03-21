@@ -125,13 +125,13 @@ void VSCompiler::do_store(OPCODE opcode, VSASTNode *lval) {
         case AST_IDENT: {
             IdentNode *name = (IdentNode *)lval;
             if (!table->contains_recur(name->name)) {
-                err("name \"%s\" is not defined locally, so can not be assigned.", 
+                err("name \"%s\" is not defined locally, so can not be assigned.",
                     STRING_TO_C_STRING(name->name).c_str());
                 terminate(TERM_ERROR);
             }
             SymtableEntry *entry = table->get_recur(name->name);
             if (!IS_LOCAL(entry->sym_type) || entry->sym_type == SYM_VAL) {
-                err("name \"%s\" is not defined locally or is immutable, so can not be assigned.", 
+                err("name \"%s\" is not defined locally or is immutable, so can not be assigned.",
                     STRING_TO_C_STRING(name->name).c_str());
                 terminate(TERM_ERROR);
             }
@@ -172,16 +172,14 @@ void VSCompiler::do_store(OPCODE opcode, VSASTNode *lval) {
 void VSCompiler::fill_back_break_continue(vs_addr_t loop_start) {
     VSCodeObject *code = this->codeobjects.top();
     std::vector<vs_addr_t> *breaks = this->breakposes.top();
-    for (auto break_pos : *breaks)
-    {
+    for (auto break_pos : *breaks) {
         code->code[break_pos].operand = code->ninsts;
     }
     this->breakposes.pop();
     delete breaks;
 
     std::vector<vs_addr_t> *continues = this->continueposes.top();
-    for (auto continue_pos : *continues)
-    {
+    for (auto continue_pos : *continues) {
         code->code[continue_pos].operand = loop_start;
     }
     this->continueposes.pop();
@@ -319,7 +317,7 @@ void VSCompiler::gen_set_decl(VSASTNode *node) {
 void VSCompiler::gen_func_call(VSASTNode *node) {
     VSCodeObject *code = this->codeobjects.top();
     FuncCallNode *funccall = (FuncCallNode *)node;
-    
+
     if (funccall->args == NULL) {
         err("internal error: func->args is NULL");
         terminate(TERM_ERROR);
@@ -553,12 +551,15 @@ void VSCompiler::gen_func_decl(VSASTNode *node) {
     bool anonymous = func->name == NULL;
     // Add function name to parent code locals.
     VSObject *name = anonymous ? ANONYMOUS_FUNC_NAME : func->name->name;
-    if (p_table->contains(name)) {
-        err("duplicated definition of name: \"%s\"", STRING_TO_C_STRING(name).c_str());
-        terminate(TERM_ERROR);
+
+    if (!anonymous) {
+        if (p_table->contains(name)) {
+            err("duplicated definition of name: \"%s\"", STRING_TO_C_STRING(name).c_str());
+            terminate(TERM_ERROR);
+        }
+        // create symtable entry
+        p_table->put(name, new SymtableEntry(SYM_VAR, name, p_code->nlvars, 0));
     }
-    // create symtable entry
-    p_table->put(name, new SymtableEntry(SYM_VAR, name, p_code->nlvars, 0));
 
     ENTER_FUNC(name);
 
@@ -594,7 +595,7 @@ void VSCompiler::gen_func_decl(VSASTNode *node) {
     for (vs_size_t i = 0; i < code->ncellvars; i++) {
         VSObject *cellvar = LIST_GET(code->cellvars, i);
         if (!table->contains(cellvar)) {
-            err("internal error: cellvar \"%s\" is used by not defined", 
+            err("internal error: cellvar \"%s\" is used by not defined",
                 STRING_TO_C_STRING(cellvar).c_str());
             terminate(TERM_ERROR);
         }
@@ -607,7 +608,7 @@ void VSCompiler::gen_func_decl(VSASTNode *node) {
             // cell var is a free var of current code object.
             code->add_inst(VSInst(OP_LOAD_FREE_CELL, entry->index));
         } else {
-            // cell var is undefined, which means it is used by inner functions 
+            // cell var is undefined, which means it is used by inner functions
             // but not used or defined by current function it self. It should be a
             // free var of current function.
             entry->sym_type = SYM_FREE;
@@ -813,7 +814,7 @@ VSCodeObject *VSCompiler::compile(std::string filename) {
     for (vs_size_t i = 0; i < program->ncellvars; i++) {
         VSObject *cellvar = LIST_GET(program->cellvars, i);
         if (!table->contains(cellvar)) {
-            err("internal error: cell var \"%s\" is used but not defined", 
+            err("internal error: cell var \"%s\" is used but not defined",
                 STRING_TO_C_STRING(cellvar).c_str());
             error = true;
         } else {
