@@ -494,6 +494,8 @@ void VSCompiler::gen_for_stmt(VSASTNode *node) {
 
     this->gen_cpd_stmt(for_stmt->body);
 
+    // remember where the for incr start from.
+    vs_size_t incr_start = code->ninsts;
     if (for_stmt->incr != NULL) {
         this->gen_expr_list(for_stmt->incr);
     }
@@ -502,7 +504,9 @@ void VSCompiler::gen_for_stmt(VSASTNode *node) {
     // jmp is the following inst of jif, so jif + 1 is the pos of jmp.
     code->code[jif_pos + 1].operand = code->ninsts;
 
-    this->fill_back_break_continue(loop_start);
+    // continue in for loop should not skip the incr part, so set 
+    // incr_start as jump target of continue statements.
+    this->fill_back_break_continue(incr_start);
 
     LEAVE_BLK();
 }
