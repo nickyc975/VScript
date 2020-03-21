@@ -390,139 +390,139 @@ begain:
 
     } else {
 
-#define NEW_SYM_TOKEN(tp) new VSToken(tp, NULL, C_STRING_TO_STRING(literal), this->ln, this->col)
+#define NEW_SYM_TOKEN(tp, literal) new VSToken(tp, NULL, C_STRING_TO_STRING(literal), this->ln, this->col)
 
         tk_char = this->getchar();
         switch (tk_char) {
             case '=':
                 if (this->peekchar() == '=') {
                     this->getchar();
-                    this->peek = NEW_SYM_TOKEN(TK_EQ);
+                    this->peek = NEW_SYM_TOKEN(TK_EQ, "==");
                 } else {
-                    this->peek = NEW_SYM_TOKEN(TK_ASSIGN);
+                    this->peek = NEW_SYM_TOKEN(TK_ASSIGN, "=");
                 }
                 break;
             case '+':
                 if (this->peekchar() == '=') {
                     this->getchar();
-                    this->peek = NEW_SYM_TOKEN(TK_ADD_ASSIGN);
+                    this->peek = NEW_SYM_TOKEN(TK_ADD_ASSIGN, "+=");
                 } else {
-                    this->peek = NEW_SYM_TOKEN(TK_ADD);
+                    this->peek = NEW_SYM_TOKEN(TK_ADD, "+");
                 }
                 break;
             case '-':
                 if (this->peekchar() == '=') {
                     this->getchar();
-                    this->peek = NEW_SYM_TOKEN(TK_SUB_ASSIGN);
+                    this->peek = NEW_SYM_TOKEN(TK_SUB_ASSIGN, "-=");
                 } else {
-                    this->peek = NEW_SYM_TOKEN(TK_SUB);
+                    this->peek = NEW_SYM_TOKEN(TK_SUB, "-");
                 }
                 break;
             case '*':
                 if (this->peekchar() == '=') {
                     this->getchar();
-                    this->peek = NEW_SYM_TOKEN(TK_MUL_ASSIGN);
+                    this->peek = NEW_SYM_TOKEN(TK_MUL_ASSIGN, "*=");
                 } else {
-                    this->peek = NEW_SYM_TOKEN(TK_MUL);
+                    this->peek = NEW_SYM_TOKEN(TK_MUL, "*");
                 }
                 break;
             case '/':
                 if (this->peekchar() == '=') {
                     this->getchar();
-                    this->peek = NEW_SYM_TOKEN(TK_DIV_ASSIGN);
+                    this->peek = NEW_SYM_TOKEN(TK_DIV_ASSIGN, "/=");
                 } else if (this->peekchar() == '/') {
                     while (this->peekchar() != EOF && this->getchar() != '\n')
                         ;
                     goto begain;
                 } else {
-                    this->peek = NEW_SYM_TOKEN(TK_DIV);
+                    this->peek = NEW_SYM_TOKEN(TK_DIV, "/");
                 }
                 break;
             case '%':
                 if (this->peekchar() == '=') {
                     this->getchar();
-                    this->peek = NEW_SYM_TOKEN(TK_MOD_ASSIGN);
+                    this->peek = NEW_SYM_TOKEN(TK_MOD_ASSIGN, "%=");
                 } else {
-                    this->peek = NEW_SYM_TOKEN(TK_MOD);
+                    this->peek = NEW_SYM_TOKEN(TK_MOD, "%");
                 }
                 break;
             case '&':
                 if (this->peekchar() == '=') {
                     this->getchar();
-                    this->peek = NEW_SYM_TOKEN(TK_AND_ASSIGN);
+                    this->peek = NEW_SYM_TOKEN(TK_AND_ASSIGN, "&=");
                 } else {
-                    this->peek = NEW_SYM_TOKEN(TK_AND);
+                    this->peek = NEW_SYM_TOKEN(TK_AND, "&");
                 }
                 break;
             case '|':
                 if (this->peekchar() == '=') {
                     this->getchar();
-                    this->peek = NEW_SYM_TOKEN(TK_OR_ASSIGN);
+                    this->peek = NEW_SYM_TOKEN(TK_OR_ASSIGN, "|=");
                 } else {
-                    this->peek = NEW_SYM_TOKEN(TK_OR);
+                    this->peek = NEW_SYM_TOKEN(TK_OR, "|");
                 }
                 break;
             case '^':
                 if (this->peekchar() == '=') {
                     this->getchar();
-                    this->peek = NEW_SYM_TOKEN(TK_XOR_ASSIGN);
+                    this->peek = NEW_SYM_TOKEN(TK_XOR_ASSIGN, "^=");
                 } else {
-                    this->peek = NEW_SYM_TOKEN(TK_XOR);
+                    this->peek = NEW_SYM_TOKEN(TK_XOR, "^");
                 }
                 break;
             case '!':
                 if (this->peekchar() == '=') {
                     this->getchar();
-                    this->peek = NEW_SYM_TOKEN(TK_NEQ);
+                    this->peek = NEW_SYM_TOKEN(TK_NEQ, "!=");
                 } else {
-                    this->peek = NEW_SYM_TOKEN(TK_NOT);
+                    this->peek = NEW_SYM_TOKEN(TK_NOT, "!");
                 }
                 break;
             case '<':
                 if (this->peekchar() == '=') {
                     this->getchar();
-                    this->peek = NEW_SYM_TOKEN(TK_LE);
+                    this->peek = NEW_SYM_TOKEN(TK_LE, "<=");
                 } else {
-                    this->peek = NEW_SYM_TOKEN(TK_LT);
+                    this->peek = NEW_SYM_TOKEN(TK_LT, "<");
                 }
                 break;
             case '>':
                 if (this->peekchar() == '=') {
                     this->getchar();
-                    this->peek = NEW_SYM_TOKEN(TK_GE);
+                    this->peek = NEW_SYM_TOKEN(TK_GE, ">=");
                 } else {
-                    this->peek = NEW_SYM_TOKEN(TK_GT);
+                    this->peek = NEW_SYM_TOKEN(TK_GT, ">");
                 }
                 break;
             case ',':
-                this->peek = NEW_SYM_TOKEN(TK_COMMA);
+                this->peek = NEW_SYM_TOKEN(TK_COMMA, ",");
                 break;
             case '.':
-                this->peek = NEW_SYM_TOKEN(TK_DOT);
+                this->peek = NEW_SYM_TOKEN(TK_DOT, ".");
                 break;
             case ';':
-                this->peek = NEW_SYM_TOKEN(TK_SEMICOLON);
+                this->peek = NEW_SYM_TOKEN(TK_SEMICOLON, ";");
                 break;
             case ':':
-                this->peek = NEW_SYM_TOKEN(TK_COLON);
+                this->peek = NEW_SYM_TOKEN(TK_COLON, ":");
                 break;
             case '(':
-                this->peek = NEW_SYM_TOKEN(TK_L_PAREN);
+                this->peek = NEW_SYM_TOKEN(TK_L_PAREN, "(");
                 break;
             case ')':
-                this->peek = NEW_SYM_TOKEN(TK_R_PAREN);
+                this->peek = NEW_SYM_TOKEN(TK_R_PAREN, ")");
                 break;
             case '[':
-                this->peek = NEW_SYM_TOKEN(TK_L_BRACK);
+                this->peek = NEW_SYM_TOKEN(TK_L_BRACK, "[");
                 break;
             case ']':
-                this->peek = NEW_SYM_TOKEN(TK_R_BRACK);
+                this->peek = NEW_SYM_TOKEN(TK_R_BRACK, "]");
                 break;
             case '{':
-                this->peek = NEW_SYM_TOKEN(TK_L_CURLY);
+                this->peek = NEW_SYM_TOKEN(TK_L_CURLY, "{");
                 break;
             case '}':
-                this->peek = NEW_SYM_TOKEN(TK_R_CURLY);
+                this->peek = NEW_SYM_TOKEN(TK_R_CURLY, "}");
                 break;
             case ' ':
             case '\n':
