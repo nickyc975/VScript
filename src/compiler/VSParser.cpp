@@ -433,11 +433,11 @@ VSASTNode *VSParser::read_expr_list() {
 VSASTNode *VSParser::read_expr_stmt() {
     ENSURE_TOKEN(NULL);
     if (PEEKTOKEN()->tk_type == TK_SEMICOLON) {
-        expect(TK_SEMICOLON);
+        this->expect(1, TK_SEMICOLON);
         return NULL;
     }
     VSASTNode *node = this->read_expr_list();
-    expect(TK_SEMICOLON);
+    this->expect(1, TK_SEMICOLON);
     return node;
 }
 
