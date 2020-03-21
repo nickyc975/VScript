@@ -201,6 +201,11 @@ VSASTNode *VSParser::read_primary_expr() {
             node = this->read_list_decl();
             POPTOKEN(1, TK_R_BRACK);
             break;
+        case TK_L_CURLY:
+            POPTOKEN(1, TK_L_CURLY);
+            node = this->read_dict_or_set_decl();
+            POPTOKEN(1, TK_R_CURLY);
+            break;
         case TK_FUNC:
             node = this->read_func_decl();
         default:
