@@ -76,7 +76,7 @@ VSToken *VSParser::expect(int ntypes, ...) {
     va_list types;
     va_start(types, ntypes);
     for (int i = 0; i < ntypes; i++) {
-        TOKEN_TYPE type = va_arg(types, TOKEN_TYPE);
+        TOKEN_TYPE type = (TOKEN_TYPE)va_arg(types, int);
         if (token->tk_type == type) {
             res = true;
             break;

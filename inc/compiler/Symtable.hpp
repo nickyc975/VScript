@@ -17,8 +17,8 @@ typedef enum {
 
 class SymtableEntry : public VSObject {
 public:
-    VSObject *symbol;
     SYM_TYPE sym_type;
+    VSObject *symbol;
     bool is_cell;
     int index, cell_index;
 

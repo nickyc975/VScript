@@ -320,7 +320,7 @@ void VSCompiler::gen_func_call(VSASTNode *node) {
     VSCodeObject *code = this->codeobjects.top();
     FuncCallNode *funccall = (FuncCallNode *)node;
     
-    if (funccall->args->node_type == NULL) {
+    if (funccall->args == NULL) {
         err("internal error: func->args is NULL");
         terminate(TERM_ERROR);
     }
