@@ -517,6 +517,7 @@ void VSCompiler::gen_build_func(VSCodeObject *code) {
         SymtableEntry *entry;
         VSObject *freevar = LIST_GET(code->freevars, i);
         if (p_table->contains(freevar)) {
+            // free var is defined in parent code object's symtable.
             entry = p_table->get(freevar);
             if (!entry->is_cell) {
                 entry->cell_index = p_code->ncellvars;
@@ -524,6 +525,7 @@ void VSCompiler::gen_build_func(VSCodeObject *code) {
                 entry->is_cell = true;
             }
         } else {
+            // freevar is currently not defined.
             entry = new SymtableEntry(SYM_UNDEFINED, freevar, 0, p_code->ncellvars);
             p_table->put(freevar, entry);
             p_code->add_cellvar(freevar);
@@ -589,16 +591,22 @@ void VSCompiler::gen_func_decl(VSASTNode *node) {
     for (vs_size_t i = 0; i < code->ncellvars; i++) {
         VSObject *cellvar = LIST_GET(code->cellvars, i);
         if (!table->contains(cellvar)) {
-            err("internal error: cellvar used by not defined");
+            err("internal error: cellvar \"%s\" is used by not defined", 
+                STRING_TO_C_STRING(cellvar).c_str());
             terminate(TERM_ERROR);
         }
 
         SymtableEntry *entry = table->get(cellvar);
         if (IS_LOCAL(entry->sym_type)) {
+            // cell var is defined locally.
             code->add_inst(VSInst(OP_LOAD_LOCAL_CELL, entry->index));
         } else if (entry->sym_type == SYM_FREE) {
+            // cell var is a free var of current code object.
             code->add_inst(VSInst(OP_LOAD_FREE_CELL, entry->index));
         } else {
+            // cell var is undefined, which means it is used by inner functions 
+            // but not used or defined by current function it self. It should be a
+            // free var of current function.
             entry->sym_type = SYM_FREE;
             entry->index = code->nfreevars;
             code->add_freevar(cellvar);
@@ -776,10 +784,56 @@ VSCodeObject *VSCompiler::compile(std::string filename) {
 
     ENTER_FUNC(C_STRING_TO_STRING("__main__"));
 
+    Symtable *table = this->symtables.top();
+    VSCodeObject *program = this->codeobjects.top();
+
+    // should set up cell vars first, so jump.
+    vs_size_t start_pos = program->ninsts;
+    program->add_inst(VSInst(OP_JMP, 0));
+
+    // generate top level code object.
     VSASTNode *astree = parser->parse();
     this->gen_cpd_stmt(astree);
 
-    auto program = codeobjects.top();
+    bool error = false;
+
+    // top level code object should not have free vars
+    for (vs_size_t i = 0; i < program->nfreevars; i++) {
+        VSObject *freevar = LIST_GET(program->freevars, i);
+        err("name: \"%s\" is not defined", STRING_TO_C_STRING(freevar).c_str());
+        error = true;
+    }
+
+    // all cell vars in top level code object should be locally defined.
+    for (vs_size_t i = 0; i < program->ncellvars; i++) {
+        VSObject *cellvar = LIST_GET(program->cellvars, i);
+        if (!table->contains(cellvar)) {
+            err("internal error: cell var \"%s\" is used but not defined", 
+                STRING_TO_C_STRING(cellvar).c_str());
+            error = true;
+        } else {
+            SymtableEntry *entry = table->get(cellvar);
+            if (entry->sym_type == SYM_FREE || entry->sym_type == SYM_UNDEFINED) {
+                err("name: \"%s\" is not defined", STRING_TO_C_STRING(cellvar).c_str());
+                error = true;
+            }
+        }
+    }
+
+    if (error) {
+        terminate(TERM_ERROR);
+    }
+
+    // set up cell vars
+    program->code[start_pos].operand = program->ninsts;
+    for (vs_size_t i = 0; i < program->ncellvars; i++) {
+        VSObject *cellvar = LIST_GET(program->cellvars, i);
+        program->add_inst(VSInst(OP_LOAD_LOCAL_CELL, table->get(cellvar)->index));
+        program->add_inst(VSInst(OP_STORE_CELL, i));
+    }
+
+    // jump back to the function body start point
+    program->add_inst(VSInst(OP_JMP, start_pos + 1));
 
     LEAVE_FUNC();
 
