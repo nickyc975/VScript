@@ -391,7 +391,7 @@ void VSCompiler::gen_expr(VSASTNode *node) {
         case AST_U_OP_EXPR:
             this->gen_u_expr(node);
             break;
-        case AST_FUNC_DECL:
+        case AST_LAMBDA_DECL:
             this->gen_func_decl(node);
             break;
         default:
@@ -511,6 +511,38 @@ void VSCompiler::gen_for_stmt(VSASTNode *node) {
     LEAVE_BLK();
 }
 
+void VSCompiler::set_up_cellvars() {
+    Symtable *table = this->symtables.top();
+    VSCodeObject *code = this->codeobjects.top();
+
+    for (vs_size_t i = 0; i < code->ncellvars; i++) {
+        VSObject *cellvar = LIST_GET(code->cellvars, i);
+        if (!table->contains(cellvar)) {
+            err("internal error: cellvar \"%s\" is used by not defined",
+                STRING_TO_C_STRING(cellvar).c_str());
+            terminate(TERM_ERROR);
+        }
+
+        SymtableEntry *entry = table->get(cellvar);
+        if (IS_LOCAL(entry->sym_type)) {
+            // cell var is defined locally.
+            code->add_inst(VSInst(OP_LOAD_LOCAL_CELL, entry->index));
+        } else if (entry->sym_type == SYM_FREE) {
+            // cell var is a free var of current code object.
+            code->add_inst(VSInst(OP_LOAD_FREE_CELL, entry->index));
+        } else {
+            // cell var is undefined, which means it is used by inner functions
+            // but not used or defined by current function it self. It should be a
+            // free var of current function.
+            entry->sym_type = SYM_FREE;
+            entry->index = code->nfreevars;
+            code->add_freevar(cellvar);
+            code->add_inst(VSInst(OP_LOAD_FREE_CELL, entry->index));
+        }
+        code->add_inst(VSInst(OP_STORE_CELL, i));
+    }
+}
+
 void VSCompiler::gen_build_func(VSCodeObject *code, bool anonymous) {
     Symtable *p_table = this->symtables.top();
     VSCodeObject *p_code = this->codeobjects.top();
@@ -553,10 +585,10 @@ void VSCompiler::gen_func_decl(VSASTNode *node) {
     FuncDeclNode *func = (FuncDeclNode *)node;
 
     bool anonymous = func->name == NULL;
-    // Add function name to parent code locals.
     VSObject *name = anonymous ? ANONYMOUS_FUNC_NAME : func->name->name;
 
     if (!anonymous) {
+        // Add function name to parent code locals.
         if (p_table->contains(name)) {
             err("duplicated definition of name: \"%s\"", STRING_TO_C_STRING(name).c_str());
             terminate(TERM_ERROR);
@@ -596,32 +628,7 @@ void VSCompiler::gen_func_decl(VSASTNode *node) {
 
     // set up cell vars
     code->code[start_pos].operand = code->ninsts;
-    for (vs_size_t i = 0; i < code->ncellvars; i++) {
-        VSObject *cellvar = LIST_GET(code->cellvars, i);
-        if (!table->contains(cellvar)) {
-            err("internal error: cellvar \"%s\" is used by not defined",
-                STRING_TO_C_STRING(cellvar).c_str());
-            terminate(TERM_ERROR);
-        }
-
-        SymtableEntry *entry = table->get(cellvar);
-        if (IS_LOCAL(entry->sym_type)) {
-            // cell var is defined locally.
-            code->add_inst(VSInst(OP_LOAD_LOCAL_CELL, entry->index));
-        } else if (entry->sym_type == SYM_FREE) {
-            // cell var is a free var of current code object.
-            code->add_inst(VSInst(OP_LOAD_FREE_CELL, entry->index));
-        } else {
-            // cell var is undefined, which means it is used by inner functions
-            // but not used or defined by current function it self. It should be a
-            // free var of current function.
-            entry->sym_type = SYM_FREE;
-            entry->index = code->nfreevars;
-            code->add_freevar(cellvar);
-            code->add_inst(VSInst(OP_LOAD_FREE_CELL, entry->index));
-        }
-        code->add_inst(VSInst(OP_STORE_CELL, i));
-    }
+    this->set_up_cellvars();
 
     // jump back to the function body start point
     code->add_inst(VSInst(OP_JMP, start_pos + 1));
@@ -629,7 +636,7 @@ void VSCompiler::gen_func_decl(VSASTNode *node) {
     LEAVE_FUNC();
 
     // Add instructions to build function
-    gen_build_func(code, anonymous);
+    this->gen_build_func(code, anonymous);
 
     if (!anonymous) {
         p_code->add_lvar(code->name);

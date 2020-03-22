@@ -62,8 +62,8 @@ dict_declaration:L_CURLY pair_list_expression R_CURLY
 
 set_declaration:L_CURLY value_list_expression R_CURLY
 
-anony_function_declaration:FUNC L_PAREN R_PAREN compound_statement
-anony_function_declaration:FUNC L_PAREN parameter_list R_PAREN compound_statement
+anony_function_declaration:LAMBDA L_PAREN R_PAREN compound_statement
+anony_function_declaration:LAMBDA L_PAREN parameter_list R_PAREN compound_statement
 
 assignment_operator:ASSIGN
 assignment_operator:MUL_ASSIGN

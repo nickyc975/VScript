@@ -15,9 +15,11 @@ private:
     std::stack<unsigned int> inloop_stack;
 
     VSToken *expect(int ntypes, ...);
+    void read_func_def(FuncDeclNode *func);
     VSASTNode *read_tuple_decl_or_expr();
     VSASTNode *read_list_decl();
     VSASTNode *read_dict_or_set_decl();
+    VSASTNode *read_lambda_decl();
     VSASTNode *read_dot_expr();
     VSASTNode *read_primary_expr();
     VSASTNode *read_postfix_expr();

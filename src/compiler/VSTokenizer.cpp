@@ -292,6 +292,11 @@ VSToken *VSTokenizer::reco_kwd(std::string &literal) {
                 token = NEW_KWD_TOKEN(TK_IF);
             }
             break;
+        case 'l':
+            if (literal == "lambda") {
+                token = NEW_KWD_TOKEN(TK_LAMBDA);
+            }
+            break;
         case 'm':
             if (literal == "meth") {
                 token = NEW_KWD_TOKEN(TK_METH);

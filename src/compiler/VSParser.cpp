@@ -92,6 +92,38 @@ VSToken *VSParser::expect(int ntypes, ...) {
     return token;
 }
 
+void VSParser::read_func_def(FuncDeclNode *func) {
+    // read func args
+    ENSURE_TOKEN();
+    if (PEEKTOKEN()->tk_type != TK_R_PAREN) {
+        VSToken *token = this->expect(1, TK_IDENTIFIER);
+        if (token != NULL) {
+            IdentNode *arg = new IdentNode(token->literal);
+            func->add_arg(arg);
+        }
+
+        ENSURE_TOKEN();
+        while (PEEKTOKEN()->tk_type == TK_COMMA) {
+            POPTOKEN(1, TK_COMMA);
+            token = this->expect(1, TK_IDENTIFIER);
+            if (token != NULL) {
+                IdentNode *arg = new IdentNode(token->literal);
+                func->add_arg(arg);
+            }
+            ENSURE_TOKEN();
+        }
+    }
+    POPTOKEN(1, TK_R_PAREN);
+
+    // read func body
+    VSASTNode *func_body = this->read_cpd_stmt();
+    if (func_body == NULL) {
+        ENSURE_TOKEN();
+        err("line: %ld, missing function body\n", PEEKTOKEN()->ln);
+    }
+    func->set_body(func_body);
+}
+
 VSASTNode *VSParser::read_tuple_decl_or_expr() {
     VSASTNode *node = this->read_log_or_expr();
     if (node == NULL)
@@ -175,6 +207,21 @@ VSASTNode *VSParser::read_dict_or_set_decl() {
     return set;
 }
 
+VSASTNode *VSParser::read_lambda_decl() {
+    POPTOKEN(1, TK_LAMBDA);
+    POPTOKEN(1, TK_L_PAREN);
+
+    ENTER_FUNC();
+
+    FuncDeclNode *func = new FuncDeclNode(NULL);
+
+    this->read_func_def(func);
+
+    LEAVE_FUNC();
+
+    return func;
+}
+
 VSASTNode *VSParser::read_primary_expr() {
     VSToken *token;
     VSASTNode *node = NULL;
@@ -206,8 +253,8 @@ VSASTNode *VSParser::read_primary_expr() {
             node = this->read_dict_or_set_decl();
             POPTOKEN(1, TK_R_CURLY);
             break;
-        case TK_FUNC:
-            node = this->read_func_decl();
+        case TK_LAMBDA:
+            node = this->read_lambda_decl();
         default:
             break;
     }
@@ -549,46 +596,17 @@ VSASTNode *VSParser::read_for_stmt() {
 
 VSASTNode *VSParser::read_func_decl() {
     POPTOKEN(1, TK_FUNC);
-    VSToken *token = NULL;
-    if (PEEKTOKEN()->tk_type == TK_IDENTIFIER) {
-        token = GETTOKEN();
+    VSToken *token = this->expect(1, TK_IDENTIFIER);
+    if (token == NULL) {
+        return NULL;
     }
-    IdentNode *funcname = token == NULL ? NULL : new IdentNode(token->literal);
     POPTOKEN(1, TK_L_PAREN);
 
     ENTER_FUNC();
 
-    FuncDeclNode *func = new FuncDeclNode(funcname);
+    FuncDeclNode *func = new FuncDeclNode(new IdentNode(token->literal));
 
-    // read func args
-    ENSURE_TOKEN(NULL);
-    if (PEEKTOKEN()->tk_type != TK_R_PAREN) {
-        token = this->expect(1, TK_IDENTIFIER);
-        if (token != NULL) {
-            IdentNode *arg = new IdentNode(token->literal);
-            func->add_arg(arg);
-        }
-
-        ENSURE_TOKEN(func);
-        while (PEEKTOKEN()->tk_type == TK_COMMA) {
-            POPTOKEN(1, TK_COMMA);
-            token = this->expect(1, TK_IDENTIFIER);
-            if (token != NULL) {
-                IdentNode *arg = new IdentNode(token->literal);
-                func->add_arg(arg);
-            }
-            ENSURE_TOKEN(func);
-        }
-    }
-    POPTOKEN(1, TK_R_PAREN);
-
-    // read func body
-    VSASTNode *func_body = this->read_cpd_stmt();
-    if (func_body == NULL) {
-        ENSURE_TOKEN(func);
-        err("line: %ld, missing function body\n", PEEKTOKEN()->ln);
-    }
-    func->set_body(func_body);
+    this->read_func_def(func);
 
     LEAVE_FUNC();
 

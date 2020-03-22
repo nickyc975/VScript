@@ -14,6 +14,7 @@ typedef enum {
     AST_LIST_DECL,
     AST_DICT_DECL,
     AST_SET_DECL,
+    AST_LAMBDA_DECL,
     AST_IDX_EXPR,
     AST_DOT_EXPR,
     AST_FUNC_CALL,
@@ -289,7 +290,7 @@ public:
     VSASTNode *body;
 
     FuncDeclNode(IdentNode *name) : name(name) {
-        this->node_type = AST_FUNC_DECL;
+        this->node_type = name != NULL ? AST_FUNC_DECL : AST_LAMBDA_DECL;
         this->args = std::vector<VSASTNode *>();
         this->body = NULL;
         INCREF(name);

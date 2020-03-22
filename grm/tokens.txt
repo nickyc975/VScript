@@ -42,6 +42,7 @@ WHILE       while
 CLASS       class # not used
 METH        meth # not used
 FUNC        func
+LAMBDA      lambda
 VAR         var
 VAL         val
 CONTINUE    continue

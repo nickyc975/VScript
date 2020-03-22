@@ -24,6 +24,7 @@ private:
 
     void do_store(OPCODE opcode, VSASTNode *lval);
     void fill_back_break_continue(vs_addr_t loop_start);
+    void set_up_cellvars();
     void gen_build_func(VSCodeObject *code, bool anonymous);
     void gen_const(VSASTNode *node);
     void gen_ident(VSASTNode *node);
