@@ -264,6 +264,26 @@ void VSCompiler::gen_idx_expr(VSASTNode *node) {
     code->add_inst(VSInst(OP_INDEX_LOAD));
 }
 
+void VSCompiler::gen_dot_expr(VSASTNode *node) {
+    Symtable *table = this->symtables.top();
+    name_addr_map *names = this->namestack.top();
+    VSCodeObject *code = this->codeobjects.top();
+
+    DotExprNode *dot_expr = (DotExprNode *)node;
+
+    this->gen_expr(dot_expr->obj);
+
+    std::string &attrname = STRING_TO_C_STRING(dot_expr->attrname->name);
+
+    auto iter = names->find(attrname);
+    if (iter == names->end()) {
+        (*names)[attrname] = code->nnames;
+        code->add_name(dot_expr->attrname->name);
+        iter = names->find(attrname);
+    }
+    code->add_inst(VSInst(OP_LOAD_ATTR, iter->second));
+}
+
 void VSCompiler::gen_tuple_decl(VSASTNode *node) {
     VSCodeObject *code = this->codeobjects.top();
     TupleDeclNode *tuple = (TupleDeclNode *)node;
@@ -378,6 +398,9 @@ void VSCompiler::gen_expr(VSASTNode *node) {
             break;
         case AST_SET_DECL:
             this->gen_set_decl(node);
+            break;
+        case AST_DOT_EXPR:
+            this->gen_dot_expr(node);
             break;
         case AST_IDX_EXPR:
             this->gen_idx_expr(node);
@@ -811,6 +834,8 @@ VSCodeObject *VSCompiler::compile(std::string filename) {
     // generate top level code object.
     VSASTNode *astree = parser->parse();
     this->gen_cpd_stmt(astree);
+    
+    program->add_inst(VSInst(OP_RET));
 
     bool error = false;
 

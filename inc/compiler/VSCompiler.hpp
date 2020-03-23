@@ -35,6 +35,7 @@ private:
     void gen_b_expr(VSASTNode *node);
     void gen_u_expr(VSASTNode *node);
     void gen_idx_expr(VSASTNode *node);
+    void gen_dot_expr(VSASTNode *node);
     void gen_func_call(VSASTNode *node);
     void gen_return(VSASTNode *node);
     void gen_break(VSASTNode *node);
