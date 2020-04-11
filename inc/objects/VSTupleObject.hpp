@@ -1,6 +1,7 @@
 #ifndef VS_TUPLE_H
 #define VS_TUPLE_H
 
+#include "error.hpp"
 #include "VSObject.hpp"
 #include "VSTypeObject.hpp"
 

@@ -53,4 +53,6 @@ public:
 
 extern VSTypeObject *VSCodeType;
 
+#define AS_CODE(obj) ((VSCodeObject *)(obj))
+
 #endif
