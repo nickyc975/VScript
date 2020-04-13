@@ -7,12 +7,13 @@
 class VSFunctionObject : public VSObject {
 public:
     /* | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | |
-     * |f|r|nargs|c|m|                     unused                      |
+     * |c|r|nargs|m|                      unused                       |
      */
     unsigned int flags;
     VSObject *name;
     VSObject *code;
-    VSObject *closure;
+    VSObject *cellvars;
+    VSObject *freevars;
     VSObject *builtins;
     VSObject *defaults;
 
@@ -22,22 +23,20 @@ public:
     VSFunctionObject(
         VSObject *name,
         void *cfunc,
-        VSObject *closure,
         int nargs,
         bool has_retval,
         bool is_method);
 
     VSFunctionObject(
-        VSObject *name, 
-        VSObject *code, 
-        VSObject *closure, 
+        VSObject *name,
+        VSObject *code,
+        VSObject *cellvars,
+        VSObject *freevars,
         VSObject *builtins, 
         VSObject *defaults, 
         bool is_method);
 
     ~VSFunctionObject() = default;
-
-    static VSObject *call(VSFunctionObject *callable, VSObject *args, VSObject *kwargs);
 };
 
 extern VSTypeObject *VSFunctionType;
@@ -55,13 +54,9 @@ extern VSTypeObject *VSFunctionType;
 #define FUNC_GET_NARGS(func) ((AS_FUNC(func)->flags >> 27) & 7)
 #define FUNC_SET_NARGS(func, v) (AS_FUNC(func)->flags | (v << 27))
 
-#define FUNC_USE_CLOSURE(func) ((AS_FUNC(func)->flags >> 26) & 1)
-#define FUNC_SET_USE_CLOSURE(func) (AS_FUNC(func)->flags | (1 << 26))
-#define FUNC_CLEAR_USE_CLOSURE(func) (AS_FUNC(func)->flags & ~(1 << 26))
-
-#define FUNC_IS_METHOD(func) ((AS_FUNC(func)->flags >> 25) & 1)
-#define FUNC_SET_IS_METHOD(func) (AS_FUNC(func)->flags | (1 << 25))
-#define FUNC_CLEAR_IS_METHOD(func) (AS_FUNC(func)->flags & ~(1 << 25))
+#define FUNC_IS_METHOD(func) ((AS_FUNC(func)->flags >> 26) & 1)
+#define FUNC_SET_IS_METHOD(func) (AS_FUNC(func)->flags | (1 << 26))
+#define FUNC_CLEAR_IS_METHOD(func) (AS_FUNC(func)->flags & ~(1 << 26))
 
 #define FUNC_GET_NAME(func) (AS_FUNC(func)->name)
 #define FUNC_SET_NAME(func, fname) (AS_FUNC(func)->name = fname)
@@ -69,8 +64,11 @@ extern VSTypeObject *VSFunctionType;
 #define FUNC_GET_CODE(func) (AS_FUNC(func)->code)
 #define FUNC_SET_CODE(func, fcode) (AS_FUNC(func)->code = fcode)
 
-#define FUNC_GET_CLOSURE(func) (AS_FUNC(func)->closure)
-#define FUNC_SET_CLOSURE(func, fclosure) (AS_FUNC(func)->closure = fclosure)
+#define FUNC_GET_CELLVARS(func) (AS_FUNC(func)->cellvars)
+#define FUNC_SET_CELLVARS(func, fcellvars) (AS_FUNC(func)->cellvars = fcellvars)
+
+#define FUNC_GET_FREEVARS(func) (AS_FUNC(func)->freevars)
+#define FUNC_SET_FREEVARS(func, ffreevars) (AS_FUNC(func)->freevars = ffreevars)
 
 #define FUNC_GET_BUILTINS(func) (AS_FUNC(func)->builtins)
 #define FUNC_SET_BUILTINS(func, fbuiltins) (AS_FUNC(func)->builtins = fbuiltins)

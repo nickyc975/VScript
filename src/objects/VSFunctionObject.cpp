@@ -1,14 +1,14 @@
 #include "objects/VSFunctionObject.hpp"
+
+#include <cassert>
+
 #include "error.hpp"
 #include "objects/VSNoneObject.hpp"
 #include "objects/VSStringObject.hpp"
 
-#include <cassert>
-
 VSFunctionObject::VSFunctionObject(
     VSObject *name,
     void *cfunc,
-    VSObject *closure,
     int nargs,
     bool has_retval,
     bool is_method) {
@@ -23,16 +23,6 @@ VSFunctionObject::VSFunctionObject(
     assert(cfunc != NULL);
     this->cfunc = cfunc;
     FUNC_SET_IS_C_FUNC(this);
-
-    if (closure != NULL) {
-        this->closure = NEW_REF(VSObject *, closure);
-        FUNC_SET_USE_CLOSURE(this);
-    } else if (!is_method) {
-        this->closure = NEW_REF(VSObject *, VS_NONE);
-    } else {
-        err("internal error: method \"%s\" not bound to object\n", vs_string_to_cstring(name).c_str());
-        terminate(TERM_ERROR);
-    }
 
     if (nargs < 1 || nargs > 4) {
         err("invalid internal function arg count: %d\n", nargs);
@@ -52,7 +42,8 @@ VSFunctionObject::VSFunctionObject(
 VSFunctionObject::VSFunctionObject(
     VSObject *name,
     VSObject *code,
-    VSObject *closure,
+    VSObject *cellvars,
+    VSObject *freevars,
     VSObject *builtins,
     VSObject *defaults,
     bool is_method) {
@@ -68,14 +59,12 @@ VSFunctionObject::VSFunctionObject(
     VS_ENSURE_TYPE(VS_TYPEOF(code), T_CODE, "as function code");
     this->code = NEW_REF(VSObject *, code);
 
-    if (closure != NULL) {
-        this->closure = NEW_REF(VSObject *, closure);
-        FUNC_SET_USE_CLOSURE(this);
-    } else if (!is_method) {
-        this->closure = NEW_REF(VSObject *, VS_NONE);
-    } else {
-        err("internal error: method \"%s\" not bound to object\n", vs_string_to_cstring(name).c_str());
-        terminate(TERM_ERROR);
+    if (cellvars != NULL) {
+        this->cellvars = NEW_REF(VSObject *, cellvars);
+    }
+
+    if (freevars != NULL) {
+        this->freevars = NEW_REF(VSObject *, freevars);
     }
 
     this->builtins = NEW_REF(VSObject *, builtins == NULL ? VS_NONE : builtins);
@@ -86,23 +75,39 @@ VSFunctionObject::VSFunctionObject(
     }
 }
 
-VSObject *VSFunctionObject::call(VSFunctionObject *callable, VSObject *args, VSObject *kwargs) {
-    bool is_c_func = FUNC_IS_C_FUNC(callable);
-    bool is_method = FUNC_IS_METHOD(callable);
+VSObject *vs_func_str(VSObject *funcobj) {
+    VSTypeObject *type = VS_TYPEOF(funcobj);
+    VS_ENSURE_TYPE(type, T_FUNC, "function str");
 
-    if (is_c_func) {
-        switch (FUNC_GET_NARGS(callable)) {
-            case 1: {
-                if (is_method) {
-                    
-                }
-            }
-            case 2:
-            case 3:
-            case 4:
-            default:
-                break;
-        }
-    }
+    INCREF_RET(C_STRING_TO_STRING("function"));
+}
+
+VSObject *vs_func_bytes(VSObject *funcobj) {
+    VSTypeObject *type = VS_TYPEOF(funcobj);
+    VS_ENSURE_TYPE(type, T_FUNC, "function bytes");
+
     return NULL;
 }
+
+VSTypeObject *VSFunctionType = new VSTypeObject(
+    VSTypeType,
+    T_FUNC,
+    "function",               // __name__
+    NULL,                     // __attrs__
+    NULL,                     // __new__
+    NULL,                     // __init__
+    NULL,                     // __copy__
+    NULL,                     // __clear__
+    NULL,                     // __getattr__
+    NULL,                     // __hasattr__
+    NULL,                     // __setattr__
+    NULL,                     // __removeattr__
+    vs_hash_not_implemented,  // __hash__
+    NULL,                     // __lt__
+    vs_default_eq,            // __eq__
+    vs_func_str,             // __str__
+    vs_func_bytes,           // __bytes__
+    NULL,                     // __call__
+    NULL,                     // _number_funcs
+    NULL                      // _container_funcs
+);
