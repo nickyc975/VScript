@@ -5,22 +5,19 @@
 #include "VSTypeObject.hpp"
 #include "VSCellObject.hpp"
 #include "VSTupleObject.hpp"
-
-#include <stack>
+#include "VSFunctionObject.hpp"
 
 extern VSTypeObject *VSFrameType;
 
 class VSFrameObject : VSObject {
 public:
     vs_addr_t pc;
-    VSObject *func;
+    VSFunctionObject *func;
     vs_addr_t nlocals;
-    VSObject *locals;
+    VSTupleObject *locals;
 
-    VSFrameObject(VSObject *func);
+    VSFrameObject(VSFunctionObject *func);
     ~VSFrameObject();
-
-    static void eval(VSFrameObject *frame, std::stack<VSObject *> &stack);
 };
 
 #define AS_FRAME(obj) ((VSFrameObject *)(obj))
