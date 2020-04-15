@@ -6,14 +6,10 @@
 #include "objects/VSNoneObject.hpp"
 #include "objects/VSStringObject.hpp"
 
-VSFunctionObject::VSFunctionObject(
-    VSObject *name,
-    void *cfunc,
-    int nargs,
-    bool has_retval,
-    bool is_method) {
-    // Start function body.
+VSFunctionObject::VSFunctionObject(VSObject *name, void *cfunc, int nargs, bool has_retval, bool is_method) {
     assert(name != NULL);
+
+    this->type = VSFunctionType;
     VS_ENSURE_TYPE(VS_TYPEOF(name), T_STR, "as function name");
     this->name = NEW_REF(VSObject *, name);
     this->type = VSFunctionType;
@@ -39,16 +35,10 @@ VSFunctionObject::VSFunctionObject(
     }
 }
 
-VSFunctionObject::VSFunctionObject(
-    VSObject *name,
-    VSObject *code,
-    VSObject *cellvars,
-    VSObject *freevars,
-    VSObject *builtins,
-    VSObject *defaults,
-    bool is_method) {
-    // Start function body.
+VSFunctionObject::VSFunctionObject(VSObject *name, VSObject *code, VSObject *cellvars, VSObject *freevars, VSObject *defaults, bool is_method) {
     assert(name != NULL);
+
+    this->type = VSFunctionType;
     VS_ENSURE_TYPE(VS_TYPEOF(name), T_STR, "as function name");
     this->name = NEW_REF(VSObject *, name);
     this->type = VSFunctionType;
@@ -67,7 +57,6 @@ VSFunctionObject::VSFunctionObject(
         this->freevars = NEW_REF(VSObject *, freevars);
     }
 
-    this->builtins = NEW_REF(VSObject *, builtins == NULL ? VS_NONE : builtins);
     this->defaults = NEW_REF(VSObject *, defaults == NULL ? VS_NONE : defaults);
 
     if (is_method) {
@@ -105,8 +94,8 @@ VSTypeObject *VSFunctionType = new VSTypeObject(
     vs_hash_not_implemented,  // __hash__
     NULL,                     // __lt__
     vs_default_eq,            // __eq__
-    vs_func_str,             // __str__
-    vs_func_bytes,           // __bytes__
+    vs_func_str,              // __str__
+    vs_func_bytes,            // __bytes__
     NULL,                     // __call__
     NULL,                     // _number_funcs
     NULL                      // _container_funcs

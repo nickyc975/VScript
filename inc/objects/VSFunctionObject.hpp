@@ -4,6 +4,8 @@
 #include "VSObject.hpp"
 #include "VSTypeObject.hpp"
 
+extern VSTypeObject *VSFunctionType;
+
 class VSFunctionObject : public VSObject {
 public:
     /* | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | |
@@ -14,32 +16,15 @@ public:
     VSObject *code;
     VSObject *cellvars;
     VSObject *freevars;
-    VSObject *builtins;
     VSObject *defaults;
 
-    // for builtin functions
+    // for builtin native functions
     void *cfunc;
 
-    VSFunctionObject(
-        VSObject *name,
-        void *cfunc,
-        int nargs,
-        bool has_retval,
-        bool is_method);
-
-    VSFunctionObject(
-        VSObject *name,
-        VSObject *code,
-        VSObject *cellvars,
-        VSObject *freevars,
-        VSObject *builtins, 
-        VSObject *defaults, 
-        bool is_method);
-
+    VSFunctionObject(VSObject *name, void *cfunc, int nargs, bool has_retval, bool is_method);
+    VSFunctionObject(VSObject *name, VSObject *code, VSObject *cellvars, VSObject *freevars, VSObject *defaults, bool is_method);
     ~VSFunctionObject() = default;
 };
-
-extern VSTypeObject *VSFunctionType;
 
 #define AS_FUNC(func) ((VSFunctionObject *)func)
 
@@ -69,9 +54,6 @@ extern VSTypeObject *VSFunctionType;
 
 #define FUNC_GET_FREEVARS(func) (AS_FUNC(func)->freevars)
 #define FUNC_SET_FREEVARS(func, ffreevars) (AS_FUNC(func)->freevars = ffreevars)
-
-#define FUNC_GET_BUILTINS(func) (AS_FUNC(func)->builtins)
-#define FUNC_SET_BUILTINS(func, fbuiltins) (AS_FUNC(func)->builtins = fbuiltins)
 
 #define FUNC_GET_DEFAULTS(func) (AS_FUNC(func)->defaults)
 #define FUNC_SET_DEFAULTS(func, fdefaults) (AS_FUNC(func)->defaults = fdefaults)
