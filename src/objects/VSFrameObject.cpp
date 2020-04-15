@@ -4,15 +4,58 @@
 #include "objects/VSNoneObject.hpp"
 #include "objects/VSStringObject.hpp"
 
-VSFrameObject::VSFrameObject(VSFunctionObject *func) {
-    this->pc = 0;
-    this->func = func;
-    this->nlocals = AS_CODE(FUNC_GET_CODE(this->func))->nlvars;
-    this->locals = new VSTupleObject(this->nlocals);
+VSFrameObject::VSFrameObject(VSCodeObject *code, VSFrameObject *prev) {
+    this->type = VSFrameType;
 
+    this->pc = 0;
+    this->func = NULL;
+
+    this->code = code;
+    INCREF(this->code);
+
+    this->nlocals = code->nlvars;
+
+    this->locals = new VSTupleObject(this->nlocals);
     for (vs_size_t i = 0; i < this->nlocals; i++) {
         TUPLE_SET(this->locals, i, new VSCellObject(VS_NONE));
     }
+    INCREF(this->locals);
+
+    this->prev = prev;
+    INCREF(prev);
+}
+
+VSFrameObject::VSFrameObject(VSFunctionObject *func, VSFrameObject *prev) {
+    this->type = VSFrameType;
+
+    this->pc = 0;
+    this->func = func;
+    INCREF(this->func);
+
+    this->code = AS_CODE(func->code);
+    INCREF(this->code);
+
+    this->nlocals = AS_CODE(FUNC_GET_CODE(this->func))->nlvars;
+
+    this->locals = new VSTupleObject(this->nlocals);
+    for (vs_size_t i = 0; i < this->nlocals; i++) {
+        TUPLE_SET(this->locals, i, new VSCellObject(VS_NONE));
+    }
+    INCREF(this->locals);
+
+    this->prev = prev;
+    INCREF(prev);
+}
+
+void vs_frame_clear(VSObject *frameobj) {
+    VSTypeObject *type = VS_TYPEOF(frameobj);
+    VS_ENSURE_TYPE(type, T_FRAME, "frame clear");
+
+    VSFrameObject *frame = AS_FRAME(frameobj);
+    DECREF_EX(frame->code);
+    DECREF_EX(frame->func);
+    DECREF_EX(frame->locals);
+    DECREF_EX(frame->prev);
 }
 
 VSObject *vs_frame_str(VSObject *frameobj) {

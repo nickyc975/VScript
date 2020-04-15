@@ -4,19 +4,23 @@
 #include "VSObject.hpp"
 #include "VSTypeObject.hpp"
 #include "VSCellObject.hpp"
+#include "VSCodeObject.hpp"
 #include "VSTupleObject.hpp"
 #include "VSFunctionObject.hpp"
 
 extern VSTypeObject *VSFrameType;
 
-class VSFrameObject : VSObject {
+class VSFrameObject : public VSObject {
 public:
     vs_addr_t pc;
+    VSCodeObject *code;
     VSFunctionObject *func;
     vs_addr_t nlocals;
     VSTupleObject *locals;
+    VSFrameObject *prev;
 
-    VSFrameObject(VSFunctionObject *func);
+    VSFrameObject(VSCodeObject *code, VSFrameObject *prev);
+    VSFrameObject(VSFunctionObject *func, VSFrameObject *prev);
     ~VSFrameObject() = default;
 };
 
@@ -31,7 +35,5 @@ public:
 
 #define FRAME_GET_FREE(frame, idx) (VS_CELL_GET(TUPLE_GET(FUNC_GET_FREEVARS((AS_FRAME(frame))->func), (idx))))
 #define FRAME_GET_FREE_CELL(frame, idx) (TUPLE_GET(FUNC_GET_FREEVARS((AS_FRAME(frame))->func), (idx)))
-
-#define FRAME_GET_BUILTIN(frame, idx) (TUPLE_GET(FUNC_GET_BUILTINS((AS_FRAME(frame))->func), (idx)))
 
 #endif
