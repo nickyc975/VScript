@@ -23,4 +23,8 @@ public:
     ~VSBaseObject() = default;
 };
 
+#define GET_ATTR(obj, attrname) MAP_GET(((VSBaseObject *)obj)->attrs, (attrname))
+#define SET_ATTR(obj, attrname, value) MAP_SET(((VSBaseObject *)obj)->attrs, (attrname), (value))
+#define HAS_ATTR(obj, attrname) MAP_HAS(((VSBaseObject *)obj)->attrs, (attrname))
+
 #endif
