@@ -21,7 +21,8 @@ typedef enum {
     T_SET,
     T_CODE,
     T_FRAME,
-    T_FUNC
+    T_FUNC,
+    T_OBJECT
 } TYPE_TYPE;
 
 class VSObject {
