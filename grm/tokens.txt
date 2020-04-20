@@ -19,7 +19,7 @@ EQ          ==
 NEQ         !=
 AND         &
 OR          |
-XOR         ^ # not implemented
+XOR         ^
 NOT         !
 ASSIGN      =
 MUL_ASSIGN  *=
@@ -29,18 +29,16 @@ ADD_ASSIGN  +=
 SUB_ASSIGN  -=
 AND_ASSIGN  &=
 OR_ASSIGN   |=
-XOR_ASSIGN  ^= # not implemented
+XOR_ASSIGN  ^=
 COMMA       ,
 SEMICOLON   ;
-COLON       : # not used
-DOT         . # not used
+COLON       :
+DOT         .
 IF          if
 ELIF        elif
 ELSE        else
 FOR         for
 WHILE       while
-CLASS       class # not used
-METH        meth # not used
 FUNC        func
 LAMBDA      lambda
 VAR         var

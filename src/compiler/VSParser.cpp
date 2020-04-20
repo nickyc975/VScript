@@ -501,12 +501,6 @@ VSASTNode *VSParser::read_stmt() {
                 return this->read_for_stmt();
             case TK_FUNC:
                 return this->read_func_decl();
-            case TK_CLASS:
-                // TODO: implement class definition
-                break;
-            case TK_METH:
-                // TODO: implement method definition
-                break;
             case TK_IF:
                 return this->read_if_stmt();
             case TK_VAL:
@@ -738,12 +732,6 @@ VSASTNode *VSParser::read_program() {
                 break;
             case TK_FUNC:
                 stmt = this->read_func_decl();
-                break;
-            case TK_CLASS:
-                // TODO: implement class definition
-                break;
-            case TK_METH:
-                // TODO: implement method definition
                 break;
             case TK_IF:
                 stmt = this->read_if_stmt();

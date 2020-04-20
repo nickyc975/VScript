@@ -54,8 +54,6 @@ typedef enum
     TK_FUNC,
     TK_LAMBDA,
     TK_RETURN,
-    TK_CLASS,
-    TK_METH,
 
     // if statement keywords
     TK_IF,
@@ -134,8 +132,6 @@ static char *TOKEN_STR[] =
     "FUNC",
     "LAMBDA",
     "RETURN",
-    "CLASS",
-    "METH",
     "IF",
     "ELIF",
     "ELSE",

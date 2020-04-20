@@ -37,8 +37,6 @@ private:
     VSASTNode *read_init_decl();
     VSASTNode *read_init_decl_stmt();
     VSASTNode *read_func_decl();
-    VSASTNode *read_class_decl();
-    VSASTNode *read_meth_decl();
     VSASTNode *read_elif_stmt();
     VSASTNode *read_elif_list();
     VSASTNode *read_if_stmt();

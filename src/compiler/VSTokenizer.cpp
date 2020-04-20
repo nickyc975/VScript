@@ -269,8 +269,6 @@ VSToken *VSTokenizer::reco_kwd(std::string &literal) {
         case 'c':
             if (literal == "continue") {
                 token = NEW_KWD_TOKEN(TK_CONTINUE);
-            } else if (literal == "class") {
-                token = NEW_KWD_TOKEN(TK_CLASS);
             }
             break;
         case 'e':
@@ -295,11 +293,6 @@ VSToken *VSTokenizer::reco_kwd(std::string &literal) {
         case 'l':
             if (literal == "lambda") {
                 token = NEW_KWD_TOKEN(TK_LAMBDA);
-            }
-            break;
-        case 'm':
-            if (literal == "meth") {
-                token = NEW_KWD_TOKEN(TK_METH);
             }
             break;
         case 'r':
