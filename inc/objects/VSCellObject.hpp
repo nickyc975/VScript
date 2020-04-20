@@ -2,24 +2,16 @@
 #define VS_CELL_H
 
 #include "VSObject.hpp"
-#include "VSTypeObject.hpp"
 
-extern VSTypeObject *VSCellType;
+VSObject *vs_cell(VSObject *item);
 
 class VSCellObject : public VSObject {
 public:
     bool mut;
     VSObject *item;
 
-    VSCellObject(VSObject *item) {
-        this->mut = true;
-        this->item = item;
-        this->type = VSCellType;
-        INCREF(item);
-        INCREF(VSCellType);
-    }
-
-    ~VSCellObject() = default;
+    VSCellObject(VSObject *item);
+    ~VSCellObject();
 };
 
 #define AS_CELL(obj) ((VSCellObject *)obj)
