@@ -50,4 +50,7 @@ public:
     VSObject *call(VSTupleObject *args) override;
 };
 
+#define NEW_NATIVE_FUNC_ATTR(obj, attrname, func, nargs, const_args) \
+    (obj)->attrs[(attrname)] = AttributeDef(true, new VSNativeFunctionObject(C_STRING_TO_STRING(attrname), (void *)(func), (nargs), (const_args), (obj)));
+
 #endif
