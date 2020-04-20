@@ -155,12 +155,21 @@ VSObject *vs_default_eq(const VSObject *a, const VSObject *b);
             if (!_iter->second.readonly) {                       \
                 DECREF_EX(_iter->second.attribute);              \
                 _obj->attrs[_attrname].attribute = _value;       \
+                INCREF(_value);                                  \
             }                                                    \
         } else {                                                 \
             _obj->attrs[_attrname] = AttributeDef(false, _value) \
         }                                                        \
-        INCREF(_value);                                          \
     } while (0);
 #define HAS_ATTR(obj, attrname) ((obj)->attrs.find(attrname) != (obj)->attrs.end())
+
+#define ERR_ATTR_MISSING(obj, attrname) \
+    err("\"%s\" object does not has attr \"" attrname "\"", TYPE_STR[obj->type]);
+
+#define ERR_ATTR_READONLY(obj, attrname) \
+    err("attr \"" attrname "\" of \"%s\" object is readonly", TYPE_STR[obj->type]);
+
+#define ERR_ATTR_IS_NOT_FUNC(obj, attrname) \
+    err("attr \"" attrname "\" of \"%s\" object is not function", TYPE_STR[obj->type]);
 
 #endif
