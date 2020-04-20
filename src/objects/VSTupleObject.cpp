@@ -143,7 +143,7 @@ VSObject *vs_tuple_add(VSObject *a, VSObject *b)
     INCREF_RET(VS_AS_OBJECT(tuple));
 }
 
-VSObject *vs_tuple_pack(vs_size_t nitems, ...)
+VSTupleObject *vs_tuple_pack(vs_size_t nitems, ...)
 {
     VSTupleObject *tuple = new VSTupleObject(nitems);
 
@@ -157,7 +157,7 @@ VSObject *vs_tuple_pack(vs_size_t nitems, ...)
     }
     va_end(args);
 
-    INCREF_RET(VS_AS_OBJECT(tuple));
+    INCREF_RET(tuple);
 }
 
 int vs_tuple_unpack(VSObject *tupleobj, vs_size_t nitems, ...)

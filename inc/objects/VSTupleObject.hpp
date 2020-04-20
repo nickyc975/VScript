@@ -31,7 +31,7 @@ public:
     }
 };
 
-extern VSObject *vs_tuple_pack(vs_size_t nitems, ...);
+extern VSTupleObject *vs_tuple_pack(vs_size_t nitems, ...);
 extern int vs_tuple_unpack(VSObject *tupleobj, vs_size_t nitems, ...);
 extern VSObject *vs_tuple_to_list(VSObject *tupleobj);
 
