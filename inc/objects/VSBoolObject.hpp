@@ -2,14 +2,13 @@
 #define VS_BOOL_H
 
 #include "VSObject.hpp"
-#include "VSTypeObject.hpp"
 
-extern VSTypeObject *VSBoolType;
+VSObject *vs_bool(VSObject *obj);
 
 class VSBoolObject : public VSObject {
 private:
     static VSBoolObject *_VS_TRUE, *_VS_FALSE;
-    VSBoolObject(cbool_t val) : _value(val ? 1 : 0) { this->type = VSBoolType; }
+    VSBoolObject(cbool_t value);
 
 public:
     const cbool_t _value;
