@@ -26,7 +26,4 @@ public:
 #define STRING_SET(obj, idx, val) (AS_STRING(obj)->_value[idx] = val)
 #define STRING_APPEND(obj, val) (AS_STRING(obj)->_value.push_back(val))
 
-// static string management
-#define NEW_ID(str) static VSStringObject *ID ##str = NEW_REF(VSStringObject *, C_STRING_TO_STRING(#str))
-
 #endif

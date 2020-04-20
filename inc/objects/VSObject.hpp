@@ -140,4 +140,27 @@ typedef VSObject *(*const_quaternaryfunc)(const VSObject *, const VSObject *, co
 
 VSObject *vs_default_eq(const VSObject *a, const VSObject *b);
 
+// static string management
+#define NEW_ID(str) static std::string ID##str = #str;
+
+// attribute operation macros
+#define GET_ATTR(obj, attrname) ((obj)->attrs[(attrname)].attribute)
+#define SET_ATTR(obj, attrname, value)                           \
+    do {                                                         \
+        auto _obj = (obj);                                       \
+        auto _attrname = (attrname);                             \
+        auto _value = (value);                                   \
+        auto _iter = _obj->attrs.find(_attrname);                \
+        if (_iter != _obj->attrs.end()) {                        \
+            if (!_iter->second.readonly) {                       \
+                DECREF_EX(_iter->second.attribute);              \
+                _obj->attrs[_attrname].attribute = _value;       \
+            }                                                    \
+        } else {                                                 \
+            _obj->attrs[_attrname] = AttributeDef(false, _value) \
+        }                                                        \
+        INCREF(_value);                                          \
+    } while (0);
+#define HAS_ATTR(obj, attrname) ((obj)->attrs.find(attrname) != (obj)->attrs.end())
+
 #endif
