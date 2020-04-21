@@ -14,7 +14,7 @@ typedef enum {
     T_STR,
     T_LIST,
     T_TUPLE,
-    T_MAP,
+    T_DICT,
     T_SET,
     T_FUNC,
     T_OBJECT,
