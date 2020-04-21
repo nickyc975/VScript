@@ -2,19 +2,16 @@
 #define VS_INT_H
 
 #include "VSObject.hpp"
-#include "VSTypeObject.hpp"
 
-extern VSTypeObject *VSIntType;
-
-class VSIntObject : public VSObject
-{
+class VSIntObject : public VSObject {
 private:
     static VSIntObject *_VS_ZERO, *_VS_ONE;
+
 public:
     const cint_t _value;
 
-    VSIntObject() : _value(0) { this->type = VSIntType; }
-    VSIntObject(cint_t val) : _value(val) { this->type = VSIntType; }
+    VSIntObject(cint_t value);
+    ~VSIntObject();
 
     static inline VSObject *ZERO() {
         if (_VS_ZERO == NULL) {
