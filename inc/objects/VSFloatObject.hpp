@@ -2,17 +2,15 @@
 #define VS_FLOAT_H
 
 #include "VSObject.hpp"
-#include "VSTypeObject.hpp"
 
-extern VSTypeObject *VSFloatType;
+VSObject *vs_float(VSObject *obj);
 
-class VSFloatObject : public VSObject
-{
+class VSFloatObject : public VSObject {
 public:
     const cfloat_t _value;
 
-    VSFloatObject() : _value(0.0L) { this->type = VSFloatType; }
-    VSFloatObject(cfloat_t val) : _value(val) { this->type = VSFloatType; }
+    VSFloatObject(cfloat_t value);
+    ~VSFloatObject();
 };
 
 #define AS_FLOAT(obj) ((VSFloatObject *)obj)
