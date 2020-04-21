@@ -1,6 +1,5 @@
 #include "objects/VSListObject.hpp"
 
-#include <cassert>
 #include <cstdarg>
 
 #include "error.hpp"
@@ -242,5 +241,5 @@ VSListObject::VSListObject(vs_size_t nitems) {
 }
 
 VSListObject::~VSListObject() {
-    vs_list_clear(this);
+    DECREF(vs_list_clear(this));
 }
