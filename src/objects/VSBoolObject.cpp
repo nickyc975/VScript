@@ -126,9 +126,8 @@ VSObject *vs_bool_float(VSObject *boolobj) {
     INCREF_RET(C_FLOAT_TO_FLOAT((cfloat_t)BOOL_TO_C_BOOL(boolobj)));
 }
 
-VSBoolObject::VSBoolObject(cbool_t value) {
+VSBoolObject::VSBoolObject(cbool_t value) : _value(value) {
     this->type = T_BOOL;
-    this->_value = value;
 
     NEW_NATIVE_FUNC_ATTR(this, "__hash__", vs_bool_hash, 1, true);
     NEW_NATIVE_FUNC_ATTR(this, "__lt__", vs_bool_lt, 2, true);

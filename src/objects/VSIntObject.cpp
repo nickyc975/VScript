@@ -35,7 +35,7 @@ VSObject *vs_int(VSObject *obj, VSObject *base) {
 VSObject *vs_int_hash(const VSObject *obj) {
     VS_ENSURE_TYPE(obj, T_INT, "int.__hash__()");
 
-    INCREF_RET(obj);
+    INCREF_RET(new VSIntObject(((VSIntObject *)obj)->_value));
 }
 
 VSObject *vs_int_lt(const VSObject *a, const VSObject *b) {
@@ -151,9 +151,8 @@ VSObject *vs_int_float(VSObject *intobj) {
     INCREF_RET(C_FLOAT_TO_FLOAT((cfloat_t)res));
 }
 
-VSIntObject::VSIntObject(cint_t value) {
+VSIntObject::VSIntObject(cint_t value) : _value(value) {
     this->type = T_INT;
-    this->_value = value;
 
     NEW_NATIVE_FUNC_ATTR(this, "__hash__", vs_int_hash, 1, true);
     NEW_NATIVE_FUNC_ATTR(this, "__lt__", vs_int_lt, 2, true);

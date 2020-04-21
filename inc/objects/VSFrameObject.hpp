@@ -2,7 +2,6 @@
 #define VS_FRAME_H
 
 #include "VSObject.hpp"
-#include "VSTypeObject.hpp"
 #include "VSCellObject.hpp"
 #include "VSCodeObject.hpp"
 #include "VSTupleObject.hpp"

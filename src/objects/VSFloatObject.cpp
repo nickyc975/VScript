@@ -137,9 +137,8 @@ VSObject *vs_float_bytes(VSObject *floatobj) {
     INCREF_RET(VS_NONE);
 }
 
-VSFloatObject::VSFloatObject(cfloat_t value) {
+VSFloatObject::VSFloatObject(cfloat_t value) : _value(value) {
     this->type = T_FLOAT;
-    this->_value = value;
 
     NEW_NATIVE_FUNC_ATTR(this, "__hash__", vs_float_hash, 1, true);
     NEW_NATIVE_FUNC_ATTR(this, "__lt__", vs_float_lt, 2, true);
@@ -147,7 +146,7 @@ VSFloatObject::VSFloatObject(cfloat_t value) {
     NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_float_str, 1, false);
     NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_float_bytes, 1, false);
     NEW_NATIVE_FUNC_ATTR(this, "__neg__", vs_float_neg, 1, false);
-    NEW_NATIVE_FUNC_ATTR(this, "__add__", , vs_float_add, 2, false);
+    NEW_NATIVE_FUNC_ATTR(this, "__add__", vs_float_add, 2, false);
     NEW_NATIVE_FUNC_ATTR(this, "__sub__", vs_float_sub, 2, false);
     NEW_NATIVE_FUNC_ATTR(this, "__mul__", vs_float_mul, 2, false);
     NEW_NATIVE_FUNC_ATTR(this, "__div__", vs_float_div, 2, false);

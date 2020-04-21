@@ -147,9 +147,8 @@ VSObject *vs_char_float(VSObject *charobj) {
     INCREF_RET(C_FLOAT_TO_FLOAT(((cfloat_t)CHAR_TO_C_CHAR(charobj))));
 }
 
-VSCharObject::VSCharObject(cchar_t value) {
+VSCharObject::VSCharObject(cchar_t value) : _value(value) {
     this->type = T_CHAR;
-    this->_value = value;
 
     NEW_NATIVE_FUNC_ATTR(this, "__hash__", vs_char_hash, 1, true);
     NEW_NATIVE_FUNC_ATTR(this, "__lt__", vs_char_lt, 2, true);

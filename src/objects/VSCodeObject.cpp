@@ -1,6 +1,7 @@
 #include "objects/VSCodeObject.hpp"
 
 #include "error.hpp"
+#include "objects/VSIntObject.hpp"
 #include "objects/VSBoolObject.hpp"
 #include "objects/VSFunctionObject.hpp"
 #include "objects/VSListObject.hpp"
