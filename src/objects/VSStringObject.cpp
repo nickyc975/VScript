@@ -153,6 +153,20 @@ VSObject *vs_string_float(VSObject *strobj) {
     INCREF_RET(C_FLOAT_TO_FLOAT(val));
 }
 
+VSObject *vs_string_copy(const VSObject *that) {
+    VS_ENSURE_TYPE(that, T_STR, "str.copy()");
+
+    VSStringObject *new_str = new VSStringObject(STRING_TO_C_STRING(that));
+    INCREF_RET(new_str);
+}
+
+VSObject *vs_string_clear(VSObject *strobj) {
+    VS_ENSURE_TYPE(strobj, T_STR, "str.clear()");
+
+    ((VSStringObject *)strobj)->_value.clear();
+    INCREF_RET(VS_NONE);
+}
+
 VSObject *vs_string_len(VSObject *obj) {
     VS_ENSURE_TYPE(obj, T_STR, "str.len()");
 
@@ -265,6 +279,8 @@ VSStringObject::VSStringObject(std::string value) {
     NEW_NATIVE_FUNC_ATTR(this, "__char__", vs_string_char, 1, false);
     NEW_NATIVE_FUNC_ATTR(this, "__int__", vs_string_int, 2, false);
     NEW_NATIVE_FUNC_ATTR(this, "__float__", vs_string_float, 1, false);
+    NEW_NATIVE_FUNC_ATTR(this, "copy", vs_string_copy, 1, true);
+    NEW_NATIVE_FUNC_ATTR(this, "clear", vs_string_clear, 1, false);
     NEW_NATIVE_FUNC_ATTR(this, "len", vs_string_len, 1, false);
     NEW_NATIVE_FUNC_ATTR(this, "get", vs_string_get, 2, false);
     NEW_NATIVE_FUNC_ATTR(this, "set", vs_string_set, 3, false);
