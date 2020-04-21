@@ -3,6 +3,8 @@
 
 #include "VSObject.hpp"
 
+VSObject *vs_int(VSObject *obj, VSObject *base);
+
 class VSIntObject : public VSObject {
 private:
     static VSIntObject *_VS_ZERO, *_VS_ONE;
