@@ -539,7 +539,7 @@ done:
     // } else {
     //     note("got token: %s, %s", TOKEN_STR[this->peek->tk_type], STRING_TO_C_STRING(this->peek->literal).c_str());
     //     if (this->peek->tk_type == TK_CONSTANT) {
-    //         note("constant type: %s", VS_TYPEOF(this->peek->tk_value)->__name__.c_str());
+    //         note("constant type: %s", TYPE_STR[this->peek->tk_value->type]);
     //     }
     // }
     return old;
