@@ -6,12 +6,11 @@
 #include "VSCodeObject.hpp"
 #include "VSNoneObject.hpp"
 #include "VSObject.hpp"
-#include "VSStringObject.hpp"
 #include "VSTupleObject.hpp"
 
 class VSFunctionObject : public VSObject {
 public:
-    VSStringObject *name;
+    std::string name;
 
     VSFunctionObject();
     ~VSFunctionObject();
@@ -26,8 +25,10 @@ private:
     bool const_args;
     VSObject *bind_obj;
 
+    VSNativeFunctionObject(std::string name, void *cfunc, cint_t args, bool const_args);
+
 public:
-    VSNativeFunctionObject(VSStringObject *name, void *cfunc, cint_t nargs, bool const_args, VSObject *bind_obj);
+    VSNativeFunctionObject(std::string name, void *cfunc, cint_t nargs, bool const_args, VSObject *bind_obj);
     ~VSNativeFunctionObject();
 
     VSObject *call(VSTupleObject *args) override;
@@ -42,7 +43,7 @@ private:
 
 public:
     VSDynamicFunctionObject(
-        VSStringObject *name,
+        std::string name,
         VSCodeObject *code,
         VSTupleObject *cellvars,
         VSTupleObject *freevars,
@@ -70,6 +71,6 @@ inline VSObject *_CALL_ATTR(VSObject *obj, std::string attrname, VSTupleObject *
 #define CALL_ATTR(obj, attrname, args) _CALL_ATTR(obj, attrname, args)
 
 #define NEW_NATIVE_FUNC_ATTR(obj, attrname, func, nargs, const_args) \
-    (obj)->attrs[(attrname)] = new AttributeDef(true, new VSNativeFunctionObject(C_STRING_TO_STRING(attrname), (void *)(func), (nargs), (const_args), (obj)));
+    (obj)->attrs[(attrname)] = new AttributeDef(true, new VSNativeFunctionObject((attrname), (void *)(func), (nargs), (const_args), (obj)));
 
 #endif

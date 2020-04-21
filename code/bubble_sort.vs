@@ -2,10 +2,6 @@
 
 // Begin temporary built-in definitions.
 // These are temporary definitions for built-in names, added to pass the compilation.
-var len = lambda(cont) {
-    return 0;
-};
-
 var int = lambda(lit) {
     return 0;
 };
@@ -14,17 +10,13 @@ var input = lambda(msg) {
     return "0";
 };
 
-var append = lambda(cont, v) {
-    return none;
-};
-
 var print = lambda(a, b, c) {
     return none;
 };
 // End temporary built-in definitions.
 
 func bubble_sort(array) {
-    var n = len(array);
+    var n = array.len();
     for (var i = 0; i < n; i += 1) {
         for (var j = 0; j < n - 1; j += 1) {
             if (array[j] > array[j + 1]) {
@@ -39,7 +31,7 @@ func bubble_sort(array) {
 var array = [];
 var a = int(input("input next: "));
 while (a != -1) {
-    append(array, a);
+    array.append(a);
     a = int(input("input next: "));
 }
 bubble_sort(array);

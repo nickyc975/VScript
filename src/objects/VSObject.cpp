@@ -14,7 +14,7 @@ AttributeDef::~AttributeDef() {
 
 VSObject::VSObject() {
     this->refcnt = 0;
-    attrs = str_attr_map();
+    this->attrs = str_attr_map();
 }
 
 VSObject::~VSObject() {

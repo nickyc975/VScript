@@ -4,6 +4,7 @@
 #include <stack>
 
 #include "objects/VSFrameObject.hpp"
+#include "objects/VSStringObject.hpp"
 
 #define ERR_NARGS(expected, actual)                                \
     err("Unexpected nargs: %ld, expected: %ld", actual, expected); \
@@ -14,7 +15,7 @@ VSObject *vs_func_str(VSObject *funcobj) {
     VS_ENSURE_TYPE(funcobj, T_FUNC, "func.__str__()");
 
     VSFunctionObject *func = (VSFunctionObject *)funcobj;
-    INCREF_RET(C_STRING_TO_STRING("function: " + func->name->_value));
+    INCREF_RET(C_STRING_TO_STRING("function: " + func->name));
 }
 
 VSObject *vs_func_bytes(VSObject *funcobj) {
@@ -27,10 +28,6 @@ VSObject *vs_func_bytes(VSObject *funcobj) {
 /* Base function type definition */
 VSFunctionObject::VSFunctionObject() {
     this->type = T_FUNC;
-
-    NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_default_eq, 2, true);
-    NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_func_str, 1, false);
-    NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_func_bytes, 1, false);
 }
 
 VSFunctionObject::~VSFunctionObject() {
@@ -41,18 +38,47 @@ VSObject *VSFunctionObject::call(VSTupleObject *args) {
 }
 
 /* Native function type definition */
-VSNativeFunctionObject::VSNativeFunctionObject(VSStringObject *name, void *cfunc, cint_t nargs, bool const_args, VSObject *bind_obj) {
-    assert(name != NULL);
+VSNativeFunctionObject::VSNativeFunctionObject(std::string name, void *cfunc, cint_t nargs, bool const_args) {
+    this->name = name;
+    this->cfunc = cfunc;
+    this->nargs = nargs;
+    this->const_args = const_args;
+}
 
-    this->name = NEW_REF(VSStringObject *, name);
+VSNativeFunctionObject::VSNativeFunctionObject(std::string name, void *cfunc, cint_t nargs, bool const_args, VSObject *bind_obj) {
+    this->name = name;
     this->cfunc = cfunc;
     this->nargs = nargs;
     this->const_args = const_args;
     this->bind_obj = NEW_REF(VSObject *, bind_obj);
+
+    /* Using NEW_NATIVE_FUNC_ATTR() will cause infinite recursion. */
+    auto *eq_func = new VSNativeFunctionObject("__eq__", (void *)vs_default_eq, 2, true);
+    auto *str_func = new VSNativeFunctionObject("__str__", (void *)vs_func_str, 1, false);
+    auto *bytes_func = new VSNativeFunctionObject("__bytes__", (void *)vs_func_bytes, 1, false);
+
+    eq_func->bind_obj = NEW_REF(VSObject *, this);
+    str_func->bind_obj = NEW_REF(VSObject *, this);
+    bytes_func->bind_obj = NEW_REF(VSObject *, this);
+
+    this->attrs["__eq__"] = new AttributeDef(true, eq_func);
+    this->attrs["__str__"] = new AttributeDef(true, str_func);
+    this->attrs["__bytes__"] = new AttributeDef(true, bytes_func);
+
+    // eq_func->attrs["__eq__"] = new AttributeDef(true, eq_func);
+    // eq_func->attrs["__str__"] = new AttributeDef(true, str_func);
+    // eq_func->attrs["__bytes__"] = new AttributeDef(true, bytes_func);
+
+    // str_func->attrs["__eq__"] = new AttributeDef(true, eq_func);
+    // str_func->attrs["__str__"] = new AttributeDef(true, str_func);
+    // str_func->attrs["__bytes__"] = new AttributeDef(true, bytes_func);
+
+    // bytes_func->attrs["__eq__"] = new AttributeDef(true, eq_func);
+    // bytes_func->attrs["__str__"] = new AttributeDef(true, str_func);
+    // bytes_func->attrs["__bytes__"] = new AttributeDef(true, bytes_func);
 }
 
 VSNativeFunctionObject::~VSNativeFunctionObject() {
-    DECREF_EX(this->name);
     DECREF_EX(this->bind_obj);
 }
 
@@ -128,16 +154,19 @@ VSObject *VSNativeFunctionObject::call(VSTupleObject *args) {
 }
 
 /* Dynamic function type definition */
-VSDynamicFunctionObject::VSDynamicFunctionObject(VSStringObject *name, VSCodeObject *code, VSTupleObject *cellvars, VSTupleObject *freevars, VSTupleObject *builtins) {
-    this->name = NEW_REF(VSStringObject *, name);
+VSDynamicFunctionObject::VSDynamicFunctionObject(std::string name, VSCodeObject *code, VSTupleObject *cellvars, VSTupleObject *freevars, VSTupleObject *builtins) {
+    this->name = name;
     this->code = NEW_REF(VSCodeObject *, code);
     this->cellvars = NEW_REF(VSTupleObject *, cellvars);
     this->freevars = NEW_REF(VSTupleObject *, freevars);
     this->builtins = NEW_REF(VSTupleObject *, builtins);
+
+    NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_default_eq, 2, true);
+    NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_func_str, 1, false);
+    NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_func_bytes, 1, false);
 }
 
 VSDynamicFunctionObject::~VSDynamicFunctionObject() {
-    DECREF_EX(this->name);
     DECREF_EX(this->code);
     DECREF_EX(this->cellvars);
     DECREF_EX(this->freevars);
