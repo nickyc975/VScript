@@ -1,28 +1,18 @@
 #ifndef VS_LIST_H
 #define VS_LIST_H
 
-#include "VSObject.hpp"
-#include "VSTypeObject.hpp"
-
 #include <vector>
 
-extern VSTypeObject *VSListType;
+#include "VSObject.hpp"
+
+VSObject *vs_list(VSObject *obj);
 
 class VSListObject : public VSObject {
 public:
     std::vector<VSObject *> items;
 
-    VSListObject() {
-        this->type = VSListType;
-        this->items = std::vector<VSObject *>();
-    }
-
-    VSListObject(vs_size_t nitems) {
-        this->type = VSListType;
-        this->items = std::vector<VSObject *>(nitems);
-    }
-
-    ~VSListObject() = default;
+    VSListObject(vs_size_t nitems);
+    ~VSListObject();
 };
 
 extern VSObject *vs_list_pack(vs_size_t nitems, ...);
