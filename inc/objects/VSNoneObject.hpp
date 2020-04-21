@@ -2,16 +2,12 @@
 #define VS_NONE_H
 
 #include "VSObject.hpp"
-#include "VSTypeObject.hpp"
 
-extern VSTypeObject *VSNoneType;
-
-class VSNoneObject : public VSObject
-{
+class VSNoneObject : public VSObject {
 private:
     static VSNoneObject *_VS_NONE;
 
-    VSNoneObject() { this->type = VSNoneType; }
+    VSNoneObject();
 
 public:
     static inline VSObject *NONE() {

@@ -1,75 +1,43 @@
-#include "error.hpp"
 #include "objects/VSNoneObject.hpp"
+
+#include "error.hpp"
 #include "objects/VSBoolObject.hpp"
+#include "objects/VSFunctionObject.hpp"
+#include "objects/VSIntObject.hpp"
 #include "objects/VSStringObject.hpp"
 
 VSNoneObject *VSNoneObject::_VS_NONE = NULL;
 
-VSObject *vs_none_new(VSObject *typeobj, VSObject *args, VSObject *)
-{
-    INCREF_RET(VS_NONE);
+VSObject *vs_none_hash(const VSObject *noneobj) {
+    VS_ENSURE_TYPE(noneobj, T_NONE, "none.__hash__()");
+
+    INCREF_RET(C_INT_TO_INT(0));
 }
 
-void vs_none_init(VSObject *, VSObject *, VSObject *)
-{
-}
-
-VSObject *vs_none_copy(const VSObject *noneobj)
-{
-    VSTypeObject *type = VS_TYPEOF(noneobj);
-    VS_ENSURE_TYPE(type, T_NONE, "none copy");
-    INCREF_RET(VS_NONE);
-}
-
-VSObject *vs_none_eq(const VSObject *a, const VSObject *b)
-{
-    VSTypeObject *a_type = VS_TYPEOF(a);
-
-    VS_ENSURE_TYPE(a_type, T_NONE, "none eq");
-
-    VSTypeObject *b_type = VS_TYPEOF(b);
-
-    VS_ENSURE_TYPE(b_type, T_NONE, "none eq");
+VSObject *vs_none_eq(const VSObject *a, const VSObject *b) {
+    VS_ENSURE_TYPE(a, T_NONE, "none.__eq__()");
+    VS_ENSURE_TYPE(b, T_NONE, "none.__eq__()");
 
     INCREF_RET(VS_TRUE);
 }
 
-VSObject *vs_none_str(VSObject *obj)
-{
-    VSTypeObject *type = VS_TYPEOF(obj);
-    VS_ENSURE_TYPE(type, T_NONE, "none to str");
+VSObject *vs_none_str(VSObject *obj) {
+    VS_ENSURE_TYPE(obj, T_NONE, "none.__str__()");
 
-    INCREF_RET(C_STRING_TO_STRING("None"));
+    INCREF_RET(C_STRING_TO_STRING("none"));
 }
 
-VSObject *vs_none_bytes(VSObject *obj)
-{
-    VSTypeObject *type = VS_TYPEOF(obj);
-
-    VS_ENSURE_TYPE(type, T_NONE, "none to bytes");
+VSObject *vs_none_bytes(VSObject *obj) {
+    VS_ENSURE_TYPE(obj, T_NONE, "none.__bytes__()");
 
     return NULL;
 }
 
-VSTypeObject *VSNoneType = new VSTypeObject(
-    VSTypeType,
-    T_NONE,
-    "none",                  // __name__
-    NULL,                    // __attrs__
-    vs_none_new,             // __new__
-    vs_none_init,            // __init__
-    vs_none_copy,            // __copy__
-    NULL,                    // __clear__
-    NULL,                    // __getattr__
-    NULL,                    // __hasattr__
-    NULL,                    // __setattr__
-    NULL,                    // __removeattr__
-    vs_hash_not_implemented, // __hash__
-    NULL,                    // __lt__
-    vs_none_eq,              // __eq__
-    vs_none_str,             // __str__
-    vs_none_bytes,           // __bytes__
-    NULL,                    // __call__
-    NULL,                    // _number_funcs
-    NULL                     // _container_funcs
-);
+VSNoneObject::VSNoneObject() {
+    this->type = T_NONE;
+
+    NEW_NATIVE_FUNC_ATTR(this, "__hash__", vs_none_hash, 1, true);
+    NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_none_eq, 2, true);
+    NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_none_str, 1, false);
+    NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_none_bytes, 1, false);
+}
