@@ -1,14 +1,12 @@
 #ifndef VS_CODE_OBJECT_H
 #define VS_CODE_OBJECT_H
 
-#include "opcode.hpp"
-#include "VSObject.hpp"
-#include "VSTypeObject.hpp"
-
 #include <vector>
 
-class VSInst
-{
+#include "VSObject.hpp"
+#include "opcode.hpp"
+
+class VSInst {
 public:
     OPCODE opcode;
     vs_addr_t operand;
@@ -20,8 +18,7 @@ public:
     VSInst &operator=(VSInst &inst);
 };
 
-class VSCodeObject : public VSObject
-{
+class VSCodeObject : public VSObject {
 public:
     vs_size_t ninsts;
     vs_size_t nconsts;
@@ -40,7 +37,7 @@ public:
     std::vector<VSInst> code;
 
     VSCodeObject(VSObject *name);
-    ~VSCodeObject() = default;
+    ~VSCodeObject();
 
     void add_inst(VSInst inst);
     void add_const(VSObject *object);
@@ -50,8 +47,6 @@ public:
     void add_cellvar(VSObject *name);
     void add_freevar(VSObject *name);
 };
-
-extern VSTypeObject *VSCodeType;
 
 #define AS_CODE(obj) ((VSCodeObject *)(obj))
 
