@@ -2,18 +2,17 @@
 #define VS_STRING_H
 
 #include <string>
+
 #include "VSObject.hpp"
-#include "VSTypeObject.hpp"
 
-extern VSTypeObject *VSStringType;
+VSObject *vs_string(VSObject *obj);
 
-class VSStringObject : public VSObject
-{
+class VSStringObject : public VSObject {
 public:
     std::string _value;
 
-    VSStringObject() : _value("") { this->type = VSStringType; }
-    VSStringObject(std::string val) : _value(val) { this->type = VSStringType; }
+    VSStringObject(std::string value);
+    ~VSStringObject();
 };
 
 #define AS_STRING(obj) ((VSStringObject *)obj)
