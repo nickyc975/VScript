@@ -1,6 +1,8 @@
 #ifndef VS_FUNCTION_H
 #define VS_FUNCTION_H
 
+#include "error.hpp"
+
 #include "VSCodeObject.hpp"
 #include "VSNoneObject.hpp"
 #include "VSObject.hpp"
@@ -50,7 +52,24 @@ public:
     VSObject *call(VSTupleObject *args) override;
 };
 
+inline VSObject *_CALL_ATTR(VSObject *obj, std::string attrname, VSTupleObject *args) {
+    if (!HAS_ATTR(obj, attrname)) {
+        ERR_ATTR_IS_NOT_FUNC(obj, attrname);
+        terminate(TERM_ERROR);
+    }
+
+    VSObject *_func = GET_ATTR(obj, attrname);
+    if (!VS_IS_TYPE(_func, T_FUNC)) {
+        ERR_ATTR_IS_NOT_FUNC(obj, attrname);
+        terminate(TERM_ERROR);
+    }
+
+    return ((VSFunctionObject *)_func)->call(args);
+}
+
+#define CALL_ATTR(obj, attrname, args) _CALL_ATTR(obj, attrname, args)
+
 #define NEW_NATIVE_FUNC_ATTR(obj, attrname, func, nargs, const_args) \
-    (obj)->attrs[(attrname)] = AttributeDef(true, new VSNativeFunctionObject(C_STRING_TO_STRING(attrname), (void *)(func), (nargs), (const_args), (obj)));
+    (obj)->attrs[(attrname)] = new AttributeDef(true, new VSNativeFunctionObject(C_STRING_TO_STRING(attrname), (void *)(func), (nargs), (const_args), (obj)));
 
 #endif

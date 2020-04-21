@@ -20,12 +20,10 @@ VSObject *vs_frame_bytes(VSObject *frameobj) {
 
 VSFrameObject::VSFrameObject(VSCodeObject *code, VSTupleObject *args, VSTupleObject *cellvars, VSTupleObject *freevars, VSTupleObject *builtins, VSFrameObject *prev) {
     this->type = T_FRAME;
-    this->attrs["__eq__"] = AttributeDef(true, new VSNativeFunctionObject(
-                                                   C_STRING_TO_STRING("__eq__"), (void *)vs_default_eq, 2, true, this));
-    this->attrs["__str__"] = AttributeDef(true, new VSNativeFunctionObject(
-                                                    C_STRING_TO_STRING("__str__"), (void *)vs_frame_str, 1, false, this));
-    this->attrs["__bytes__"] = AttributeDef(true, new VSNativeFunctionObject(
-                                                      C_STRING_TO_STRING("__bytes__"), (void *)vs_frame_bytes, 1, false, this));
+
+    NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_default_eq, 2, true);
+    NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_frame_str, 1, false);
+    NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_frame_bytes, 1, false);
 
     this->pc = 0;
 

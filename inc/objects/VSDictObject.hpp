@@ -16,18 +16,9 @@ class VSDictObject : public VSObject {
 private:
     struct __dict_hash__ {
         std::size_t operator()(const VSObject *o) const {
-            if (!HAS_ATTR(o, "__hash__")) {
-                ERR_ATTR_MISSING(o, "__hash__");
-                terminate(TERM_ERROR);
-            }
+            VSObject *res = CALL_ATTR(const_cast<VSObject *>(o), "__hash__", vs_tuple_pack(0));
+            VS_ENSURE_TYPE(res, T_INT, "as __hash__() result");
 
-            VSObject *hash_func = GET_ATTR(o, "__hash__");
-            if (!VS_IS_TYPE(hash_func, T_FUNC)) {
-                ERR_ATTR_IS_NOT_FUNC(o, "__hash__");
-                terminate(TERM_ERROR);
-            }
-
-            VSObject *res = ((VSFunctionObject *)hash_func)->call(vs_tuple_pack(0));
             std::size_t h = (std::size_t)INT_TO_C_INT(res);
             DECREF_EX(res);
             return h;
@@ -40,18 +31,9 @@ private:
                 return false;
             }
 
-            if (!HAS_ATTR(a, "__eq__")) {
-                ERR_ATTR_MISSING(a, "__eq__");
-                terminate(TERM_ERROR);
-            }
+            VSObject *resobj = CALL_ATTR(const_cast<VSObject *>(a), "__eq__", vs_tuple_pack(1, b));
+            VS_ENSURE_TYPE(resobj, T_BOOL, "as __eq__() result");
 
-            VSObject *eq_func = GET_ATTR(a, "__eq__");
-            if (!VS_IS_TYPE(eq_func, T_FUNC)) {
-                ERR_ATTR_IS_NOT_FUNC(a, "__eq__");
-                terminate(TERM_ERROR);
-            }
-
-            VSObject *resobj = ((VSFunctionObject *)eq_func)->call(vs_tuple_pack(1, b));
             bool res = (bool)BOOL_TO_C_BOOL(resobj);
             DECREF_EX(resobj);
             return res;

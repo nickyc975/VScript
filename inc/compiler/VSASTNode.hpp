@@ -1,11 +1,10 @@
 #ifndef VS_ASTNODE_H
 #define VS_ASTNODE_H
 
-#include "objects/VSObject.hpp"
-#include "objects/VSTypeObject.hpp"
-#include "compiler/VSTokenizer.hpp"
-
 #include <vector>
+
+#include "compiler/VSTokenizer.hpp"
+#include "objects/VSObject.hpp"
 
 typedef enum {
     AST_CONST,
@@ -93,7 +92,7 @@ public:
 
 class TupleDeclNode : public ContainerNode {
 public:
-   TupleDeclNode() {
+    TupleDeclNode() {
         this->node_type = AST_TUPLE_DECL;
     }
     ~TupleDeclNode() = default;
@@ -177,8 +176,7 @@ public:
     VSASTNode *l_operand;
     VSASTNode *r_operand;
 
-    BOPNode(TOKEN_TYPE opcode, VSASTNode *l_operand, VSASTNode *r_operand) : 
-        opcode(opcode), l_operand(l_operand), r_operand(r_operand) {
+    BOPNode(TOKEN_TYPE opcode, VSASTNode *l_operand, VSASTNode *r_operand) : opcode(opcode), l_operand(l_operand), r_operand(r_operand) {
         this->node_type = AST_B_OP_EXPR;
         INCREF(l_operand);
         INCREF(r_operand);
@@ -209,8 +207,7 @@ public:
     VSASTNode *lval;
     VSASTNode *rval;
 
-    AssignExprNode(TOKEN_TYPE opcode, VSASTNode *lval, VSASTNode *rval) : 
-        opcode(opcode), lval(lval), rval(rval) {
+    AssignExprNode(TOKEN_TYPE opcode, VSASTNode *lval, VSASTNode *rval) : opcode(opcode), lval(lval), rval(rval) {
         this->node_type = AST_ASSIGN_EXPR;
         INCREF(lval);
         INCREF(rval);
@@ -321,8 +318,7 @@ public:
     VSASTNode *truestmt;
     VSASTNode *falsestmt;
 
-    IfStmtNode(VSASTNode *cond, VSASTNode *truestmt, VSASTNode *falsestmt) :
-        cond(cond), truestmt(truestmt), falsestmt(falsestmt) {
+    IfStmtNode(VSASTNode *cond, VSASTNode *truestmt, VSASTNode *falsestmt) : cond(cond), truestmt(truestmt), falsestmt(falsestmt) {
         this->node_type = AST_IF_STMT;
         INCREF(cond);
         INCREF(truestmt);
@@ -388,8 +384,7 @@ public:
     VSASTNode *incr;
     VSASTNode *body;
 
-    ForStmtNode(VSASTNode *init, VSASTNode *cond, VSASTNode *incr, VSASTNode *body) : 
-        init(init), cond(cond), incr(incr), body(body) {
+    ForStmtNode(VSASTNode *init, VSASTNode *cond, VSASTNode *incr, VSASTNode *body) : init(init), cond(cond), incr(incr), body(body) {
         this->node_type = AST_FOR_STMT;
         INCREF(init);
         INCREF(cond);
@@ -443,7 +438,7 @@ public:
 
 class ProgramNode : public ContainerNode {
 public:
-   ProgramNode() {
+    ProgramNode() {
         this->node_type = AST_PROGRAM;
     }
     ~ProgramNode() = default;

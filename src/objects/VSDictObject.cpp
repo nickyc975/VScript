@@ -61,19 +61,10 @@ VSObject *vs_dict_get(VSObject *obj, VSObject *key) {
     if (iter != dict->_dict.end()) {
         INCREF_RET(iter->second);
     } else {
-        if (!HAS_ATTR(key, "__str__")) {
-            ERR_ATTR_MISSING(key, "__str__");
-            terminate(TERM_ERROR);
-        }
-
-        VSObject *str_func = GET_ATTR(key, "__str__");
-        if (!VS_IS_TYPE(str_func, T_FUNC)) {
-            ERR_ATTR_IS_NOT_FUNC(key, "__str__");
-            terminate(TERM_ERROR);
-        }
-
-        err("key \"%s\" not found.", STRING_TO_C_STRING(
-                                     ((VSFunctionObject *)str_func)->call(vs_tuple_pack(0))).c_str());
+        VSObject *strobj = CALL_ATTR(key, "__str__", vs_tuple_pack(0));
+        VS_ENSURE_TYPE(strobj, T_STR, "as __str__() result");
+    
+        err("key \"%s\" not found.", STRING_TO_C_STRING(strobj).c_str());
         terminate(TERM_ERROR);
     }
     return NULL;

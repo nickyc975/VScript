@@ -3,7 +3,6 @@
 #include <cassert>
 #include <stack>
 
-#include "error.hpp"
 #include "objects/VSFrameObject.hpp"
 
 #define ERR_NARGS(expected, actual)                                \
@@ -28,12 +27,10 @@ VSObject *vs_func_bytes(VSObject *funcobj) {
 /* Base function type definition */
 VSFunctionObject::VSFunctionObject() {
     this->type = T_FUNC;
-    this->attrs["__eq__"] = AttributeDef(true, new VSNativeFunctionObject(
-                                                   C_STRING_TO_STRING("__eq__"), (void *)vs_default_eq, 2, true, this));
-    this->attrs["__str__"] = AttributeDef(true, new VSNativeFunctionObject(
-                                                    C_STRING_TO_STRING("__str__"), (void *)vs_func_str, 1, false, this));
-    this->attrs["__bytes__"] = AttributeDef(true, new VSNativeFunctionObject(
-                                                      C_STRING_TO_STRING("__bytes__"), (void *)vs_func_bytes, 1, false, this));
+
+    NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_default_eq, 2, true);
+    NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_func_str, 1, false);
+    NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_func_bytes, 1, false);
 }
 
 VSFunctionObject::~VSFunctionObject() {

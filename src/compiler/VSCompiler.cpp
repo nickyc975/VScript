@@ -1,4 +1,5 @@
 #include "compiler/VSCompiler.hpp"
+
 #include "error.hpp"
 #include "objects/VSListObject.hpp"
 #include "objects/VSStringObject.hpp"
@@ -88,12 +89,11 @@ OPCODE VSCompiler::get_b_op(TOKEN_TYPE tk) {
 }
 
 std::string VSCompiler::get_key(VSObject *value) {
-    VSTypeObject *type = VS_TYPEOF(value);
-    VSObject *value_strobj = type->__str__(value);
+    VSObject *value_strobj = CALL_ATTR(value, "__str__", vs_tuple_pack(0));
     std::string value_str = STRING_TO_C_STRING(value_strobj);
     DECREF(value_strobj);
 
-    switch (type->t_type) {
+    switch (value->type) {
         case T_NONE:
             return "__vs_none__";
         case T_BOOL:
@@ -527,7 +527,7 @@ void VSCompiler::gen_for_stmt(VSASTNode *node) {
     // jmp is the following inst of jif, so jif + 1 is the pos of jmp.
     code->code[jif_pos + 1].operand = code->ninsts;
 
-    // continue in for loop should not skip the incr part, so set 
+    // continue in for loop should not skip the incr part, so set
     // incr_start as jump target of continue statements.
     this->fill_back_break_continue(incr_start);
 
@@ -834,7 +834,7 @@ VSCodeObject *VSCompiler::compile(std::string filename) {
     // generate top level code object.
     VSASTNode *astree = parser->parse();
     this->gen_cpd_stmt(astree);
-    
+
     program->add_inst(VSInst(OP_RET));
 
     bool error = false;

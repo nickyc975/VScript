@@ -12,18 +12,7 @@ VSIntObject *VSIntObject::_VS_ZERO = NULL;
 VSIntObject *VSIntObject::_VS_ONE = NULL;
 
 VSObject *vs_int(VSObject *obj, VSObject *base) {
-    if (!HAS_ATTR(obj, "__int__")) {
-        ERR_ATTR_MISSING(obj, "__int__");
-        terminate(TERM_ERROR);
-    }
-
-    VSObject *int_func = GET_ATTR(obj, "__int__");
-    if (!VS_IS_TYPE(int_func, T_FUNC)) {
-        ERR_ATTR_IS_NOT_FUNC(obj, "__int__");
-        terminate(TERM_ERROR);
-    }
-
-    VSObject *val = ((VSFunctionObject *)int_func)->call(vs_tuple_pack(1, base));
+    VSObject *val = CALL_ATTR(obj, "__int__", vs_tuple_pack(1, base));
     if (!VS_IS_TYPE(val, T_INT)) {
         err("%s.__int__() returned \"%s\" instead of int.", TYPE_STR[obj->type], TYPE_STR[val->type]);
         terminate(TERM_ERROR);

@@ -1,16 +1,16 @@
 #ifndef VS_COMPILER_H
 #define VS_COMPILER_H
 
+#include <stack>
+#include <unordered_map>
+#include <vector>
+
 #include "compiler/Symtable.hpp"
 #include "compiler/VSASTNode.hpp"
 #include "compiler/VSParser.hpp"
 #include "compiler/VSTokenizer.hpp"
 #include "objects/VSCodeObject.hpp"
 #include "objects/VSObject.hpp"
-
-#include <stack>
-#include <unordered_map>
-#include <vector>
 
 class VSCompiler : public VSObject {
 private:

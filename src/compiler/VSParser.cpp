@@ -1,8 +1,9 @@
-#include "error.hpp"
 #include "compiler/VSParser.hpp"
-#include "objects/VSStringObject.hpp"
 
 #include <cstdarg>
+
+#include "error.hpp"
+#include "objects/VSStringObject.hpp"
 
 #define HASTOKEN() this->tokenizer->hastoken()
 
@@ -41,7 +42,7 @@
     this->infunc++;
 
 // Check if in func decl
-#define ENSURE_IN_FUNC()                                                            \
+#define ENSURE_IN_FUNC()                                                           \
     if (!this->infunc) {                                                           \
         err("line %ld, return must be in function declaration\n", GETTOKEN()->ln); \
     }
@@ -178,8 +179,7 @@ VSASTNode *VSParser::read_dict_or_set_decl() {
             dict->append(new PairExprNode(key, value));
         }
 
-        while (PEEKTOKEN()->tk_type == TK_COMMA)
-        {
+        while (PEEKTOKEN()->tk_type == TK_COMMA) {
             POPTOKEN(1, TK_COMMA);
             key = this->read_log_or_expr();
             POPTOKEN(1, TK_COLON);
@@ -195,9 +195,8 @@ VSASTNode *VSParser::read_dict_or_set_decl() {
     SetDeclNode *set = new SetDeclNode();
     set->append(key);
 
-    while (PEEKTOKEN()->tk_type == TK_COMMA)
-    {
-       POPTOKEN(1, TK_COMMA);
+    while (PEEKTOKEN()->tk_type == TK_COMMA) {
+        POPTOKEN(1, TK_COMMA);
         key = this->read_log_or_expr();
         if (key != NULL) {
             set->append(key);
@@ -666,7 +665,7 @@ VSASTNode *VSParser::read_init_decl() {
     if (token == NULL) {
         return NULL;
     }
-    IdentNode *ident = new IdentNode(token->literal);    
+    IdentNode *ident = new IdentNode(token->literal);
 
     ENSURE_TOKEN(new InitDeclNode(ident, init));
     if (PEEKTOKEN()->tk_type == TK_ASSIGN) {

@@ -1,10 +1,10 @@
 #ifndef VS_TOKENIZER_H
 #define VS_TOKENIZER_H
 
-#include "vs.hpp"
-#include "objects/VSObject.hpp"
-
 #include <string>
+
+#include "objects/VSObject.hpp"
+#include "vs.hpp"
 
 #define IS_NUMBER(c) ((c) >= '0' && (c) <= '9')
 
@@ -14,11 +14,10 @@
 
 #define IS_QUOTE(c) ((c) == '\'' || (c) == '\"')
 
-typedef enum
-{
+typedef enum {
     // constant
     TK_CONSTANT,
-    
+
     // identifier
     TK_IDENTIFIER,
 
@@ -59,17 +58,17 @@ typedef enum
     TK_IF,
     TK_ELIF,
     TK_ELSE,
-    
+
     // for loop
     TK_FOR,
 
     // while loop
     TK_WHILE,
-    
+
     // jump keywords
     TK_BREAK,
     TK_CONTINUE,
-    
+
     // ,
     TK_COMMA,
 
@@ -81,11 +80,11 @@ typedef enum
 
     // :
     TK_COLON,
-    
+
     // ()
     TK_L_PAREN,
     TK_R_PAREN,
-    
+
     // []
     TK_L_BRACK,
     TK_R_BRACK,
@@ -99,59 +98,58 @@ typedef enum
     TK_END
 } TOKEN_TYPE;
 
-static char *TOKEN_STR[] = 
-{
-    "CONSTANT",
-    "IDENTIFIER",
-    "ADD",
-    "ADD_ASSIGN",
-    "SUB",
-    "SUB_ASSIGN",
-    "MUL",
-    "MUL_ASSIGN",
-    "DIV",
-    "DIV_ASSIGN",
-    "MOD",
-    "MOD_ASSIGN",
-    "GE",
-    "GT",
-    "LE",
-    "LT",
-    "EQ",
-    "NEQ",
-    "AND",
-    "AND_ASSIGN",
-    "OR",
-    "OR_ASSIGN",
-    "XOR",
-    "XOR_ASSIGN",
-    "NOT",
-    "ASSIGN",
-    "VAL",
-    "VAR",
-    "FUNC",
-    "LAMBDA",
-    "RETURN",
-    "IF",
-    "ELIF",
-    "ELSE",
-    "FOR",
-    "WHILE",
-    "BREAK",
-    "CONTINUE",
-    "COMMA",
-    "DOT",
-    "SEMICOLON",
-    "COLON",
-    "L_PAREN",
-    "R_PAREN",
-    "L_BRACK",
-    "R_BRACK",
-    "L_CURLY",
-    "R_CURLY",
-    "NOP",
-    "END"
-};
+static char *TOKEN_STR[] =
+    {
+        "CONSTANT",
+        "IDENTIFIER",
+        "ADD",
+        "ADD_ASSIGN",
+        "SUB",
+        "SUB_ASSIGN",
+        "MUL",
+        "MUL_ASSIGN",
+        "DIV",
+        "DIV_ASSIGN",
+        "MOD",
+        "MOD_ASSIGN",
+        "GE",
+        "GT",
+        "LE",
+        "LT",
+        "EQ",
+        "NEQ",
+        "AND",
+        "AND_ASSIGN",
+        "OR",
+        "OR_ASSIGN",
+        "XOR",
+        "XOR_ASSIGN",
+        "NOT",
+        "ASSIGN",
+        "VAL",
+        "VAR",
+        "FUNC",
+        "LAMBDA",
+        "RETURN",
+        "IF",
+        "ELIF",
+        "ELSE",
+        "FOR",
+        "WHILE",
+        "BREAK",
+        "CONTINUE",
+        "COMMA",
+        "DOT",
+        "SEMICOLON",
+        "COLON",
+        "L_PAREN",
+        "R_PAREN",
+        "L_BRACK",
+        "R_BRACK",
+        "L_CURLY",
+        "R_CURLY",
+        "NOP",
+        "END"};
 
 class VSToken : public VSObject {
 public:
@@ -199,63 +197,54 @@ public:
     VSToken *peektoken();
 };
 
-inline bool is_arith(TOKEN_TYPE opcode)
-{
+inline bool is_arith(TOKEN_TYPE opcode) {
     return opcode >= TK_ADD && opcode <= TK_NEQ;
 }
 
-inline bool is_cmp(TOKEN_TYPE opcode)
-{
+inline bool is_cmp(TOKEN_TYPE opcode) {
     return opcode >= TK_LT && opcode <= TK_NEQ;
 }
 
-inline bool is_logic(TOKEN_TYPE opcode)
-{
+inline bool is_logic(TOKEN_TYPE opcode) {
     return opcode >= TK_EQ && opcode <= TK_OR;
 }
 
-inline bool is_assign(TOKEN_TYPE opcode)
-{
-    switch (opcode)
-    {
-    case TK_ASSIGN:
-    case TK_ADD_ASSIGN:
-    case TK_SUB_ASSIGN:
-    case TK_MUL_ASSIGN:
-    case TK_DIV_ASSIGN:
-    case TK_MOD_ASSIGN:
-    case TK_AND_ASSIGN:
-    case TK_OR_ASSIGN:
-        return true;
-    default:
-        return false;
+inline bool is_assign(TOKEN_TYPE opcode) {
+    switch (opcode) {
+        case TK_ASSIGN:
+        case TK_ADD_ASSIGN:
+        case TK_SUB_ASSIGN:
+        case TK_MUL_ASSIGN:
+        case TK_DIV_ASSIGN:
+        case TK_MOD_ASSIGN:
+        case TK_AND_ASSIGN:
+        case TK_OR_ASSIGN:
+            return true;
+        default:
+            return false;
     }
 }
 
-inline bool is_rel(TOKEN_TYPE opcode)
-{
-    switch (opcode)
-    {
-    case TK_LT:
-    case TK_LE:
-    case TK_GT:
-    case TK_GE:
-        return true;
-    default:
-        return false;
+inline bool is_rel(TOKEN_TYPE opcode) {
+    switch (opcode) {
+        case TK_LT:
+        case TK_LE:
+        case TK_GT:
+        case TK_GE:
+            return true;
+        default:
+            return false;
     }
 }
 
-inline bool is_mul(TOKEN_TYPE opcode)
-{
-    switch (opcode)
-    {
-    case TK_MUL:
-    case TK_DIV:
-    case TK_MOD:
-        return true;
-    default:
-        return false;
+inline bool is_mul(TOKEN_TYPE opcode) {
+    switch (opcode) {
+        case TK_MUL:
+        case TK_DIV:
+        case TK_MOD:
+            return true;
+        default:
+            return false;
     }
 }
 

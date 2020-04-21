@@ -4,10 +4,10 @@ vpath %.cpp src src/compiler src/runtime src/tools src/objects
 CXX=g++
 CXXFLAGS=-I inc -g -Wall -Wextra -Wno-write-strings
 
-SRCS=error.cpp VSBoolObject.cpp VSCharObject.cpp VSFloatObject.cpp VSIntObject.cpp \
-	 VSMapObject.cpp VSNoneObject.cpp VSObject.cpp VSStringObject.cpp VSTypeObject.cpp \
-	 VSTupleObject.cpp VSListObject.cpp VSSetObject.cpp VSCodeObject.cpp Symtable.cpp \
-	 VSTokenizer.cpp VSParser.cpp VSCompiler.cpp printers.cpp vs.cpp
+SRCS=error.cpp VSCellObject.cpp VSBoolObject.cpp VSCharObject.cpp VSFloatObject.cpp VSIntObject.cpp \
+	 VSDictObject.cpp VSNoneObject.cpp VSObject.cpp VSStringObject.cpp VSFunctionObject.cpp \
+	 VSTupleObject.cpp VSListObject.cpp VSSetObject.cpp VSCodeObject.cpp VSFrameObject.cpp \
+	 Symtable.cpp VSTokenizer.cpp VSParser.cpp VSCompiler.cpp printers.cpp vs.cpp
 
 OBJECTS=$(SRCS:.cpp=.o)
 

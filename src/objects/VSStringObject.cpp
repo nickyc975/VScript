@@ -9,18 +9,7 @@
 #include "objects/VSTupleObject.hpp"
 
 VSObject *vs_string(VSObject *obj) {
-    if (!HAS_ATTR(obj, "__str__")) {
-        ERR_ATTR_MISSING(obj, "__str__");
-        terminate(TERM_ERROR);
-    }
-
-    VSObject *str_func = GET_ATTR(obj, "__str__");
-    if (!VS_IS_TYPE(str_func, T_FUNC)) {
-        ERR_ATTR_IS_NOT_FUNC(obj, "__str__");
-        terminate(TERM_ERROR);
-    }
-
-    VSObject *val = ((VSFunctionObject *)str_func)->call(vs_tuple_pack(0));
+    VSObject *val = CALL_ATTR(obj, "__str__", vs_tuple_pack(0));
     if (!VS_IS_TYPE(val, T_STR)) {
         err("%s.__str__() returned \"%s\" instead of str.", TYPE_STR[obj->type], TYPE_STR[val->type]);
         terminate(TERM_ERROR);

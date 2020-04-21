@@ -23,7 +23,7 @@ typedef enum {
     T_FRAME
 } TYPE;
 
-char *TYPE_STR[] = {
+static char *TYPE_STR[] = {
     "none",
     "bool",
     "char",
@@ -40,8 +40,6 @@ char *TYPE_STR[] = {
     "cell",
     "code",
     "frame"};
-
-class VSObject;
 
 #define VS_AS_OBJECT(obj) ((VSObject *)obj)
 
@@ -91,23 +89,18 @@ class VSObject;
         }                                         \
     } while (0);
 
+class VSObject;
+
 class AttributeDef {
 public:
     bool readonly;
     VSObject *attribute;
 
-    AttributeDef(bool readonly, VSObject *attribute) {
-        this->readonly = readonly;
-        this->attribute = attribute;
-        INCREF(this->attribute);
-    }
-
-    ~AttributeDef() {
-        DECREF_EX(this->attribute);
-    }
+    AttributeDef(bool readonly, VSObject *attribute);
+    ~AttributeDef();
 };
 
-typedef std::unordered_map<std::string, AttributeDef> str_attr_map;
+typedef std::unordered_map<std::string, AttributeDef *> str_attr_map;
 
 class VSObject {
 public:
@@ -115,10 +108,8 @@ public:
     vs_size_t refcnt;
     str_attr_map attrs;
 
-    VSObject() {
-        this->refcnt = 0;
-        attrs = str_attr_map();
-    }
+    VSObject();
+    ~VSObject();
 };
 
 inline VSObject *_NEW_REF(VSObject *obj) {
@@ -144,32 +135,32 @@ VSObject *vs_default_eq(const VSObject *a, const VSObject *b);
 #define NEW_ID(str) static std::string ID##str = #str;
 
 // attribute operation macros
-#define GET_ATTR(obj, attrname) ((obj)->attrs[(attrname)].attribute)
-#define SET_ATTR(obj, attrname, value)                           \
-    do {                                                         \
-        auto _obj = (obj);                                       \
-        auto _attrname = (attrname);                             \
-        auto _value = (value);                                   \
-        auto _iter = _obj->attrs.find(_attrname);                \
-        if (_iter != _obj->attrs.end()) {                        \
-            if (!_iter->second.readonly) {                       \
-                DECREF_EX(_iter->second.attribute);              \
-                _obj->attrs[_attrname].attribute = _value;       \
-                INCREF(_value);                                  \
-            }                                                    \
-        } else {                                                 \
-            _obj->attrs[_attrname] = AttributeDef(false, _value) \
-        }                                                        \
+#define GET_ATTR(obj, attrname) ((obj)->attrs[(attrname)]->attribute)
+#define SET_ATTR(obj, attrname, value)                               \
+    do {                                                             \
+        auto _obj = (obj);                                           \
+        auto _attrname = (attrname);                                 \
+        auto _value = (value);                                       \
+        auto _iter = _obj->attrs.find(_attrname);                   \
+        if (_iter != _obj->attrs.end()) {                           \
+            if (!_iter->second->readonly) {                          \
+                DECREF_EX(_iter->second->attribute);                 \
+                _obj->attrs[_attrname]->attribute = _value;          \
+                INCREF(_value);                                      \
+            }                                                        \
+        } else {                                                     \
+            _obj->attrs[_attrname] = new AttributeDef(false, _value) \
+        }                                                            \
     } while (0);
 #define HAS_ATTR(obj, attrname) ((obj)->attrs.find(attrname) != (obj)->attrs.end())
 
 #define ERR_ATTR_MISSING(obj, attrname) \
-    err("\"%s\" object does not has attr \"" attrname "\"", TYPE_STR[obj->type]);
+    err("\"%s\" object does not has attr \"%s\"", TYPE_STR[obj->type], attrname.c_str());
 
 #define ERR_ATTR_READONLY(obj, attrname) \
-    err("attr \"" attrname "\" of \"%s\" object is readonly", TYPE_STR[obj->type]);
+    err("attr \"%s\" of \"%s\" object is readonly", attrname.c_str(), TYPE_STR[obj->type]);
 
 #define ERR_ATTR_IS_NOT_FUNC(obj, attrname) \
-    err("attr \"" attrname "\" of \"%s\" object is not function", TYPE_STR[obj->type]);
+    err("attr \"%s\" of \"%s\" object is not function", attrname.c_str(), TYPE_STR[obj->type]);
 
 #endif

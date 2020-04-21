@@ -1,10 +1,8 @@
-#include "objects/VSTypeObject.hpp"
 #include "compiler/Symtable.hpp"
 
-SymtableEntry::SymtableEntry(SYM_TYPE sym_type, VSObject *symbol, int index, int cell_index) : 
-    sym_type(sym_type), symbol(symbol), index(index), cell_index(cell_index) {
-        this->is_cell = NULL;
-        INCREF(symbol);
+SymtableEntry::SymtableEntry(SYM_TYPE sym_type, VSObject *symbol, int index, int cell_index) : sym_type(sym_type), symbol(symbol), index(index), cell_index(cell_index) {
+    this->is_cell = NULL;
+    INCREF(symbol);
 }
 
 SymtableEntry::~SymtableEntry() {
@@ -12,7 +10,7 @@ SymtableEntry::~SymtableEntry() {
 }
 
 Symtable::Symtable(Symtable *parent) : parent(parent) {
-    this->table = NEW_REF(VSMapObject *, new VSMapObject());
+    this->table = NEW_REF(VSDictObject *, new VSDictObject());
     INCREF(parent);
 }
 
@@ -30,16 +28,15 @@ Symtable *Symtable::get_parent() {
 }
 
 void Symtable::put(VSObject *name, SymtableEntry *value) {
-    MAP_SET(this->table, name, value);
+    DICT_SET(this->table, name, value);
 }
 
 SymtableEntry *Symtable::get(VSObject *name) {
-    if (MAP_HAS(this->table, name)) {
-        return (SymtableEntry *)MAP_GET(this->table, name);
+    if (DICT_HAS(this->table, name)) {
+        return (SymtableEntry *)DICT_GET(this->table, name);
     }
     return NULL;
 }
-
 
 SymtableEntry *Symtable::get_recur(VSObject *name) {
     SymtableEntry *node = this->get(name);
@@ -49,11 +46,9 @@ SymtableEntry *Symtable::get_recur(VSObject *name) {
     return node;
 }
 
-
 bool Symtable::contains(VSObject *name) {
-    return MAP_HAS(this->table, name);
+    return DICT_HAS(this->table, name);
 }
-
 
 bool Symtable::contains_recur(VSObject *name) {
     bool result = this->contains(name);

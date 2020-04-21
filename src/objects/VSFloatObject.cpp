@@ -9,18 +9,7 @@
 #include "objects/VSTupleObject.hpp"
 
 VSObject *vs_float(VSObject *obj) {
-    if (!HAS_ATTR(obj, "__float__")) {
-        ERR_ATTR_MISSING(obj, "__float__");
-        terminate(TERM_ERROR);
-    }
-
-    VSObject *float_func = GET_ATTR(obj, "__float__");
-    if (!VS_IS_TYPE(float_func, T_FUNC)) {
-        ERR_ATTR_IS_NOT_FUNC(obj, "__float__");
-        terminate(TERM_ERROR);
-    }
-
-    VSObject *val = ((VSFunctionObject *)float_func)->call(vs_tuple_pack(0));
+    VSObject *val = CALL_ATTR(obj, "__float__", vs_tuple_pack(0));
     if (!VS_IS_TYPE(val, T_FLOAT)) {
         err("%s.__float__() returned \"%s\" instead of \"float\".", TYPE_STR[obj->type], TYPE_STR[val->type]);
         terminate(TERM_ERROR);

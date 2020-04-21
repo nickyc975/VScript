@@ -454,10 +454,10 @@ void fprint_code(FILE *file, VSCodeObject *code) {
                 break;
             case OP_LOAD_CONST:
                 object = LIST_GET(code->consts, inst.operand);
-                if (VS_TYPEOF(object)->t_type == T_CODE) {
+                if (object->type == T_CODE) {
                     fprintf(file, "%s\n", STRING_TO_C_STRING(((VSCodeObject *)object)->name).c_str());
                 } else {
-                    VSObject *strobj = VS_TYPEOF(object)->__str__(object);
+                    VSObject *strobj = CALL_ATTR(object, "__str__", vs_tuple_pack(0));
                     fprintf(file, "%s\n", STRING_TO_C_STRING(strobj).c_str());
                     DECREF_EX(strobj);
                 }
@@ -482,7 +482,7 @@ void fprint_code(FILE *file, VSCodeObject *code) {
     indent++;
     for (vs_size_t i = 0; i < code->nconsts; i++) {
         VSObject *obj = LIST_GET(code->consts, i);
-        if (VS_TYPEOF(obj)->t_type == T_CODE) {
+        if (obj->type == T_CODE) {
             fprint_code(file, (VSCodeObject *)obj);
         }
     }

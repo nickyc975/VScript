@@ -12,18 +12,7 @@ VSBoolObject *VSBoolObject::_VS_TRUE = NULL;
 VSBoolObject *VSBoolObject::_VS_FALSE = NULL;
 
 VSObject *vs_bool(VSObject *obj) {
-    if (!HAS_ATTR(obj, "__bool__")) {
-        ERR_ATTR_MISSING(obj, "__bool__");
-        terminate(TERM_ERROR);
-    }
-
-    VSObject *bool_func = GET_ATTR(obj, "__bool__");
-    if (!VS_IS_TYPE(bool_func, T_FUNC)) {
-        ERR_ATTR_IS_NOT_FUNC(obj, "__bool__");
-        terminate(TERM_ERROR);
-    }
-
-    VSObject *val = ((VSFunctionObject *)bool_func)->call(vs_tuple_pack(0));
+    VSObject *val = CALL_ATTR(obj, "__bool__", vs_tuple_pack(0));
     if (!VS_IS_TYPE(val, T_BOOL)) {
         err("%s.__bool__() returned \"%s\" instead of bool.", TYPE_STR[obj->type], TYPE_STR[val->type]);
         terminate(TERM_ERROR);

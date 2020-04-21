@@ -1,8 +1,8 @@
 #ifndef VS_SYMTABLE_H
 #define VS_SYMTABLE_H
 
+#include "objects/VSDictObject.hpp"
 #include "objects/VSObject.hpp"
-#include "objects/VSMapObject.hpp"
 
 typedef enum {
     SYM_VAR,
@@ -29,7 +29,7 @@ public:
 class Symtable : public VSObject {
 private:
     Symtable *parent;
-    VSMapObject *table;
+    VSDictObject *table;
 
 public:
     Symtable(Symtable *parent);

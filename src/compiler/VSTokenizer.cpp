@@ -7,7 +7,6 @@
 #include "objects/VSIntObject.hpp"
 #include "objects/VSNoneObject.hpp"
 #include "objects/VSStringObject.hpp"
-#include "objects/VSTypeObject.hpp"
 
 #define ERR_WITH_POS(ln, col, msg, ...) err("line: %ld, col: %d, " msg, ln, col, __VA_ARGS__)
 

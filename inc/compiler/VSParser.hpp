@@ -1,12 +1,12 @@
 #ifndef VS_PARSER_H
 #define VS_PARSER_H
 
-#include "vs.hpp"
-#include "compiler/VSTokenizer.hpp"
-#include "compiler/VSASTNode.hpp"
-#include "objects/VSObject.hpp"
-
 #include <stack>
+
+#include "compiler/VSASTNode.hpp"
+#include "compiler/VSTokenizer.hpp"
+#include "objects/VSObject.hpp"
+#include "vs.hpp"
 
 class VSParser : public VSObject {
 private:
