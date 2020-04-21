@@ -175,7 +175,7 @@ VSObject *vs_string_get(VSObject *strobj, VSObject *idxobj) {
     INCREF_RET(C_CHAR_TO_CHAR(str->_value.at(idx)));
 }
 
-void vs_string_set(VSObject *strobj, VSObject *idxobj, VSObject *charobj) {
+VSObject *vs_string_set(VSObject *strobj, VSObject *idxobj, VSObject *charobj) {
     cchar_t char_val = CHAR_TO_C_CHAR(charobj);
     vs_size_t idx = (vs_size_t)INT_TO_C_INT(idxobj);
 
@@ -188,15 +188,17 @@ void vs_string_set(VSObject *strobj, VSObject *idxobj, VSObject *charobj) {
     }
 
     str->_value[idx] = char_val;
+    INCREF_RET(VS_NONE);
 }
 
-void vs_string_append(VSObject *strobj, VSObject *charobj) {
+VSObject *vs_string_append(VSObject *strobj, VSObject *charobj) {
     char char_val = CHAR_TO_C_CHAR(charobj);
 
     VS_ENSURE_TYPE(strobj, T_STR, "str.append()");
     VSStringObject *str = (VSStringObject *)strobj;
 
     str->_value.push_back(char_val);
+    INCREF_RET(VS_NONE);
 }
 
 VSObject *vs_string_has(VSObject *strobj, VSObject *charobj) {
@@ -220,7 +222,7 @@ VSObject *vs_string_has_at(VSObject *strobj, VSObject *idxobj) {
     INCREF_RET(idx < str->_value.size() ? VS_FALSE : VS_TRUE);
 }
 
-void vs_string_remove(VSObject *strobj, VSObject *charobj) {
+VSObject *vs_string_remove(VSObject *strobj, VSObject *charobj) {
     char char_val = CHAR_TO_C_CHAR(charobj);
 
     VS_ENSURE_TYPE(strobj, T_STR, "str.remove()");
@@ -231,9 +233,10 @@ void vs_string_remove(VSObject *strobj, VSObject *charobj) {
         str->_value.erase(idx, 1);
         idx = str->_value.find_first_of(char_val, idx);
     }
+    INCREF_RET(VS_NONE);
 }
 
-void vs_string_remove_at(VSObject *strobj, VSObject *idxobj) {
+VSObject *vs_string_remove_at(VSObject *strobj, VSObject *idxobj) {
     vs_size_t idx = (vs_size_t)INT_TO_C_INT(idxobj);
 
     VS_ENSURE_TYPE(strobj, T_STR, "str.remove_at()");
@@ -245,6 +248,7 @@ void vs_string_remove_at(VSObject *strobj, VSObject *idxobj) {
     }
 
     str->_value.erase(idx, 1);
+    INCREF_RET(VS_NONE);
 }
 
 VSStringObject::VSStringObject(std::string value) {
