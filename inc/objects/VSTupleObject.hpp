@@ -1,34 +1,18 @@
 #ifndef VS_TUPLE_H
 #define VS_TUPLE_H
 
-#include "error.hpp"
 #include "VSObject.hpp"
-#include "VSTypeObject.hpp"
+#include "error.hpp"
 
-extern VSTypeObject *VSTupleType;
+VSObject *vs_tuple(VSObject *obj);
 
 class VSTupleObject : public VSObject {
 public:
     vs_size_t nitems;
     VSObject **items;
 
-    VSTupleObject(vs_size_t nitems) {
-        this->type = VSTupleType;
-
-        this->nitems = nitems;
-        this->items = (VSObject **)malloc(sizeof(VSObject *) * nitems);
-        if (items == NULL) {
-            err("unable to malloc memory of size: %llu\n", sizeof(VSObject *) * nitems);
-            terminate(TERM_ERROR);
-        }
-    }
-
-    ~VSTupleObject() {
-        for (vs_size_t i = 0; i < this->nitems; i++) {
-            DECREF(this->items[i]);
-        }
-        free(this->items);
-    }
+    VSTupleObject(vs_size_t nitems);
+    ~VSTupleObject();
 };
 
 extern VSTupleObject *vs_tuple_pack(vs_size_t nitems, ...);
