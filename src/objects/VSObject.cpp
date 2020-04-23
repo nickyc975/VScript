@@ -18,6 +18,11 @@ VSObject::VSObject() {
 }
 
 VSObject::~VSObject() {
+    for (auto entry : this->attrs) {
+        if (entry.second != NULL) {
+            delete entry.second;
+        }
+    }
 }
 
 VSObject *vs_default_eq(const VSObject *a, const VSObject *b) {
