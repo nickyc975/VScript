@@ -43,6 +43,7 @@ VSObject *vs_dict_clear(VSObject *obj) {
         DECREF_EX(entry.second);
     }
     dict->_dict.clear();
+    INCREF_RET(VS_NONE);
 }
 
 VSObject *vs_dict_len(VSObject *obj) {

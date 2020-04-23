@@ -86,7 +86,7 @@ inline VSObject *_stack_pop(cpt_stack_t &stack) {
     return value;
 }
 
-inline void *_stack_push(cpt_stack_t &stack, VSObject *value) {
+inline void _stack_push(cpt_stack_t &stack, VSObject *value) {
     if (value == NULL) {
         err("Internal error: pushing NULL into compute stack");
         terminate(TERM_ERROR);

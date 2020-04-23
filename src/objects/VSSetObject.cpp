@@ -57,6 +57,7 @@ VSObject *vs_set_clear(VSObject *obj) {
         DECREF(item);
     }
     set->_set.clear();
+    INCREF_RET(VS_NONE);
 }
 
 VSObject *vs_set_len(VSObject *obj) {

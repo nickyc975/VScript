@@ -470,7 +470,7 @@ void fprint_code(FILE *file, VSCodeObject *code) {
             case OP_BUILD_LIST:
             case OP_BUILD_DICT:
             case OP_BUILD_SET:
-                fprintf(file, "%u\n", inst.operand);
+                fprintf(file, "%llu\n", inst.operand);
                 break;
             default:
                 fprintf(file, "\n");

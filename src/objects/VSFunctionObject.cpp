@@ -175,7 +175,7 @@ VSDynamicFunctionObject::~VSDynamicFunctionObject() {
 
 VSObject *VSDynamicFunctionObject::call(VSTupleObject *args) {
     assert(args != NULL);
-    cint_t nargs = TUPLE_LEN(args);
+    vs_size_t nargs = TUPLE_LEN(args);
     if (nargs != this->code->nargs) {
         ERR_NARGS(this->code->nargs, nargs);
     }
@@ -190,6 +190,6 @@ VSObject *VSDynamicFunctionObject::call(VSTupleObject *args) {
         return stack.top();
     } else {
         err("Internal error: more than 1 object left in compute stack: %ld", stack.size());
-        terminate(TERM_ERROR);
+        INCREF_RET(VS_NONE);
     }
 }

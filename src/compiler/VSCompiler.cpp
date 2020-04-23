@@ -265,7 +265,6 @@ void VSCompiler::gen_idx_expr(VSASTNode *node) {
 }
 
 void VSCompiler::gen_dot_expr(VSASTNode *node) {
-    Symtable *table = this->symtables.top();
     name_addr_map *names = this->namestack.top();
     VSCodeObject *code = this->codeobjects.top();
 
