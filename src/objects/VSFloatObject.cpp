@@ -34,6 +34,30 @@ VSObject *vs_float_lt(const VSObject *a, const VSObject *b) {
     INCREF_RET(res ? VS_TRUE : VS_FALSE);
 }
 
+VSObject *vs_float_gt(const VSObject *a, const VSObject *b) {
+    VS_ENSURE_TYPE(a, T_FLOAT, "float.__gt__()");
+    VS_ENSURE_TYPE(b, T_FLOAT, "float.__gt__()");
+
+    bool res = ((VSFloatObject *)a)->_value > ((VSFloatObject *)b)->_value;
+    INCREF_RET(res ? VS_TRUE : VS_FALSE);
+}
+
+VSObject *vs_float_le(const VSObject *a, const VSObject *b) {
+    VS_ENSURE_TYPE(a, T_FLOAT, "float.__le__()");
+    VS_ENSURE_TYPE(b, T_FLOAT, "float.__le__()");
+
+    bool res = ((VSFloatObject *)a)->_value <= ((VSFloatObject *)b)->_value;
+    INCREF_RET(res ? VS_TRUE : VS_FALSE);
+}
+
+VSObject *vs_float_ge(const VSObject *a, const VSObject *b) {
+    VS_ENSURE_TYPE(a, T_FLOAT, "float.__ge__()");
+    VS_ENSURE_TYPE(b, T_FLOAT, "float.__ge__()");
+
+    bool res = ((VSFloatObject *)a)->_value >= ((VSFloatObject *)b)->_value;
+    INCREF_RET(res ? VS_TRUE : VS_FALSE);
+}
+
 VSObject *vs_float_eq(const VSObject *a, const VSObject *b) {
     VS_ENSURE_TYPE(a, T_FLOAT, "float.__eq__()");
     VS_ENSURE_TYPE(b, T_FLOAT, "float.__eq__()");
@@ -131,6 +155,9 @@ VSFloatObject::VSFloatObject(cfloat_t value) : _value(value) {
 
     NEW_NATIVE_FUNC_ATTR(this, "__hash__", vs_float_hash, 1, true);
     NEW_NATIVE_FUNC_ATTR(this, "__lt__", vs_float_lt, 2, true);
+    NEW_NATIVE_FUNC_ATTR(this, "__gt__", vs_float_gt, 2, true);
+    NEW_NATIVE_FUNC_ATTR(this, "__le__", vs_float_le, 2, true);
+    NEW_NATIVE_FUNC_ATTR(this, "__ge__", vs_float_ge, 2, true);
     NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_float_eq, 2, true);
     NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_float_str, 1, false);
     NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_float_bytes, 1, false);

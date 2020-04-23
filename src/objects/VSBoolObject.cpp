@@ -34,6 +34,30 @@ VSObject *vs_bool_lt(const VSObject *a, const VSObject *b) {
     INCREF_RET(C_BOOL_TO_BOOL(res));
 }
 
+VSObject *vs_bool_gt(const VSObject *a, const VSObject *b) {
+    VS_ENSURE_TYPE(a, T_BOOL, "bool.__gt__()");
+    VS_ENSURE_TYPE(b, T_BOOL, "bool.__gt__()");
+
+    bool res = ((VSBoolObject *)a)->_value > ((VSBoolObject *)b)->_value;
+    INCREF_RET(C_BOOL_TO_BOOL(res));
+}
+
+VSObject *vs_bool_le(const VSObject *a, const VSObject *b) {
+    VS_ENSURE_TYPE(a, T_BOOL, "bool.__le__()");
+    VS_ENSURE_TYPE(b, T_BOOL, "bool.__le__()");
+
+    bool res = ((VSBoolObject *)a)->_value <= ((VSBoolObject *)b)->_value;
+    INCREF_RET(C_BOOL_TO_BOOL(res));
+}
+
+VSObject *vs_bool_ge(const VSObject *a, const VSObject *b) {
+    VS_ENSURE_TYPE(a, T_BOOL, "bool.__ge__()");
+    VS_ENSURE_TYPE(b, T_BOOL, "bool.__ge__()");
+
+    bool res = ((VSBoolObject *)a)->_value >= ((VSBoolObject *)b)->_value;
+    INCREF_RET(C_BOOL_TO_BOOL(res));
+}
+
 VSObject *vs_bool_eq(const VSObject *a, const VSObject *b) {
     VS_ENSURE_TYPE(a, T_BOOL, "bool.__eq__()");
     VS_ENSURE_TYPE(b, T_BOOL, "bool.__eq__()");
@@ -120,6 +144,9 @@ VSBoolObject::VSBoolObject(cbool_t value) : _value(value) {
 
     NEW_NATIVE_FUNC_ATTR(this, "__hash__", vs_bool_hash, 1, true);
     NEW_NATIVE_FUNC_ATTR(this, "__lt__", vs_bool_lt, 2, true);
+    NEW_NATIVE_FUNC_ATTR(this, "__gt__", vs_bool_gt, 2, true);
+    NEW_NATIVE_FUNC_ATTR(this, "__le__", vs_bool_le, 2, true);
+    NEW_NATIVE_FUNC_ATTR(this, "__ge__", vs_bool_ge, 2, true);
     NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_bool_eq, 2, true);
     NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_bool_str, 1, false);
     NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_bool_bytes, 1, false);

@@ -100,19 +100,6 @@ inline void *_stack_push(cpt_stack_t &stack, VSObject *value) {
 #define STACK_POP(stack) _stack_pop(stack)
 #define STACK_PUSH(stack, value) _stack_push(stack, value)
 
-#define DO_B_OP(op, l_val, r_val, res)                                                     \
-    NEW_ID(__##op##__);                                                                    \
-    if (!HAS_ATTR(l_val, ID__##op##__)) {                                                  \
-        err("\"%s\" object does not has attr: \"__" #op "__\"", TYPE_STR[l_val->type]);    \
-        terminate(TERM_ERROR);                                                             \
-    }                                                                                      \
-    VSObject *op_func = GET_ATTR(l_val, ID__##op##__);                                     \
-    if (!VS_IS_TYPE(op_func, T_FUNC)) {                                                    \
-        err("attr \"__" #op "__\" of type \"%s\" is not function", TYPE_STR[l_val->type]); \
-        terminate(TERM_ERROR);                                                             \
-    }                                                                                      \
-    res = ((VSFunctionObject *)op_func)->call(vs_tuple_pack(1, r_val));
-
 void VSFrameObject::eval(std::stack<VSObject *> &stack) {
     while (this->pc < this->code->ninsts) {
         switch (code->code[this->pc].opcode) {
@@ -124,8 +111,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
             case OP_ADD: {
                 VSObject *l_val = STACK_POP(stack);
                 VSObject *r_val = STACK_POP(stack);
-                VSObject *res = NULL;
-                DO_B_OP(add, l_val, r_val, res);
+                VSObject *res = CALL_ATTR(l_val, "__add__", vs_tuple_pack(1, r_val));
                 STACK_PUSH(stack, res);
                 DECREF(l_val);
                 DECREF(r_val);
@@ -134,8 +120,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
             case OP_SUB: {
                 VSObject *l_val = STACK_POP(stack);
                 VSObject *r_val = STACK_POP(stack);
-                VSObject *res = NULL;
-                DO_B_OP(sub, l_val, r_val, res);
+                VSObject *res = CALL_ATTR(l_val, "__sub__", vs_tuple_pack(1, r_val));
                 STACK_PUSH(stack, res);
                 DECREF(l_val);
                 DECREF(r_val);
@@ -144,8 +129,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
             case OP_MUL: {
                 VSObject *l_val = STACK_POP(stack);
                 VSObject *r_val = STACK_POP(stack);
-                VSObject *res = NULL;
-                DO_B_OP(mul, l_val, r_val, res);
+                VSObject *res = CALL_ATTR(l_val, "__mul__", vs_tuple_pack(1, r_val));
                 STACK_PUSH(stack, res);
                 DECREF(l_val);
                 DECREF(r_val);
@@ -154,8 +138,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
             case OP_DIV: {
                 VSObject *l_val = STACK_POP(stack);
                 VSObject *r_val = STACK_POP(stack);
-                VSObject *res = NULL;
-                DO_B_OP(div, l_val, r_val, res);
+                VSObject *res = CALL_ATTR(l_val, "__div__", vs_tuple_pack(1, r_val));
                 STACK_PUSH(stack, res);
                 DECREF(l_val);
                 DECREF(r_val);
@@ -164,44 +147,106 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
             case OP_MOD: {
                 VSObject *l_val = STACK_POP(stack);
                 VSObject *r_val = STACK_POP(stack);
-                VSObject *res = NULL;
-                DO_B_OP(mod, l_val, r_val, res);
+                VSObject *res = CALL_ATTR(l_val, "__mod__", vs_tuple_pack(1, r_val));
                 STACK_PUSH(stack, res);
                 DECREF(l_val);
                 DECREF(r_val);
                 break;
             }
             case OP_LT: {
+                VSObject *l_val = STACK_POP(stack);
+                VSObject *r_val = STACK_POP(stack);
+                VSObject *res = CALL_ATTR(l_val, "__lt__", vs_tuple_pack(1, r_val));
+                STACK_PUSH(stack, res);
+                DECREF(l_val);
+                DECREF(r_val);
                 break;
             }
             case OP_GT: {
+                VSObject *l_val = STACK_POP(stack);
+                VSObject *r_val = STACK_POP(stack);
+                VSObject *res = CALL_ATTR(l_val, "__gt__", vs_tuple_pack(1, r_val));
+                STACK_PUSH(stack, res);
+                DECREF(l_val);
+                DECREF(r_val);
                 break;
             }
             case OP_LE: {
+                VSObject *l_val = STACK_POP(stack);
+                VSObject *r_val = STACK_POP(stack);
+                VSObject *res = CALL_ATTR(l_val, "__le__", vs_tuple_pack(1, r_val));
+                STACK_PUSH(stack, res);
+                DECREF(l_val);
+                DECREF(r_val);
                 break;
             }
             case OP_GE: {
+                VSObject *l_val = STACK_POP(stack);
+                VSObject *r_val = STACK_POP(stack);
+                VSObject *res = CALL_ATTR(l_val, "__ge__", vs_tuple_pack(1, r_val));
+                STACK_PUSH(stack, res);
+                DECREF(l_val);
+                DECREF(r_val);
                 break;
             }
             case OP_EQ: {
+                VSObject *l_val = STACK_POP(stack);
+                VSObject *r_val = STACK_POP(stack);
+                VSObject *res = CALL_ATTR(l_val, "__eq__", vs_tuple_pack(1, r_val));
+                STACK_PUSH(stack, res);
+                DECREF(l_val);
+                DECREF(r_val);
                 break;
             }
             case OP_NEQ: {
+                VSObject *l_val = STACK_POP(stack);
+                VSObject *r_val = STACK_POP(stack);
+                VSObject *res = CALL_ATTR(l_val, "__eq__", vs_tuple_pack(1, r_val));
+                res = CALL_ATTR(res, "__not__", vs_tuple_pack(0));
+                STACK_PUSH(stack, res);
+                DECREF(l_val);
+                DECREF(r_val);
                 break;
             }
             case OP_AND: {
+                VSObject *l_val = STACK_POP(stack);
+                VSObject *r_val = STACK_POP(stack);
+                VSObject *res = CALL_ATTR(l_val, "__and__", vs_tuple_pack(1, r_val));
+                STACK_PUSH(stack, res);
+                DECREF(l_val);
+                DECREF(r_val);
                 break;
             }
             case OP_XOR: {
+                VSObject *l_val = STACK_POP(stack);
+                VSObject *r_val = STACK_POP(stack);
+                VSObject *res = CALL_ATTR(l_val, "__xor__", vs_tuple_pack(1, r_val));
+                STACK_PUSH(stack, res);
+                DECREF(l_val);
+                DECREF(r_val);
                 break;
             }
             case OP_OR: {
+                VSObject *l_val = STACK_POP(stack);
+                VSObject *r_val = STACK_POP(stack);
+                VSObject *res = CALL_ATTR(l_val, "__or__", vs_tuple_pack(1, r_val));
+                STACK_PUSH(stack, res);
+                DECREF(l_val);
+                DECREF(r_val);
                 break;
             }
             case OP_NOT: {
+                VSObject *val = STACK_POP(stack);
+                VSObject *res = CALL_ATTR(val, "__not__", vs_tuple_pack(0));
+                STACK_PUSH(stack, res);
+                DECREF(val);
                 break;
             }
             case OP_NEG: {
+                VSObject *val = STACK_POP(stack);
+                VSObject *res = CALL_ATTR(val, "__neg__", vs_tuple_pack(0));
+                STACK_PUSH(stack, res);
+                DECREF(val);
                 break;
             }
             case OP_BUILD_TUPLE: {

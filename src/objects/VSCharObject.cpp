@@ -32,6 +32,30 @@ VSObject *vs_char_lt(const VSObject *a, const VSObject *b) {
     INCREF_RET(res ? VS_TRUE : VS_FALSE);
 }
 
+VSObject *vs_char_gt(const VSObject *a, const VSObject *b) {
+    VS_ENSURE_TYPE(a, T_BOOL, "char.__gt__()");
+    VS_ENSURE_TYPE(b, T_BOOL, "char.__gt__()");
+
+    cbool_t res = ((VSCharObject *)a)->_value > ((VSCharObject *)b)->_value;
+    INCREF_RET(res ? VS_TRUE : VS_FALSE);
+}
+
+VSObject *vs_char_le(const VSObject *a, const VSObject *b) {
+    VS_ENSURE_TYPE(a, T_BOOL, "char.__le__()");
+    VS_ENSURE_TYPE(b, T_BOOL, "char.__le__()");
+
+    cbool_t res = ((VSCharObject *)a)->_value <= ((VSCharObject *)b)->_value;
+    INCREF_RET(res ? VS_TRUE : VS_FALSE);
+}
+
+VSObject *vs_char_ge(const VSObject *a, const VSObject *b) {
+    VS_ENSURE_TYPE(a, T_BOOL, "char.__ge__()");
+    VS_ENSURE_TYPE(b, T_BOOL, "char.__ge__()");
+
+    cbool_t res = ((VSCharObject *)a)->_value >= ((VSCharObject *)b)->_value;
+    INCREF_RET(res ? VS_TRUE : VS_FALSE);
+}
+
 VSObject *vs_char_eq(const VSObject *a, const VSObject *b) {
     VS_ENSURE_TYPE(a, T_BOOL, "char.__eq__()");
     VS_ENSURE_TYPE(b, T_BOOL, "char.__eq__()");
@@ -141,6 +165,9 @@ VSCharObject::VSCharObject(cchar_t value) : _value(value) {
 
     NEW_NATIVE_FUNC_ATTR(this, "__hash__", vs_char_hash, 1, true);
     NEW_NATIVE_FUNC_ATTR(this, "__lt__", vs_char_lt, 2, true);
+    NEW_NATIVE_FUNC_ATTR(this, "__gt__", vs_char_gt, 2, true);
+    NEW_NATIVE_FUNC_ATTR(this, "__le__", vs_char_le, 2, true);
+    NEW_NATIVE_FUNC_ATTR(this, "__ge__", vs_char_ge, 2, true);
     NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_char_eq, 2, true);
     NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_char_str, 1, false);
     NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_char_bytes, 1, false);
