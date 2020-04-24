@@ -251,7 +251,7 @@ VSToken *VSTokenizer::reco_str(std::string &literal) {
         ERR_WITH_POS(this->ln, this->col, "invalid string literal: \"%s\"", literal.c_str());
         return NULL;
     }
-    VSObject *strobj = C_STRING_TO_STRING(literal);
+    VSObject *strobj = C_STRING_TO_STRING(literal.substr(1, literal.length() - 2));
     return new VSToken(TK_CONSTANT, strobj, strobj, this->ln, this->col);
 }
 

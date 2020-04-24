@@ -1,6 +1,7 @@
 #include "objects/VSTupleObject.hpp"
 
 #include <cstdarg>
+#include <cstring>
 
 #include "error.hpp"
 #include "objects/VSBoolObject.hpp"
@@ -161,13 +162,15 @@ VSObject *vs_tuple_to_list(VSObject *tupleobj) {
 
 VSTupleObject::VSTupleObject(vs_size_t nitems) {
     this->type = T_TUPLE;
-
     this->nitems = nitems;
-    this->items = (VSObject **)malloc(sizeof(VSObject *) * nitems);
-    if (items == NULL) {
-        err("unable to malloc memory of size: %llu\n", sizeof(VSObject *) * nitems);
+
+    size_t size = sizeof(VSObject *) * nitems;
+    this->items = (VSObject **)malloc(size);
+    if (this->items == NULL) {
+        err("unable to malloc memory of size: %lu\n", size);
         terminate(TERM_ERROR);
     }
+    memset(this->items, NULL, size);
 
     NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_default_eq, 2, true);
     NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_tuple_str, 1, false);

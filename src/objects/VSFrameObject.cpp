@@ -316,8 +316,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
                 VSObject *obj = STACK_POP(stack);
                 VSObject *idx = STACK_POP(stack);
                 VSObject *val = STACK_POP(stack);
-                VSObject *res = CALL_ATTR(obj, "set", vs_tuple_pack(2, idx, val));
-                STACK_PUSH(stack, res);
+                CALL_ATTR(obj, "set", vs_tuple_pack(2, idx, val));
                 DECREF(obj);
                 DECREF(idx);
                 DECREF(val);
