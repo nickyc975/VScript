@@ -3,7 +3,10 @@
 #include <cassert>
 
 #include "objects/VSCodeObject.hpp"
+#include "objects/VSDictObject.hpp"
+#include "objects/VSListObject.hpp"
 #include "objects/VSNoneObject.hpp"
+#include "objects/VSSetObject.hpp"
 #include "objects/VSStringObject.hpp"
 
 VSObject *vs_frame_str(VSObject *frameobj) {
@@ -102,7 +105,8 @@ inline void _stack_push(cpt_stack_t &stack, VSObject *value) {
 
 void VSFrameObject::eval(std::stack<VSObject *> &stack) {
     while (this->pc < this->code->ninsts) {
-        switch (code->code[this->pc].opcode) {
+        VSInst inst = code->code[this->pc];
+        switch (inst.opcode) {
             case OP_POP: {
                 VSObject *top = STACK_POP(stack);
                 DECREF_EX(top);
@@ -250,15 +254,53 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
                 break;
             }
             case OP_BUILD_TUPLE: {
+                vs_size_t nitems = inst.operand;
+                VSTupleObject *tuple = new VSTupleObject(nitems);
+                for (vs_size_t i = 0; i < nitems; i++) {
+                    VSObject *item = STACK_POP(stack);
+                    tuple->items[i] = item;
+                }
+                STACK_PUSH(stack, tuple);
                 break;
             }
             case OP_BUILD_LIST: {
+                vs_size_t nitems = inst.operand;
+                VSListObject *list = new VSListObject(nitems);
+                for (vs_size_t i = 0; i < nitems; i++) {
+                    VSObject *item = STACK_POP(stack);
+                    list->items[i] = item;
+                }
+                STACK_PUSH(stack, list);
                 break;
             }
             case OP_BUILD_DICT: {
+                vs_size_t npairs = inst.operand;
+                VSDictObject *dict = new VSDictObject();
+                for (vs_size_t i = 0; i < npairs; i++) {
+                    VSObject *pair = STACK_POP(stack);
+                    if (pair->type != T_TUPLE || TUPLE_LEN(pair) != 2) {
+                        err("Internal error: BUILD_DICT arguments are not binary tuples");
+                        terminate(TERM_ERROR);
+                    }
+
+                    VSObject *key = TUPLE_GET(pair, 0), *value = TUPLE_GET(pair, 1);
+                    DICT_SET(dict, key, value);
+                    DECREF_EX(pair);
+                }
+                STACK_PUSH(stack, dict);
                 break;
             }
             case OP_BUILD_SET: {
+                vs_size_t nitems = inst.operand;
+                VSSetObject *set = new VSSetObject();
+                for (vs_size_t i = 0; i < nitems; i++) {
+                    VSObject *item = STACK_POP(stack);
+                    auto res = set->_set.insert(item);
+                    if (!res.second) {
+                        DECREF_EX(item);
+                    }
+                }
+                STACK_PUSH(stack, set);
                 break;
             }
             case OP_INDEX_LOAD: {
