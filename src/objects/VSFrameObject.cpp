@@ -285,7 +285,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
 
                     VSObject *key = TUPLE_GET(pair, 0), *value = TUPLE_GET(pair, 1);
                     DICT_SET(dict, key, value);
-                    DECREF_EX(pair);
+                    DECREF(pair);
                 }
                 STACK_PUSH(stack, dict);
                 break;
@@ -297,16 +297,30 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
                     VSObject *item = STACK_POP(stack);
                     auto res = set->_set.insert(item);
                     if (!res.second) {
-                        DECREF_EX(item);
+                        DECREF(item);
                     }
                 }
                 STACK_PUSH(stack, set);
                 break;
             }
             case OP_INDEX_LOAD: {
+                VSObject *obj = STACK_POP(stack);
+                VSObject *idx = STACK_POP(stack);
+                VSObject *val = CALL_ATTR(obj, "get", vs_tuple_pack(1, idx));
+                STACK_PUSH(stack, val);
+                DECREF(obj);
+                DECREF(val);
                 break;
             }
             case OP_INDEX_STORE: {
+                VSObject *obj = STACK_POP(stack);
+                VSObject *idx = STACK_POP(stack);
+                VSObject *val = STACK_POP(stack);
+                VSObject *res = CALL_ATTR(obj, "set", vs_tuple_pack(2, idx, val));
+                STACK_PUSH(stack, res);
+                DECREF(obj);
+                DECREF(idx);
+                DECREF(val);
                 break;
             }
             case OP_LOAD_LOCAL: {
