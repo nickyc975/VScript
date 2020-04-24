@@ -154,12 +154,17 @@ VSObject *VSNativeFunctionObject::call(VSTupleObject *args) {
 }
 
 /* Dynamic function type definition */
-VSDynamicFunctionObject::VSDynamicFunctionObject(std::string name, VSCodeObject *code, VSTupleObject *cellvars, VSTupleObject *freevars, VSTupleObject *builtins) {
+VSDynamicFunctionObject::VSDynamicFunctionObject(std::string name, VSCodeObject *code, VSTupleObject *freevars, VSTupleObject *builtins) {
     this->name = name;
     this->code = NEW_REF(VSCodeObject *, code);
-    this->cellvars = NEW_REF(VSTupleObject *, cellvars);
     this->freevars = NEW_REF(VSTupleObject *, freevars);
     this->builtins = NEW_REF(VSTupleObject *, builtins);
+
+    this->cellvars = new VSTupleObject(code->ncellvars);
+    for (vs_addr_t i = 0; i < code->ncellvars; i++) {
+        TUPLE_SET(this->cellvars, i, VS_NONE);
+    }
+    INCREF(this->cellvars);
 
     NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_default_eq, 2, true);
     NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_func_str, 1, false);

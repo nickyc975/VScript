@@ -45,7 +45,6 @@ public:
     VSDynamicFunctionObject(
         std::string name,
         VSCodeObject *code,
-        VSTupleObject *cellvars,
         VSTupleObject *freevars,
         VSTupleObject *builtins);
     ~VSDynamicFunctionObject();

@@ -324,55 +324,223 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
                 break;
             }
             case OP_LOAD_LOCAL: {
+                vs_addr_t idx = inst.operand;
+                if (idx >= this->nlocals) {
+                    err("Internal error: invalid local var index: %llu, max: %llu", idx, this->nlocals - 1);
+                    terminate(TERM_ERROR);
+                }
+                VSObject *local = TUPLE_GET(this->locals, idx);
+                STACK_PUSH(stack, VS_CELL_GET(local));
                 break;
             }
             case OP_LOAD_FREE: {
+                vs_addr_t idx = inst.operand;
+                if (idx >= this->nfreevars) {
+                    err("Internal error: invalid free var index: %llu, max: %llu", idx, this->nfreevars - 1);
+                    terminate(TERM_ERROR);
+                }
+                VSObject *free = TUPLE_GET(this->freevars, idx);
+                STACK_PUSH(stack, VS_CELL_GET(free));
                 break;
             }
             case OP_LOAD_CELL: {
+                vs_addr_t idx = inst.operand;
+                if (idx >= this->ncellvars) {
+                    err("Internal error: invalid cell var index: %llu, max: %llu", idx, this->ncellvars - 1);
+                    terminate(TERM_ERROR);
+                }
+                VSObject *cell = TUPLE_GET(this->cellvars, idx);
+                STACK_PUSH(stack, cell);
                 break;
             }
             case OP_LOAD_LOCAL_CELL: {
+                vs_addr_t idx = inst.operand;
+                if (idx >= this->nlocals) {
+                    err("Internal error: invalid local var index: %llu, max: %llu", idx, this->nlocals - 1);
+                    terminate(TERM_ERROR);
+                }
+                VSObject *local = TUPLE_GET(this->locals, idx);
+                STACK_PUSH(stack, local);
+                break;
                 break;
             }
             case OP_LOAD_FREE_CELL: {
+                vs_addr_t idx = inst.operand;
+                if (idx >= this->nfreevars) {
+                    err("Internal error: invalid free var index: %llu, max: %llu", idx, this->nfreevars - 1);
+                    terminate(TERM_ERROR);
+                }
+                VSObject *free = TUPLE_GET(this->freevars, idx);
+                STACK_PUSH(stack, free);
+                break;
                 break;
             }
             case OP_LOAD_ATTR: {
+                VSObject *obj = STACK_POP(stack);
+                vs_addr_t idx = inst.operand;
+                if (idx >= this->code->nnames) {
+                    err("Internal error: invalid name index: %llu, max: %llu", idx, this->code->nnames - 1);
+                    terminate(TERM_ERROR);
+                }
+
+                VSObject *attrnameobj = LIST_GET(this->code->names, idx);
+                std::string &attrname = STRING_TO_C_STRING(attrnameobj);
+                if (!HAS_ATTR(obj, attrname)) {
+                    ERR_ATTR_MISSING(obj, attrname);
+                    terminate(TERM_ERROR);
+                }
+
+                VSObject *attr = GET_ATTR(obj, attrname);
+                STACK_PUSH(stack, attr);
+                DECREF(obj);
                 break;
             }
             case OP_STORE_LOCAL: {
+                vs_addr_t idx = inst.operand;
+                VSObject *val = STACK_POP(stack);
+                if (idx >= this->nlocals) {
+                    err("Internal error: invalid local var index: %llu, max: %llu", idx, this->nlocals - 1);
+                    terminate(TERM_ERROR);
+                }
+
+                VSObject *cell = TUPLE_GET(this->locals, idx);
+                VS_CELL_SET(cell, val);
+                DECREF(val);
                 break;
             }
             case OP_STORE_FREE: {
+                vs_addr_t idx = inst.operand;
+                VSObject *val = STACK_POP(stack);
+                if (idx >= this->nfreevars) {
+                    err("Internal error: invalid free var index: %llu, max: %llu", idx, this->nfreevars - 1);
+                    terminate(TERM_ERROR);
+                }
+
+                VSObject *cell = TUPLE_GET(this->freevars, idx);
+                VS_CELL_SET(cell, val);
+                DECREF(val);
                 break;
             }
             case OP_STORE_CELL: {
+                vs_addr_t idx = inst.operand;
+                VSObject *val = STACK_POP(stack);
+                if (idx >= this->ncellvars) {
+                    err("Internal error: invalid cell var index: %llu, max: %llu", idx, this->ncellvars - 1);
+                    terminate(TERM_ERROR);
+                }
+
+                TUPLE_SET(this->cellvars, idx, val);
+                DECREF(val);
                 break;
             }
             case OP_STORE_ATTR: {
+                vs_addr_t idx = inst.operand;
+                VSObject *obj = STACK_POP(stack);
+                VSObject *attr = STACK_POP(stack);
+                if (idx >= this->code->nnames) {
+                    err("Internal error: invalid name index: %llu, max: %llu", idx, this->code->nnames - 1);
+                    terminate(TERM_ERROR);
+                }
+
+                VSObject *attrnameobj = LIST_GET(this->code->names, idx);
+                std::string &attrname = STRING_TO_C_STRING(attrnameobj);
+                if (!HAS_ATTR(obj, attrname)) {
+                    ERR_ATTR_MISSING(obj, attrname);
+                    terminate(TERM_ERROR);
+                }
+
+                AttributeDef *attrdef = obj->attrs[attrname];
+                if (attrdef->readonly) {
+                    err("attr \"%s\" of \"%s\" object is readonly", attrname.c_str(), TYPE_STR[obj->type]);
+                    terminate(TERM_ERROR);
+                }
+
+                DECREF(attrdef->attribute);
+                attrdef->attribute = attr;
+                DECREF(obj);
                 break;
             }
             case OP_LOAD_CONST: {
+                vs_addr_t idx = inst.operand;
+                if (idx >= this->code->nconsts) {
+                    err("Internal error: invalid const index: %llu, max: %llu", idx, this->code->nconsts - 1);
+                    terminate(TERM_ERROR);
+                }
+
+                VSObject *obj = LIST_GET(this->code->consts, idx);
+                STACK_PUSH(stack, obj);
                 break;
             }
             case OP_LOAD_BUILTIN: {
+                vs_addr_t idx = inst.operand;
+                if (idx >= this->nbuiltins) {
+                    err("Internal error: invalid builtin index: %llu, max: %llu", idx, this->nbuiltins - 1);
+                    terminate(TERM_ERROR);
+                }
+
+                VSObject *obj = TUPLE_GET(this->builtins, idx);
+                STACK_PUSH(stack, obj);
                 break;
             }
             case OP_JMP: {
+                vs_addr_t target = inst.operand;
+                if (target >= this->code->ninsts) {
+                    err("Internal error: invalid jump target: %llu, max: %llu", target, this->code->ninsts - 1);
+                    terminate(TERM_ERROR);
+                }
+
+                this->pc = target;
+                this->pc--;
                 break;
             }
             case OP_JIF: {
+                vs_addr_t target = inst.operand;
+                VSObject *obj = STACK_POP(stack);
+                if (obj->type != T_BOOL) {
+                    err("Internal error: jump condition can not be \"%s\" object", TYPE_STR[obj->type]);
+                    terminate(TERM_ERROR);
+                }
+
+                if (BOOL_TO_C_BOOL(obj)) {
+                    this->pc = target;
+                    this->pc--;
+                }
+                DECREF(obj);
                 break;
             }
             case OP_BUILD_FUNC: {
+                VSObject *code = STACK_POP(stack);
+                VSObject *freevars = STACK_POP(stack);
+
+                std::string &name = STRING_TO_C_STRING(AS_CODE(code)->name);
+                VSFunctionObject *func = new VSDynamicFunctionObject(name, AS_CODE(code), AS_TUPLE(freevars), this->builtins);
+                STACK_PUSH(stack, func);
+                DECREF(freevars);
+                DECREF(code);
                 break;
             }
             case OP_CALL_FUNC: {
+                VSObject *func = STACK_POP(stack);
+                VSObject *args = STACK_POP(stack);
+
+                if (func->type != T_FUNC) {
+                    err("\"%s\" object is not callable", TYPE_STR[func->type]);
+                    terminate(TERM_ERROR);
+                }
+
+                if (args->type != T_TUPLE) {
+                    err("Internal error: function arg list can not be \"%s\" object", TYPE_STR[func->type]);
+                    terminate(TERM_ERROR);
+                }
+
+                VSObject *res = ((VSFunctionObject *)func)->call((VSTupleObject *)args);
+                STACK_PUSH(stack, res);
+                DECREF(func);
+                DECREF(args);
                 break;
             }
             case OP_RET: {
-                break;
+                return;
             }
             case OP_NOP: {
                 break;
