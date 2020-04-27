@@ -3,7 +3,7 @@
 
 #include "VSObject.hpp"
 
-VSObject *vs_bool(VSObject *obj);
+extern VSObject *vs_bool(VSObject *, VSObject *const *args, vs_size_t nargs);
 
 class VSBoolObject : public VSObject {
 private:
