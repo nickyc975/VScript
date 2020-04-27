@@ -10,7 +10,7 @@
 #include "objects/VSIntObject.hpp"
 #include "objects/VSTupleObject.hpp"
 
-VSObject *vs_set(VSObject *obj);
+extern VSObject *vs_set(VSObject *, VSObject *const *args, vs_size_t nargs);
 
 class VSSetObject : public VSObject {
 private:
