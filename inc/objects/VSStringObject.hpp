@@ -5,7 +5,7 @@
 
 #include "VSObject.hpp"
 
-VSObject *vs_string(VSObject *obj);
+extern VSObject *vs_str(VSObject *, VSObject *const *args, vs_size_t nargs);
 
 class VSStringObject : public VSObject {
 public:
