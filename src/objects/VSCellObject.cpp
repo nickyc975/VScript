@@ -9,36 +9,43 @@
 #include "objects/VSNoneObject.hpp"
 #include "objects/VSStringObject.hpp"
 
-VSObject *vs_cell(VSObject *item) {
-    assert(item != NULL);
-    VSCellObject *cell = new VSCellObject(item);
+VSObject *vs_cell(VSObject *, VSObject *const *args, vs_size_t nargs) {
+    if (nargs != 1) {
+        ERR_NARGS("cell()", 1, nargs);
+        terminate(TERM_ERROR);
+    }
+
+    VSCellObject *cell = new VSCellObject(args[0]);
     INCREF_RET(VS_AS_OBJECT(cell));
 }
 
-VSObject *vs_cell_hash(const VSObject *cellobj) {
-    assert(cellobj != NULL);
-    VS_ENSURE_TYPE(cellobj, T_CELL, "cell.__hash__()");
-    INCREF_RET(C_INT_TO_INT((cint_t)cellobj));
+VSObject *vs_cell_hash(VSObject *self, VSObject *const *, vs_size_t nargs) {
+    assert(self != NULL);
+    if (nargs != 0) {
+        ERR_NARGS("cell.__hash__()", 0, nargs);
+        terminate(TERM_ERROR);
+    }
+    VS_ENSURE_TYPE(self, T_CELL, "cell.__hash__()");
+    INCREF_RET(C_INT_TO_INT((cint_t)self));
 }
 
-VSObject *vs_cell_eq(const VSObject *a, const VSObject *b) {
-    assert(a != NULL);
-    assert(b != NULL);
-    VS_ENSURE_TYPE(a, T_CELL, "cell.__eq__()");
-    VS_ENSURE_TYPE(b, T_CELL, "cell.__eq__()");
-
-    INCREF_RET(C_BOOL_TO_BOOL(a == b));
-}
-
-VSObject *vs_cell_str(VSObject *cellobj) {
-    assert(cellobj != NULL);
-    VS_ENSURE_TYPE(cellobj, T_CELL, "cell.__str__()");
+VSObject *vs_cell_str(VSObject *self, VSObject *const *, vs_size_t nargs) {
+    assert(self != NULL);
+    if (nargs != 0) {
+        ERR_NARGS("cell.__hash__()", 0, nargs);
+        terminate(TERM_ERROR);
+    }
+    VS_ENSURE_TYPE(self, T_CELL, "cell.__hash__()");
     INCREF_RET(C_STRING_TO_STRING("cell"));
 }
 
-VSObject *vs_cell_bytes(VSObject *cellobj) {
-    assert(cellobj != NULL);
-    VS_ENSURE_TYPE(cellobj, T_CELL, "cell.__bytes__()");
+VSObject *vs_cell_bytes(VSObject *self, VSObject *const *, vs_size_t nargs) {
+    assert(self != NULL);
+    if (nargs != 0) {
+        ERR_NARGS("cell.__hash__()", 0, nargs);
+        terminate(TERM_ERROR);
+    }
+    VS_ENSURE_TYPE(self, T_CELL, "cell.__hash__()");
     INCREF_RET(VS_NONE);
 }
 
@@ -48,10 +55,10 @@ VSCellObject::VSCellObject(VSObject *item) {
     this->item = item;
     INCREF(item);
 
-    NEW_NATIVE_FUNC_ATTR(this, "__hash__", vs_cell_hash, 1, true);
-    NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_cell_eq, 1, true);
-    NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_cell_str, 1, false);
-    NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_cell_bytes, 1, false);
+    NEW_NATIVE_FUNC_ATTR(this, "__hash__", vs_cell_hash);
+    NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_default_eq);
+    NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_cell_str);
+    NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_cell_bytes);
 }
 
 VSCellObject::~VSCellObject() {

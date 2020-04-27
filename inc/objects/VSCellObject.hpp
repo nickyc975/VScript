@@ -3,7 +3,7 @@
 
 #include "VSObject.hpp"
 
-VSObject *vs_cell(VSObject *item);
+extern VSObject *vs_cell(VSObject *, VSObject *const *args, vs_size_t nargs);
 
 class VSCellObject : public VSObject {
 public:
