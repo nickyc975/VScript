@@ -3,7 +3,7 @@
 
 #include "VSObject.hpp"
 
-VSObject *vs_int(VSObject *obj, VSObject *base);
+extern VSObject *vs_int(VSObject *, VSObject *const *args, vs_size_t nargs);
 
 class VSIntObject : public VSObject {
 private:
