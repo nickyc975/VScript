@@ -119,17 +119,9 @@ inline VSObject *_NEW_REF(VSObject *obj) {
     return obj;
 }
 
-typedef VSObject *(*unaryfunc)(VSObject *);
-typedef VSObject *(*binaryfunc)(VSObject *, VSObject *);
-typedef VSObject *(*ternaryfunc)(VSObject *, VSObject *, VSObject *);
-typedef VSObject *(*quaternaryfunc)(VSObject *, VSObject *, VSObject *, VSObject *);
+typedef VSObject *(*vs_native_func)(VSObject *, VSObject *const *args, vs_size_t nargs);
 
-typedef VSObject *(*const_unaryfunc)(const VSObject *);
-typedef VSObject *(*const_binaryfunc)(const VSObject *, const VSObject *);
-typedef VSObject *(*const_ternaryfunc)(const VSObject *, const VSObject *, const VSObject *);
-typedef VSObject *(*const_quaternaryfunc)(const VSObject *, const VSObject *, const VSObject *, const VSObject *);
-
-VSObject *vs_default_eq(const VSObject *a, const VSObject *b);
+VSObject *vs_default_eq(VSObject *self, VSObject *const *args, vs_size_t nargs);
 
 // static string management
 #define NEW_ID(str) static std::string ID##str = #str;
@@ -141,8 +133,8 @@ VSObject *vs_default_eq(const VSObject *a, const VSObject *b);
         auto _obj = (obj);                                           \
         auto _attrname = (attrname);                                 \
         auto _value = (value);                                       \
-        auto _iter = _obj->attrs.find(_attrname);                   \
-        if (_iter != _obj->attrs.end()) {                           \
+        auto _iter = _obj->attrs.find(_attrname);                    \
+        if (_iter != _obj->attrs.end()) {                            \
             if (!_iter->second->readonly) {                          \
                 DECREF_EX(_iter->second->attribute);                 \
                 _obj->attrs[_attrname]->attribute = _value;          \
@@ -162,5 +154,8 @@ VSObject *vs_default_eq(const VSObject *a, const VSObject *b);
 
 #define ERR_ATTR_IS_NOT_FUNC(obj, attrname) \
     err("attr \"%s\" of \"%s\" object is not function", attrname.c_str(), TYPE_STR[obj->type]);
+
+#define ERR_NARGS(func, expected, actual) \
+    err("Unexpected nargs for function \"%s\": %ld, expected: %ld", func, actual, expected);
 
 #endif

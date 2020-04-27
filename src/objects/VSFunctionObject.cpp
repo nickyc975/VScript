@@ -6,20 +6,24 @@
 #include "objects/VSFrameObject.hpp"
 #include "objects/VSStringObject.hpp"
 
-#define ERR_NARGS(expected, actual)                                \
-    err("Unexpected nargs: %ld, expected: %ld", actual, expected); \
-    terminate(TERM_ERROR);
-
 /* begin function attributes */
-VSObject *vs_func_str(VSObject *funcobj) {
+VSObject *vs_func_str(VSObject *funcobj, VSObject *const *, vs_size_t nargs) {
     VS_ENSURE_TYPE(funcobj, T_FUNC, "func.__str__()");
+    if (nargs != 0) {
+        ERR_NARGS("func.__str__()", 0, nargs);
+        terminate(TERM_ERROR);
+    }
 
     VSFunctionObject *func = (VSFunctionObject *)funcobj;
     INCREF_RET(C_STRING_TO_STRING("function: " + func->name));
 }
 
-VSObject *vs_func_bytes(VSObject *funcobj) {
+VSObject *vs_func_bytes(VSObject *funcobj, VSObject *const *, vs_size_t nargs) {
     VS_ENSURE_TYPE(funcobj, T_FUNC, "func.__bytes__()");
+    if (nargs != 0) {
+        ERR_NARGS("func.__bytes__()", 0, nargs);
+        terminate(TERM_ERROR);
+    }
 
     INCREF_RET(VS_NONE);
 }
@@ -38,28 +42,24 @@ VSObject *VSFunctionObject::call(VSTupleObject *args) {
 }
 
 /* Native function type definition */
-VSNativeFunctionObject::VSNativeFunctionObject(std::string name, void *cfunc, cint_t nargs, bool const_args) {
+VSNativeFunctionObject::VSNativeFunctionObject(std::string name, vs_native_func func) {
     this->name = name;
-    this->cfunc = cfunc;
-    this->nargs = nargs;
-    this->const_args = const_args;
+    this->func = func;
 }
 
-VSNativeFunctionObject::VSNativeFunctionObject(std::string name, void *cfunc, cint_t nargs, bool const_args, VSObject *bind_obj) {
+VSNativeFunctionObject::VSNativeFunctionObject(std::string name, vs_native_func func, VSObject *self) {
     this->name = name;
-    this->cfunc = cfunc;
-    this->nargs = nargs;
-    this->const_args = const_args;
-    this->bind_obj = NEW_REF(VSObject *, bind_obj);
+    this->func = func;
+    this->self = NEW_REF(VSObject *, self);
 
     /* Using NEW_NATIVE_FUNC_ATTR() will cause infinite recursion. */
-    auto *eq_func = new VSNativeFunctionObject("__eq__", (void *)vs_default_eq, 2, true);
-    auto *str_func = new VSNativeFunctionObject("__str__", (void *)vs_func_str, 1, false);
-    auto *bytes_func = new VSNativeFunctionObject("__bytes__", (void *)vs_func_bytes, 1, false);
+    auto *eq_func = new VSNativeFunctionObject("__eq__", vs_default_eq);
+    auto *str_func = new VSNativeFunctionObject("__str__", vs_func_str);
+    auto *bytes_func = new VSNativeFunctionObject("__bytes__", vs_func_bytes);
 
-    eq_func->bind_obj = NEW_REF(VSObject *, this);
-    str_func->bind_obj = NEW_REF(VSObject *, this);
-    bytes_func->bind_obj = NEW_REF(VSObject *, this);
+    eq_func->self = NEW_REF(VSObject *, this);
+    str_func->self = NEW_REF(VSObject *, this);
+    bytes_func->self = NEW_REF(VSObject *, this);
 
     this->attrs["__eq__"] = new AttributeDef(true, eq_func);
     this->attrs["__str__"] = new AttributeDef(true, str_func);
@@ -79,82 +79,19 @@ VSNativeFunctionObject::VSNativeFunctionObject(std::string name, void *cfunc, ci
 }
 
 VSNativeFunctionObject::~VSNativeFunctionObject() {
-    DECREF_EX(this->bind_obj);
+    DECREF_EX(this->self);
 }
 
 VSObject *VSNativeFunctionObject::call(VSTupleObject *args) {
     assert(args != NULL);
     VS_ENSURE_TYPE(args, T_TUPLE, "as args");
-
-    bool is_method = this->bind_obj != NULL;
-
-    cint_t expected_nargs = this->nargs;
-    if (is_method) {
-        expected_nargs--;
-        if (expected_nargs < 0) {
-            ERR_NARGS(0, 1);
-        }
-    }
-
-    cint_t actual_nargs = (cint_t)TUPLE_LEN(args);
-    if (expected_nargs != actual_nargs) {
-        ERR_NARGS(expected_nargs, actual_nargs);
-    }
-
-    VSObject *res = NULL;
-    switch (this->nargs) {
-        case 1: {
-            VSObject *arg0 = is_method ? this->bind_obj : TUPLE_GET(args, 0);
-            if (this->const_args) {
-                res = ((const_unaryfunc)this->cfunc)(arg0);
-            } else {
-                res = ((unaryfunc)this->cfunc)(arg0);
-            }
-            break;
-        }
-        case 2: {
-            VSObject *arg0 = is_method ? this->bind_obj : TUPLE_GET(args, 0);
-            VSObject *arg1 = is_method ? TUPLE_GET(args, 0) : TUPLE_GET(args, 1);
-            if (this->const_args) {
-                res = ((const_binaryfunc)this->cfunc)(arg0, arg1);
-            } else {
-                res = ((binaryfunc)this->cfunc)(arg0, arg1);
-            }
-            break;
-        }
-        case 3: {
-            VSObject *arg0 = is_method ? this->bind_obj : TUPLE_GET(args, 0);
-            VSObject *arg1 = is_method ? TUPLE_GET(args, 0) : TUPLE_GET(args, 1);
-            VSObject *arg2 = is_method ? TUPLE_GET(args, 1) : TUPLE_GET(args, 2);
-            if (this->const_args) {
-                res = ((const_ternaryfunc)this->cfunc)(arg0, arg1, arg2);
-            } else {
-                res = ((ternaryfunc)this->cfunc)(arg0, arg1, arg2);
-            }
-            break;
-        }
-        case 4: {
-            VSObject *arg0 = is_method ? this->bind_obj : TUPLE_GET(args, 0);
-            VSObject *arg1 = is_method ? TUPLE_GET(args, 0) : TUPLE_GET(args, 1);
-            VSObject *arg2 = is_method ? TUPLE_GET(args, 1) : TUPLE_GET(args, 2);
-            VSObject *arg3 = is_method ? TUPLE_GET(args, 2) : TUPLE_GET(args, 3);
-            if (this->const_args) {
-                res = ((const_quaternaryfunc)this->cfunc)(arg0, arg1, arg2, arg3);
-            } else {
-                res = ((quaternaryfunc)this->cfunc)(arg0, arg1, arg2, arg3);
-            }
-            break;
-        }
-        default:
-            // Unreachable
-            res = NEW_REF(VSObject *, VS_NONE);
-            break;
-    }
+    VSObject *res = this->func(this->self, args->items, args->nitems);
+    // check result
     return res;
 }
 
 /* Dynamic function type definition */
-VSDynamicFunctionObject::VSDynamicFunctionObject(std::string name, VSCodeObject *code, VSTupleObject *freevars, VSTupleObject *builtins) {
+VSDynamicFunctionObject::VSDynamicFunctionObject(std::string name, VSCodeObject *code, VSTupleObject *freevars, VSTupleObject *builtins, int flags) {
     this->name = name;
     this->code = NEW_REF(VSCodeObject *, code);
     this->freevars = NEW_REF(VSTupleObject *, freevars);
@@ -166,9 +103,11 @@ VSDynamicFunctionObject::VSDynamicFunctionObject(std::string name, VSCodeObject 
     }
     INCREF(this->cellvars);
 
-    NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_default_eq, 2, true);
-    NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_func_str, 1, false);
-    NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_func_bytes, 1, false);
+    this->flags = flags;
+
+    NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_default_eq);
+    NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_func_str);
+    NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_func_bytes);
 }
 
 VSDynamicFunctionObject::~VSDynamicFunctionObject() {
@@ -181,8 +120,9 @@ VSDynamicFunctionObject::~VSDynamicFunctionObject() {
 VSObject *VSDynamicFunctionObject::call(VSTupleObject *args) {
     assert(args != NULL);
     vs_size_t nargs = TUPLE_LEN(args);
-    if (nargs != this->code->nargs) {
-        ERR_NARGS(this->code->nargs, nargs);
+    if (nargs < this->code->nargs || (nargs > this->code->nargs && !(VS_FUNC_VARARGS & this->flags))) {
+        ERR_NARGS(this->name.c_str(), this->code->nargs, nargs);
+        terminate(TERM_ERROR);
     }
 
     std::stack<VSObject *> stack = std::stack<VSObject *>();

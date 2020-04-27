@@ -1,6 +1,8 @@
 #include "objects/VSObject.hpp"
 
+#include "error.hpp"
 #include "objects/VSBoolObject.hpp"
+#include "objects/VSNoneObject.hpp"
 
 AttributeDef::AttributeDef(bool readonly, VSObject *attribute) {
     this->readonly = readonly;
@@ -25,6 +27,11 @@ VSObject::~VSObject() {
     }
 }
 
-VSObject *vs_default_eq(const VSObject *a, const VSObject *b) {
-    return C_BOOL_TO_BOOL(a == b);
+VSObject *vs_default_eq(VSObject *self, VSObject *const *args, vs_size_t nargs) {
+    if (nargs != 1) {
+        ERR_NARGS("default __eq__()", 1, nargs);
+        INCREF_RET(VS_NONE);
+    }
+
+    INCREF_RET(C_BOOL_TO_BOOL(self == args[0]));
 }
