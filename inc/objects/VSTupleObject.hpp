@@ -4,7 +4,7 @@
 #include "VSObject.hpp"
 #include "error.hpp"
 
-VSObject *vs_tuple(VSObject *obj);
+extern VSObject *vs_tuple(VSObject *, VSObject *const *args, vs_size_t nargs);
 
 class VSTupleObject : public VSObject {
 public:
