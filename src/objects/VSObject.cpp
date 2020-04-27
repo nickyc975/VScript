@@ -2,6 +2,7 @@
 
 #include "error.hpp"
 #include "objects/VSBoolObject.hpp"
+#include "objects/VSIntObject.hpp"
 #include "objects/VSNoneObject.hpp"
 
 AttributeDef::AttributeDef(bool readonly, VSObject *attribute) {
@@ -25,6 +26,15 @@ VSObject::~VSObject() {
             delete entry.second;
         }
     }
+}
+
+VSObject *vs_default_hash(VSObject *self, VSObject *const *args, vs_size_t nargs) {
+    if (nargs != 0) {
+        ERR_NARGS("default __hash__()", 0, nargs);
+        terminate(TERM_ERROR);
+    }
+
+    INCREF_RET(C_INT_TO_INT((cint_t)self));
 }
 
 VSObject *vs_default_eq(VSObject *self, VSObject *const *args, vs_size_t nargs) {

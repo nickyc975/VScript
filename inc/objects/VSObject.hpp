@@ -119,8 +119,7 @@ inline VSObject *_NEW_REF(VSObject *obj) {
     return obj;
 }
 
-typedef VSObject *(*vs_native_func)(VSObject *, VSObject *const *args, vs_size_t nargs);
-
+VSObject *vs_default_hash(VSObject *self, VSObject *const *args, vs_size_t nargs);
 VSObject *vs_default_eq(VSObject *self, VSObject *const *args, vs_size_t nargs);
 
 // static string management
@@ -128,6 +127,7 @@ VSObject *vs_default_eq(VSObject *self, VSObject *const *args, vs_size_t nargs);
 
 // attribute operation macros
 #define GET_ATTR(obj, attrname) ((obj)->attrs[(attrname)]->attribute)
+
 #define SET_ATTR(obj, attrname, value)                               \
     do {                                                             \
         auto _obj = (obj);                                           \
@@ -144,6 +144,7 @@ VSObject *vs_default_eq(VSObject *self, VSObject *const *args, vs_size_t nargs);
             _obj->attrs[_attrname] = new AttributeDef(false, _value) \
         }                                                            \
     } while (0);
+
 #define HAS_ATTR(obj, attrname) ((obj)->attrs.find(attrname) != (obj)->attrs.end())
 
 #define ERR_ATTR_MISSING(obj, attrname) \
@@ -154,8 +155,5 @@ VSObject *vs_default_eq(VSObject *self, VSObject *const *args, vs_size_t nargs);
 
 #define ERR_ATTR_IS_NOT_FUNC(obj, attrname) \
     err("attr \"%s\" of \"%s\" object is not function", attrname.c_str(), TYPE_STR[obj->type]);
-
-#define ERR_NARGS(func, expected, actual) \
-    err("Unexpected nargs for function \"%s\": %ld, expected: %ld", func, actual, expected);
 
 #endif

@@ -1,12 +1,11 @@
 #ifndef VS_FUNCTION_H
 #define VS_FUNCTION_H
 
-#include "error.hpp"
-
 #include "VSCodeObject.hpp"
 #include "VSNoneObject.hpp"
 #include "VSObject.hpp"
 #include "VSTupleObject.hpp"
+#include "error.hpp"
 
 class VSFunctionObject : public VSObject {
 public:
@@ -17,6 +16,8 @@ public:
 
     virtual VSObject *call(VSTupleObject *);
 };
+
+typedef VSObject *(*vs_native_func)(VSObject *, VSObject *const *, vs_size_t);
 
 class VSNativeFunctionObject : public VSFunctionObject {
 private:

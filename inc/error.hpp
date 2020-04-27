@@ -23,6 +23,9 @@
 #define b_op_err_lno(lno, op, ltype, rtype) \
     err("line: %ld, Can not apply operation \"%s\" on type \"%s\" and type \"%s\"\n", lno, op, ltype, rtype)
 
+#define ERR_NARGS(func, expected, actual) \
+    err("Unexpected nargs for function \"%s\": %ld, expected: %ld", func, actual, expected);
+
 typedef enum
 {
     ERR,
