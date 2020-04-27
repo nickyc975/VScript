@@ -10,7 +10,7 @@
 #include "objects/VSIntObject.hpp"
 #include "objects/VSTupleObject.hpp"
 
-VSObject *vs_dict();
+extern VSObject *vs_dict(VSObject *, VSObject *const *, vs_size_t nargs);
 
 class VSDictObject : public VSObject {
 private:
