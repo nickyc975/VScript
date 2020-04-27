@@ -24,22 +24,22 @@ VSObject *vs_dict_str(VSObject *self, VSObject *const *, vs_size_t nargs) {
     VSDictObject *dict = (VSDictObject *)self;
     for (auto entry : dict->_dict) {
         VSObject *str = CALL_ATTR(entry.first, "__str__", vs_tuple_pack(0));
-        dict_str += STRING_TO_C_STRING(str);
+        dict_str.append(STRING_TO_C_STRING(str));
         DECREF_EX(str);
 
-        dict_str += ": ";
+        dict_str.append(": ");
 
         str = CALL_ATTR(entry.second, "__str__", vs_tuple_pack(0));
-        dict_str += STRING_TO_C_STRING(str);
+        dict_str.append(STRING_TO_C_STRING(str));
         DECREF_EX(str);
 
-        dict_str += ", ";
+        dict_str.append(", ");
     }
     if (dict_str.back() == ' ') {
         dict_str.pop_back();
         dict_str.pop_back();
     }
-    dict_str += "}";
+    dict_str.append("}");
 
     INCREF_RET(C_STRING_TO_STRING(dict_str));
 }
