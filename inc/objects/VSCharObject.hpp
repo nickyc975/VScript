@@ -3,7 +3,7 @@
 
 #include "VSObject.hpp"
 
-VSObject *vs_char(VSObject *obj);
+extern VSObject *vs_char(VSObject *, VSObject *const *args, vs_size_t nargs);
 
 class VSCharObject : public VSObject {
 public:

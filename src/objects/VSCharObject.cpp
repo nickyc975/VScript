@@ -8,7 +8,13 @@
 #include "objects/VSStringObject.hpp"
 #include "objects/VSTupleObject.hpp"
 
-VSObject *vs_char(VSObject *obj) {
+VSObject *vs_char(VSObject *, VSObject *const *args, vs_size_t nargs) {
+    if (nargs != 1) {
+        ERR_NARGS("char()", 1, nargs);
+        terminate(TERM_ERROR);
+    }
+
+    VSObject *obj = args[0];
     VSObject *val = CALL_ATTR(obj, "__char__", vs_tuple_pack(0));
     if (!VS_IS_TYPE(val, T_CHAR)) {
         err("%s.__char__() returned \"%s\" instead of char.", TYPE_STR[obj->type], TYPE_STR[val->type]);
@@ -18,169 +24,269 @@ VSObject *vs_char(VSObject *obj) {
     INCREF_RET(val);
 }
 
-VSObject *vs_char_hash(const VSObject *charobj) {
-    VS_ENSURE_TYPE(charobj, T_CHAR, "char.__hash__()");
+VSObject *vs_char_hash(VSObject *self, VSObject *const *, vs_size_t nargs) {
+    if (nargs != 0) {
+        ERR_NARGS("char.__hash__()", 0, nargs);
+        terminate(TERM_ERROR);
+    }
 
-    INCREF_RET(C_INT_TO_INT((((VSCharObject *)charobj)->_value)));
+    VS_ENSURE_TYPE(self, T_CHAR, "char.__hash__()");
+
+    INCREF_RET(C_INT_TO_INT((((VSCharObject *)self)->_value)));
 }
 
-VSObject *vs_char_lt(const VSObject *a, const VSObject *b) {
-    VS_ENSURE_TYPE(a, T_BOOL, "char.__lt__()");
-    VS_ENSURE_TYPE(b, T_BOOL, "char.__lt__()");
+VSObject *vs_char_lt(VSObject *self, VSObject *const *args, vs_size_t nargs) {
+    if (nargs != 1) {
+        ERR_NARGS("char.__lt__()", 1, nargs);
+        terminate(TERM_ERROR);
+    }
 
-    cbool_t res = ((VSCharObject *)a)->_value < ((VSCharObject *)b)->_value;
+    VSObject *that = args[0];
+    VS_ENSURE_TYPE(self, T_BOOL, "char.__lt__()");
+    VS_ENSURE_TYPE(that, T_BOOL, "char.__lt__()");
+
+    cbool_t res = ((VSCharObject *)self)->_value < ((VSCharObject *)that)->_value;
     INCREF_RET(res ? VS_TRUE : VS_FALSE);
 }
 
-VSObject *vs_char_gt(const VSObject *a, const VSObject *b) {
-    VS_ENSURE_TYPE(a, T_BOOL, "char.__gt__()");
-    VS_ENSURE_TYPE(b, T_BOOL, "char.__gt__()");
+VSObject *vs_char_gt(VSObject *self, VSObject *const *args, vs_size_t nargs) {
+    if (nargs != 1) {
+        ERR_NARGS("char.__gt__()", 1, nargs);
+        terminate(TERM_ERROR);
+    }
 
-    cbool_t res = ((VSCharObject *)a)->_value > ((VSCharObject *)b)->_value;
+    VSObject *that = args[0];
+    VS_ENSURE_TYPE(self, T_BOOL, "char.__gt__()");
+    VS_ENSURE_TYPE(that, T_BOOL, "char.__gt__()");
+
+    cbool_t res = ((VSCharObject *)self)->_value > ((VSCharObject *)that)->_value;
     INCREF_RET(res ? VS_TRUE : VS_FALSE);
 }
 
-VSObject *vs_char_le(const VSObject *a, const VSObject *b) {
-    VS_ENSURE_TYPE(a, T_BOOL, "char.__le__()");
-    VS_ENSURE_TYPE(b, T_BOOL, "char.__le__()");
+VSObject *vs_char_le(VSObject *self, VSObject *const *args, vs_size_t nargs) {
+    if (nargs != 1) {
+        ERR_NARGS("char.__le__()", 1, nargs);
+        terminate(TERM_ERROR);
+    }
 
-    cbool_t res = ((VSCharObject *)a)->_value <= ((VSCharObject *)b)->_value;
+    VSObject *that = args[0];
+    VS_ENSURE_TYPE(self, T_BOOL, "char.__le__()");
+    VS_ENSURE_TYPE(that, T_BOOL, "char.__le__()");
+
+    cbool_t res = ((VSCharObject *)self)->_value <= ((VSCharObject *)that)->_value;
     INCREF_RET(res ? VS_TRUE : VS_FALSE);
 }
 
-VSObject *vs_char_ge(const VSObject *a, const VSObject *b) {
-    VS_ENSURE_TYPE(a, T_BOOL, "char.__ge__()");
-    VS_ENSURE_TYPE(b, T_BOOL, "char.__ge__()");
+VSObject *vs_char_ge(VSObject *self, VSObject *const *args, vs_size_t nargs) {
+    if (nargs != 1) {
+        ERR_NARGS("char.__ge__()", 1, nargs);
+        terminate(TERM_ERROR);
+    }
 
-    cbool_t res = ((VSCharObject *)a)->_value >= ((VSCharObject *)b)->_value;
+    VSObject *that = args[0];
+    VS_ENSURE_TYPE(self, T_BOOL, "char.__ge__()");
+    VS_ENSURE_TYPE(that, T_BOOL, "char.__ge__()");
+
+    cbool_t res = ((VSCharObject *)self)->_value >= ((VSCharObject *)that)->_value;
     INCREF_RET(res ? VS_TRUE : VS_FALSE);
 }
 
-VSObject *vs_char_eq(const VSObject *a, const VSObject *b) {
-    VS_ENSURE_TYPE(a, T_BOOL, "char.__eq__()");
-    VS_ENSURE_TYPE(b, T_BOOL, "char.__eq__()");
+VSObject *vs_char_eq(VSObject *self, VSObject *const *args, vs_size_t nargs) {
+    if (nargs != 1) {
+        ERR_NARGS("char.__eq__()", 1, nargs);
+        terminate(TERM_ERROR);
+    }
 
-    bool res = ((VSCharObject *)a)->_value == ((VSCharObject *)b)->_value;
+    VSObject *that = args[0];
+    VS_ENSURE_TYPE(self, T_BOOL, "char.__eq__()");
+    VS_ENSURE_TYPE(that, T_BOOL, "char.__eq__()");
+
+    cbool_t res = ((VSCharObject *)self)->_value == ((VSCharObject *)that)->_value;
     INCREF_RET(res ? VS_TRUE : VS_FALSE);
 }
 
-VSObject *vs_char_str(VSObject *charobj) {
-    VS_ENSURE_TYPE(charobj, T_CHAR, "char.__str__()");
+VSObject *vs_char_str(VSObject *self, VSObject *const *, vs_size_t nargs) {
+    if (nargs != 0) {
+        ERR_NARGS("char.__str__()", 0, nargs);
+        terminate(TERM_ERROR);
+    }
+
+    VS_ENSURE_TYPE(self, T_CHAR, "char.__str__()");
 
     auto str = std::string();
-    str.push_back(((VSCharObject *)charobj)->_value);
+    str.push_back(((VSCharObject *)self)->_value);
     INCREF_RET(C_STRING_TO_STRING((str)));
 }
 
-VSObject *vs_char_bytes(VSObject *charobj) {
-    VS_ENSURE_TYPE(charobj, T_CHAR, "char.__bytes__()");
+VSObject *vs_char_bytes(VSObject *self, VSObject *const *, vs_size_t nargs) {
+    if (nargs != 0) {
+        ERR_NARGS("char.__bytes__()", 0, nargs);
+        terminate(TERM_ERROR);
+    }
+
+    VS_ENSURE_TYPE(self, T_CHAR, "char.__bytes__()");
 
     INCREF_RET(VS_NONE);
 }
 
-VSObject *vs_char_neg(VSObject *charobj) {
-    VS_ENSURE_TYPE(charobj, T_CHAR, "char.__neg__()");
+VSObject *vs_char_neg(VSObject *self, VSObject *const *, vs_size_t nargs) {
+    if (nargs != 0) {
+        ERR_NARGS("char.__neg__()", 0, nargs);
+        terminate(TERM_ERROR);
+    }
 
-    cchar_t res = -((VSCharObject *)charobj)->_value;
+    VS_ENSURE_TYPE(self, T_CHAR, "char.__neg__()");
+
+    cchar_t res = -((VSCharObject *)self)->_value;
     INCREF_RET(C_CHAR_TO_CHAR(res));
 }
 
-VSObject *vs_char_add(VSObject *a, VSObject *b) {
-    VS_ENSURE_TYPE(a, T_CHAR, "char.__add__()");
-    VS_ENSURE_TYPE(b, T_CHAR, "char.__add__()");
+VSObject *vs_char_add(VSObject *self, VSObject *const *args, vs_size_t nargs) {
+    if (nargs != 1) {
+        ERR_NARGS("char.__add__()", 1, nargs);
+        terminate(TERM_ERROR);
+    }
 
-    cchar_t res = ((VSCharObject *)a)->_value + ((VSCharObject *)b)->_value;
+    VSObject *that = args[0];
+    VS_ENSURE_TYPE(self, T_BOOL, "char.__add__()");
+    VS_ENSURE_TYPE(that, T_BOOL, "char.__add__()");
+
+    cchar_t res = ((VSCharObject *)self)->_value + ((VSCharObject *)that)->_value;
     INCREF_RET(C_CHAR_TO_CHAR(res));
 }
 
-VSObject *vs_char_sub(VSObject *a, VSObject *b) {
-    VS_ENSURE_TYPE(a, T_CHAR, "char.__sub__()");
-    VS_ENSURE_TYPE(b, T_CHAR, "char.__sub__()");
+VSObject *vs_char_sub(VSObject *self, VSObject *const *args, vs_size_t nargs) {
+    if (nargs != 1) {
+        ERR_NARGS("char.__sub__()", 1, nargs);
+        terminate(TERM_ERROR);
+    }
 
-    cchar_t res = ((VSCharObject *)a)->_value - ((VSCharObject *)b)->_value;
+    VSObject *that = args[0];
+    VS_ENSURE_TYPE(self, T_BOOL, "char.__sub__()");
+    VS_ENSURE_TYPE(that, T_BOOL, "char.__sub__()");
+
+    cchar_t res = ((VSCharObject *)self)->_value - ((VSCharObject *)that)->_value;
     INCREF_RET(C_CHAR_TO_CHAR(res));
 }
 
-VSObject *vs_char_mul(VSObject *a, VSObject *b) {
-    VS_ENSURE_TYPE(a, T_CHAR, "char.__mul__()");
-    VS_ENSURE_TYPE(b, T_CHAR, "char.__mul__()");
+VSObject *vs_char_mul(VSObject *self, VSObject *const *args, vs_size_t nargs) {
+    if (nargs != 1) {
+        ERR_NARGS("char.__mul__()", 1, nargs);
+        terminate(TERM_ERROR);
+    }
 
-    cchar_t res = ((VSCharObject *)a)->_value * ((VSCharObject *)b)->_value;
+    VSObject *that = args[0];
+    VS_ENSURE_TYPE(self, T_BOOL, "char.__mul__()");
+    VS_ENSURE_TYPE(that, T_BOOL, "char.__mul__()");
+
+    cchar_t res = ((VSCharObject *)self)->_value * ((VSCharObject *)that)->_value;
     INCREF_RET(C_CHAR_TO_CHAR(res));
 }
 
-VSObject *vs_char_div(VSObject *a, VSObject *b) {
-    VS_ENSURE_TYPE(a, T_CHAR, "char.__div__()");
-    VS_ENSURE_TYPE(b, T_CHAR, "char.__div__()");
+VSObject *vs_char_div(VSObject *self, VSObject *const *args, vs_size_t nargs) {
+    if (nargs != 1) {
+        ERR_NARGS("char.__div__()", 1, nargs);
+        terminate(TERM_ERROR);
+    }
 
-    if (((VSCharObject *)b)->_value == 0) {
+    VSObject *that = args[0];
+    VS_ENSURE_TYPE(self, T_BOOL, "char.__div__()");
+    VS_ENSURE_TYPE(that, T_BOOL, "char.__div__()");
+
+    if (((VSCharObject *)that)->_value == 0) {
         err("divided by zero\n");
         terminate(TERM_ERROR);
     }
 
-    cchar_t res = ((VSCharObject *)a)->_value / ((VSCharObject *)b)->_value;
+    cchar_t res = ((VSCharObject *)self)->_value / ((VSCharObject *)that)->_value;
     INCREF_RET(C_CHAR_TO_CHAR(res));
 }
 
-VSObject *vs_char_mod(VSObject *a, VSObject *b) {
-    VS_ENSURE_TYPE(a, T_CHAR, "char.__mod__()");
-    VS_ENSURE_TYPE(b, T_CHAR, "char.__mod__()");
+VSObject *vs_char_mod(VSObject *self, VSObject *const *args, vs_size_t nargs) {
+    if (nargs != 1) {
+        ERR_NARGS("char.__mod__()", 1, nargs);
+        terminate(TERM_ERROR);
+    }
 
-    if (((VSCharObject *)b)->_value == 0) {
+    VSObject *that = args[0];
+    VS_ENSURE_TYPE(self, T_BOOL, "char.__mod__()");
+    VS_ENSURE_TYPE(that, T_BOOL, "char.__mod__()");
+
+    if (((VSCharObject *)that)->_value == 0) {
         err("mod by zero\n");
         terminate(TERM_ERROR);
     }
 
-    cchar_t res = ((VSCharObject *)a)->_value % ((VSCharObject *)b)->_value;
+    cchar_t res = ((VSCharObject *)self)->_value % ((VSCharObject *)self)->_value;
     INCREF_RET(C_CHAR_TO_CHAR(res));
 }
 
-VSObject *vs_char_bool(VSObject *charobj) {
-    VS_ENSURE_TYPE(charobj, T_CHAR, "char.__bool__()");
+VSObject *vs_char_bool(VSObject *self, VSObject *const *, vs_size_t nargs) {
+    if (nargs != 0) {
+        ERR_NARGS("char.__bool__()", 0, nargs);
+        terminate(TERM_ERROR);
+    }
 
-    cchar_t val = ((VSCharObject *)charobj)->_value;
+    VS_ENSURE_TYPE(self, T_CHAR, "char.__bool__()");
+
+    cchar_t val = ((VSCharObject *)self)->_value;
     INCREF_RET(val ? VS_TRUE : VS_FALSE);
 }
 
-VSObject *vs_char_char(VSObject *charobj) {
-    VS_ENSURE_TYPE(charobj, T_CHAR, "char.__char__()");
+VSObject *vs_char_char(VSObject *self, VSObject *const *, vs_size_t nargs) {
+    if (nargs != 0) {
+        ERR_NARGS("char.__char__()", 0, nargs);
+        terminate(TERM_ERROR);
+    }
 
-    INCREF_RET(charobj);
+    VS_ENSURE_TYPE(self, T_CHAR, "char.__char__()");
+
+    INCREF_RET(self);
 }
 
-VSObject *vs_char_int(VSObject *charobj) {
-    VS_ENSURE_TYPE(charobj, T_CHAR, "char.__int__()");
+VSObject *vs_char_int(VSObject *self, VSObject *const *, vs_size_t nargs) {
+    if (nargs != 0) {
+        ERR_NARGS("char.__int__()", 0, nargs);
+        terminate(TERM_ERROR);
+    }
 
-    INCREF_RET(C_INT_TO_INT((cint_t)CHAR_TO_C_CHAR(charobj)));
+    VS_ENSURE_TYPE(self, T_CHAR, "char.__int__()");
+
+    INCREF_RET(C_INT_TO_INT((cint_t)CHAR_TO_C_CHAR(self)));
 }
 
-VSObject *vs_char_float(VSObject *charobj) {
-    VS_ENSURE_TYPE(charobj, T_CHAR, "char.__float__()");
+VSObject *vs_char_float(VSObject *self, VSObject *const *, vs_size_t nargs) {
+    if (nargs != 0) {
+        ERR_NARGS("char.__float__()", 0, nargs);
+        terminate(TERM_ERROR);
+    }
 
-    INCREF_RET(C_FLOAT_TO_FLOAT(((cfloat_t)CHAR_TO_C_CHAR(charobj))));
+    VS_ENSURE_TYPE(self, T_CHAR, "char.__float__()");
+
+    INCREF_RET(C_FLOAT_TO_FLOAT(((cfloat_t)CHAR_TO_C_CHAR(self))));
 }
 
 VSCharObject::VSCharObject(cchar_t value) : _value(value) {
     this->type = T_CHAR;
 
-    NEW_NATIVE_FUNC_ATTR(this, "__hash__", vs_char_hash, 1, true);
-    NEW_NATIVE_FUNC_ATTR(this, "__lt__", vs_char_lt, 2, true);
-    NEW_NATIVE_FUNC_ATTR(this, "__gt__", vs_char_gt, 2, true);
-    NEW_NATIVE_FUNC_ATTR(this, "__le__", vs_char_le, 2, true);
-    NEW_NATIVE_FUNC_ATTR(this, "__ge__", vs_char_ge, 2, true);
-    NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_char_eq, 2, true);
-    NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_char_str, 1, false);
-    NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_char_bytes, 1, false);
-    NEW_NATIVE_FUNC_ATTR(this, "__neg__", vs_char_neg, 1, false);
-    NEW_NATIVE_FUNC_ATTR(this, "__add__", vs_char_add, 2, false);
-    NEW_NATIVE_FUNC_ATTR(this, "__sub__", vs_char_sub, 2, false);
-    NEW_NATIVE_FUNC_ATTR(this, "__mul__", vs_char_mul, 2, false);
-    NEW_NATIVE_FUNC_ATTR(this, "__div__", vs_char_div, 2, false);
-    NEW_NATIVE_FUNC_ATTR(this, "__mod__", vs_char_mod, 2, false);
-    NEW_NATIVE_FUNC_ATTR(this, "__bool__", vs_char_bool, 1, false);
-    NEW_NATIVE_FUNC_ATTR(this, "__char__", vs_char_char, 1, false);
-    NEW_NATIVE_FUNC_ATTR(this, "__int__", vs_char_int, 1, false);
-    NEW_NATIVE_FUNC_ATTR(this, "__float__", vs_char_float, 1, false);
+    NEW_NATIVE_FUNC_ATTR(this, "__hash__", vs_char_hash);
+    NEW_NATIVE_FUNC_ATTR(this, "__lt__", vs_char_lt);
+    NEW_NATIVE_FUNC_ATTR(this, "__gt__", vs_char_gt);
+    NEW_NATIVE_FUNC_ATTR(this, "__le__", vs_char_le);
+    NEW_NATIVE_FUNC_ATTR(this, "__ge__", vs_char_ge);
+    NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_char_eq);
+    NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_char_str);
+    NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_char_bytes);
+    NEW_NATIVE_FUNC_ATTR(this, "__neg__", vs_char_neg);
+    NEW_NATIVE_FUNC_ATTR(this, "__add__", vs_char_add);
+    NEW_NATIVE_FUNC_ATTR(this, "__sub__", vs_char_sub);
+    NEW_NATIVE_FUNC_ATTR(this, "__mul__", vs_char_mul);
+    NEW_NATIVE_FUNC_ATTR(this, "__div__", vs_char_div);
+    NEW_NATIVE_FUNC_ATTR(this, "__mod__", vs_char_mod);
+    NEW_NATIVE_FUNC_ATTR(this, "__bool__", vs_char_bool);
+    NEW_NATIVE_FUNC_ATTR(this, "__char__", vs_char_char);
+    NEW_NATIVE_FUNC_ATTR(this, "__int__", vs_char_int);
+    NEW_NATIVE_FUNC_ATTR(this, "__float__", vs_char_float);
 }
 
 VSCharObject::~VSCharObject() {
