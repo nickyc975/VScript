@@ -9,26 +9,24 @@
 #include "objects/VSStringObject.hpp"
 #include "objects/VSTupleObject.hpp"
 
-VSObject *vs_code_hash(const VSObject *codeobj) {
-    VS_ENSURE_TYPE(codeobj, T_CODE, "code.__hash__()");
-    INCREF_RET(C_INT_TO_INT((cint_t)codeobj));
-}
+VSObject *vs_code_str(VSObject *self, VSObject *const *, vs_size_t nargs) {
+    if (nargs != 0) {
+        ERR_NARGS("code.__str__()", 0, nargs);
+        terminate(TERM_ERROR);
+    }
 
-VSObject *vs_code_eq(const VSObject *a, const VSObject *b) {
-    VS_ENSURE_TYPE(a, T_CODE, "code.__eq__()");
-    VS_ENSURE_TYPE(b, T_CODE, "code.__eq__()");
-
-    INCREF_RET(C_BOOL_TO_BOOL(a == b));
-}
-
-VSObject *vs_code_str(VSObject *codeobj) {
-    VS_ENSURE_TYPE(codeobj, T_CODE, "code.__str__()");
+    VS_ENSURE_TYPE(self, T_CODE, "code.__str__()");
 
     INCREF_RET(C_STRING_TO_STRING("code"));
 }
 
-VSObject *vs_code_bytes(VSObject *codeobj) {
-    VS_ENSURE_TYPE(codeobj, T_CODE, "code.__bytes__()");
+VSObject *vs_code_bytes(VSObject *self, VSObject *const *, vs_size_t nargs) {
+    if (nargs != 0) {
+        ERR_NARGS("code.__bytes__()", 0, nargs);
+        terminate(TERM_ERROR);
+    }
+
+    VS_ENSURE_TYPE(self, T_CODE, "code.__bytes__()");
 
     INCREF_RET(VS_NONE);
 }
@@ -68,10 +66,10 @@ VSCodeObject::VSCodeObject(VSObject *name) {
     // set constants
     this->add_const(VS_NONE);
 
-    NEW_NATIVE_FUNC_ATTR(this, "__hash__", vs_code_hash, 1, true);
-    NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_code_eq, 2, true);
-    NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_code_str, 1, false);
-    NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_code_bytes, 1, false);
+    NEW_NATIVE_FUNC_ATTR(this, "__hash__", vs_default_hash);
+    NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_default_eq);
+    NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_code_str);
+    NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_code_bytes);
 }
 
 VSCodeObject::~VSCodeObject() {
