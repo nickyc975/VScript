@@ -3,7 +3,7 @@
 
 #include "VSObject.hpp"
 
-VSObject *vs_float(VSObject *obj);
+extern VSObject *vs_float(VSObject *, VSObject *const *args, vs_size_t nargs);
 
 class VSFloatObject : public VSObject {
 public:
