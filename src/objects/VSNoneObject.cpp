@@ -8,36 +8,33 @@
 
 VSNoneObject *VSNoneObject::_VS_NONE = NULL;
 
-VSObject *vs_none_hash(const VSObject *noneobj) {
-    VS_ENSURE_TYPE(noneobj, T_NONE, "none.__hash__()");
+VSObject *vs_none_str(VSObject *self, VSObject *const *, vs_size_t nargs) {
+    if (nargs != 0) {
+        ERR_NARGS("none.__str__()", 0, nargs);
+        terminate(TERM_ERROR);
+    }
 
-    INCREF_RET(C_INT_TO_INT(0));
-}
-
-VSObject *vs_none_eq(const VSObject *a, const VSObject *b) {
-    VS_ENSURE_TYPE(a, T_NONE, "none.__eq__()");
-    VS_ENSURE_TYPE(b, T_NONE, "none.__eq__()");
-
-    INCREF_RET(VS_TRUE);
-}
-
-VSObject *vs_none_str(VSObject *obj) {
-    VS_ENSURE_TYPE(obj, T_NONE, "none.__str__()");
+    VS_ENSURE_TYPE(self, T_NONE, "none.__str__()");
 
     INCREF_RET(C_STRING_TO_STRING("none"));
 }
 
-VSObject *vs_none_bytes(VSObject *obj) {
-    VS_ENSURE_TYPE(obj, T_NONE, "none.__bytes__()");
+VSObject *vs_none_bytes(VSObject *self, VSObject *const *, vs_size_t nargs) {
+    if (nargs != 0) {
+        ERR_NARGS("none.__bytes__()", 0, nargs);
+        terminate(TERM_ERROR);
+    }
 
-    return NULL;
+    VS_ENSURE_TYPE(self, T_NONE, "none.__bytes__()");
+
+    INCREF_RET(VS_NONE);
 }
 
 VSNoneObject::VSNoneObject() {
     this->type = T_NONE;
 
-    NEW_NATIVE_FUNC_ATTR(this, "__hash__", vs_none_hash, 1, true);
-    NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_none_eq, 2, true);
-    NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_none_str, 1, false);
-    NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_none_bytes, 1, false);
+    NEW_NATIVE_FUNC_ATTR(this, "__hash__", vs_default_hash);
+    NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_default_eq);
+    NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_none_str);
+    NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_none_bytes);
 }
