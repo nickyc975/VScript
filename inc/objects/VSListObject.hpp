@@ -5,7 +5,7 @@
 
 #include "VSObject.hpp"
 
-VSObject *vs_list(VSObject *obj);
+extern VSObject *vs_list(VSObject *, VSObject *const *args, vs_size_t nargs);
 
 class VSListObject : public VSObject {
 public:

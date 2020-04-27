@@ -9,37 +9,73 @@
 #include "objects/VSStringObject.hpp"
 #include "objects/VSTupleObject.hpp"
 
-VSObject *vs_list(VSObject *obj) {
-    if (obj == NULL) {
+VSObject *vs_list(VSObject *, VSObject *const *args, vs_size_t nargs) {
+    if (nargs == 0) {
         INCREF_RET(new VSListObject(0));
-    } else if (obj->type == T_LIST) {
-        INCREF_RET(obj);
-    } else if (obj->type == T_TUPLE) {
-        return vs_tuple_to_list(obj);
-    } else {
-        err("can not cast \"%s\" object to list", TYPE_STR[obj->type]);
-        INCREF_RET(VS_NONE);
+    } else if (nargs == 1) {
+        VSObject *obj = args[0];
+        if (obj->type == T_LIST) {
+            INCREF_RET(obj);
+        } else if (obj->type == T_TUPLE) {
+            return vs_tuple_to_list(obj);
+        } else {
+            err("can not cast \"%s\" object to list", TYPE_STR[obj->type]);
+            INCREF_RET(VS_NONE);
+        }
     }
+
+    ERR_NARGS("list()", 1, nargs);
+    terminate(TERM_ERROR);
 }
 
-VSObject *vs_list_str(VSObject *listobj) {
-    VS_ENSURE_TYPE(listobj, T_LIST, "list.__str__()");
+VSObject *vs_list_str(VSObject *self, VSObject *const *, vs_size_t nargs) {
+    if (nargs != 0) {
+        ERR_NARGS("list.__str__()", 0, nargs);
+        terminate(TERM_ERROR);
+    }
 
-    INCREF_RET(C_STRING_TO_STRING("list"));
+    VS_ENSURE_TYPE(self, T_LIST, "list.__str__()");
+
+    std::string list_str = "[";
+    VSListObject *list = (VSListObject *)self;
+    for (auto obj : list->items) {
+        VSObject *str = CALL_ATTR(obj, "__str__", vs_tuple_pack(0));
+        list_str.append(STRING_TO_C_STRING(str));
+        list_str.append(", ");
+        DECREF(str);
+    }
+    if (list_str.back() == ' ') {
+        list_str.pop_back();
+        list_str.pop_back();
+    }
+    list_str.append("]");
+
+    INCREF_RET(C_STRING_TO_STRING(list_str));
 }
 
-VSObject *vs_list_bytes(VSObject *listobj) {
-    VS_ENSURE_TYPE(listobj, T_LIST, "list.__bytes__()");
+VSObject *vs_list_bytes(VSObject *self, VSObject *const *, vs_size_t nargs) {
+    if (nargs != 0) {
+        ERR_NARGS("list.__bytes__()", 0, nargs);
+        terminate(TERM_ERROR);
+    }
+
+    VS_ENSURE_TYPE(self, T_LIST, "list.__bytes__()");
 
     INCREF_RET(VS_NONE);
 }
 
-VSObject *vs_list_add(VSObject *a, VSObject *b) {
-    VS_ENSURE_TYPE(a, T_LIST, "list.__add__()");
-    VS_ENSURE_TYPE(b, T_LIST, "list.__add__()");
+VSObject *vs_list_add(VSObject *self, VSObject *const *args, vs_size_t nargs) {
+    if (nargs != 1) {
+        ERR_NARGS("list.__add__()", 1, nargs);
+        terminate(TERM_ERROR);
+    }
 
-    VSListObject *list_a = (VSListObject *)a;
-    VSListObject *list_b = (VSListObject *)b;
+    VSObject *that = args[0];
+    VS_ENSURE_TYPE(self, T_LIST, "list.__add__()");
+    VS_ENSURE_TYPE(that, T_LIST, "list.__add__()");
+
+    VSListObject *list_a = (VSListObject *)self;
+    VSListObject *list_b = (VSListObject *)that;
     VSListObject *list = new VSListObject(list_a->items.size() + list_b->items.size());
 
     vs_size_t idx = 0;
@@ -58,10 +94,15 @@ VSObject *vs_list_add(VSObject *a, VSObject *b) {
     INCREF_RET(VS_AS_OBJECT(list));
 }
 
-VSObject *vs_list_copy(const VSObject *that) {
-    VS_ENSURE_TYPE(that, T_LIST, "list.copy()");
+VSObject *vs_list_copy(VSObject *self, VSObject *const *, vs_size_t nargs) {
+    if (nargs != 0) {
+        ERR_NARGS("list.copy()", 0, nargs);
+        terminate(TERM_ERROR);
+    }
 
-    VSListObject *old_list = (VSListObject *)that;
+    VS_ENSURE_TYPE(self, T_LIST, "list.copy()");
+
+    VSListObject *old_list = (VSListObject *)self;
     VSListObject *new_list = new VSListObject(old_list->items.size());
 
     for (vs_size_t i = 0; i < old_list->items.size(); i++) {
@@ -72,10 +113,15 @@ VSObject *vs_list_copy(const VSObject *that) {
     INCREF_RET(VS_AS_OBJECT(new_list));
 }
 
-VSObject *vs_list_clear(VSObject *listobj) {
-    VS_ENSURE_TYPE(listobj, T_LIST, "list.clear()");
+VSObject *vs_list_clear(VSObject *self, VSObject *const *, vs_size_t nargs) {
+    if (nargs != 0) {
+        ERR_NARGS("list.clear()", 0, nargs);
+        terminate(TERM_ERROR);
+    }
 
-    VSListObject *list = (VSListObject *)listobj;
+    VS_ENSURE_TYPE(self, T_LIST, "list.clear()");
+
+    VSListObject *list = (VSListObject *)self;
     for (auto item : list->items) {
         DECREF_EX(item);
     }
@@ -83,19 +129,30 @@ VSObject *vs_list_clear(VSObject *listobj) {
     INCREF_RET(VS_NONE);
 }
 
-VSObject *vs_list_len(VSObject *listobj) {
-    VS_ENSURE_TYPE(listobj, T_LIST, "list.len()");
+VSObject *vs_list_len(VSObject *self, VSObject *const *, vs_size_t nargs) {
+    if (nargs != 0) {
+        ERR_NARGS("list.len()", 0, nargs);
+        terminate(TERM_ERROR);
+    }
 
-    VSListObject *list = (VSListObject *)listobj;
+    VS_ENSURE_TYPE(self, T_LIST, "list.len()");
+
+    VSListObject *list = (VSListObject *)self;
 
     INCREF_RET(C_INT_TO_INT((cint_t)list->items.size()));
 }
 
-VSObject *vs_list_get(VSObject *listobj, VSObject *idxobj) {
-    VS_ENSURE_TYPE(listobj, T_LIST, "list.get()");
+VSObject *vs_list_get(VSObject *self, VSObject *const *args, vs_size_t nargs) {
+    if (nargs != 1) {
+        ERR_NARGS("list.get()", 1, nargs);
+        terminate(TERM_ERROR);
+    }
+
+    VSObject *idxobj = args[0];
+    VS_ENSURE_TYPE(self, T_LIST, "list.get()");
     VS_ENSURE_TYPE(idxobj, T_INT, "as list index");
 
-    VSListObject *list = (VSListObject *)listobj;
+    VSListObject *list = (VSListObject *)self;
     vs_size_t idx = (vs_size_t)INT_TO_C_INT(idxobj);
     if (idx >= list->items.size()) {
         INDEX_OUT_OF_BOUND(idx, list->items.size());
@@ -105,11 +162,18 @@ VSObject *vs_list_get(VSObject *listobj, VSObject *idxobj) {
     INCREF_RET(list->items[idx]);
 }
 
-VSObject *vs_list_set(VSObject *listobj, VSObject *idxobj, VSObject *item) {
-    VS_ENSURE_TYPE(listobj, T_LIST, "list.set()");
+VSObject *vs_list_set(VSObject *self, VSObject *const *args, vs_size_t nargs) {
+    if (nargs != 2) {
+        ERR_NARGS("list.set()", 2, nargs);
+        terminate(TERM_ERROR);
+    }
+
+    VSObject *idxobj = args[0];
+    VSObject *item = args[1];
+    VS_ENSURE_TYPE(self, T_LIST, "list.set()");
     VS_ENSURE_TYPE(idxobj, T_INT, "as list index");
 
-    VSListObject *list = (VSListObject *)listobj;
+    VSListObject *list = (VSListObject *)self;
     vs_size_t idx = (vs_size_t)INT_TO_C_INT(idxobj);
     if (idx >= list->items.size()) {
         INDEX_OUT_OF_BOUND(idx, list->items.size());
@@ -121,46 +185,75 @@ VSObject *vs_list_set(VSObject *listobj, VSObject *idxobj, VSObject *item) {
     INCREF_RET(VS_NONE);
 }
 
-VSObject *vs_list_append(VSObject *listobj, VSObject *item) {
-    VS_ENSURE_TYPE(listobj, T_LIST, "list.append()");
+VSObject *vs_list_append(VSObject *self, VSObject *const *args, vs_size_t nargs) {
+    if (nargs != 1) {
+        ERR_NARGS("list.append()", 1, nargs);
+        terminate(TERM_ERROR);
+    }
 
-    VSListObject *list = (VSListObject *)listobj;
+    VS_ENSURE_TYPE(self, T_LIST, "list.append()");
+
+    VSObject *item = args[0];
+    VSListObject *list = (VSListObject *)self;
     list->items.push_back(item);
     INCREF(item);
     INCREF_RET(VS_NONE);
 }
 
 // TODO: implement list.__has__()
-VSObject *vs_list_has(VSObject *listobj, VSObject *item) {
-    VS_ENSURE_TYPE(listobj, T_LIST, "list.has()");
+VSObject *vs_list_has(VSObject *self, VSObject *const *args, vs_size_t nargs) {
+    if (nargs != 1) {
+        ERR_NARGS("list.has()", 1, nargs);
+        terminate(TERM_ERROR);
+    }
 
-    VSListObject *list = (VSListObject *)listobj;
+    VS_ENSURE_TYPE(self, T_LIST, "list.has()");
+
+    VSObject *item = args[0];
+    VSListObject *list = (VSListObject *)self;
     INCREF_RET(VS_TRUE);
 }
 
-VSObject *vs_list_has_at(VSObject *listobj, VSObject *idxobj) {
-    VS_ENSURE_TYPE(listobj, T_LIST, "list.has_at()");
+VSObject *vs_list_has_at(VSObject *self, VSObject *const *args, vs_size_t nargs) {
+    if (nargs != 1) {
+        ERR_NARGS("list.has_at()", 1, nargs);
+        terminate(TERM_ERROR);
+    }
+
+    VSObject *idxobj = args[0];
+    VS_ENSURE_TYPE(self, T_LIST, "list.has_at()");
     VS_ENSURE_TYPE(idxobj, T_INT, "as list index");
 
-    VSListObject *list = (VSListObject *)listobj;
+    VSListObject *list = (VSListObject *)self;
     vs_size_t idx = (vs_size_t)INT_TO_C_INT(idxobj);
 
     INCREF_RET(idx < list->items.size() ? VS_TRUE : VS_FALSE);
 }
 
 // TODO: implement list.__remove__()
-VSObject *vs_list_remove(VSObject *listobj, VSObject *item) {
-    VS_ENSURE_TYPE(listobj, T_LIST, "list.remove()");
+VSObject *vs_list_remove(VSObject *self, VSObject *const *args, vs_size_t nargs) {
+    if (nargs != 1) {
+        ERR_NARGS("list.remove()", 1, nargs);
+        terminate(TERM_ERROR);
+    }
 
-    VSListObject *list = (VSListObject *)listobj;
+    VS_ENSURE_TYPE(self, T_LIST, "list.remove()");
+
+    VSListObject *list = (VSListObject *)self;
     INCREF_RET(VS_NONE);
 }
 
-VSObject *vs_list_remove_at(VSObject *listobj, VSObject *idxobj) {
-    VS_ENSURE_TYPE(listobj, T_LIST, "list.remove_at()");
+VSObject *vs_list_remove_at(VSObject *self, VSObject *const *args, vs_size_t nargs) {
+    if (nargs != 1) {
+        ERR_NARGS("list.remove_at()", 1, nargs);
+        terminate(TERM_ERROR);
+    }
+
+    VSObject *idxobj = args[0];
+    VS_ENSURE_TYPE(self, T_LIST, "list.remove_at()");
     VS_ENSURE_TYPE(idxobj, T_INT, "as list index");
 
-    VSListObject *list = (VSListObject *)listobj;
+    VSListObject *list = (VSListObject *)self;
     vs_size_t idx = (vs_size_t)INT_TO_C_INT(idxobj);
 
     if (idx >= list->items.size()) {
@@ -226,20 +319,21 @@ VSListObject::VSListObject(vs_size_t nitems) {
     this->type = T_LIST;
     this->items = std::vector<VSObject *>(nitems);
 
-    NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_default_eq, 2, true);
-    NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_list_str, 1, false);
-    NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_list_bytes, 1, false);
-    NEW_NATIVE_FUNC_ATTR(this, "__add__", vs_list_add, 2, false);
-    NEW_NATIVE_FUNC_ATTR(this, "copy", vs_list_copy, 1, true);
-    NEW_NATIVE_FUNC_ATTR(this, "clear", vs_list_clear, 1, false);
-    NEW_NATIVE_FUNC_ATTR(this, "len", vs_list_len, 1, false);
-    NEW_NATIVE_FUNC_ATTR(this, "get", vs_list_get, 2, false);
-    NEW_NATIVE_FUNC_ATTR(this, "set", vs_list_set, 3, false);
-    NEW_NATIVE_FUNC_ATTR(this, "append", vs_list_append, 2, false);
-    NEW_NATIVE_FUNC_ATTR(this, "has_at", vs_list_has_at, 2, false);
-    NEW_NATIVE_FUNC_ATTR(this, "remove_at", vs_list_remove_at, 2, false);
+    NEW_NATIVE_FUNC_ATTR(this, "__hash__", vs_default_hash);
+    NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_default_eq);
+    NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_list_str);
+    NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_list_bytes);
+    NEW_NATIVE_FUNC_ATTR(this, "__add__", vs_list_add);
+    NEW_NATIVE_FUNC_ATTR(this, "copy", vs_list_copy);
+    NEW_NATIVE_FUNC_ATTR(this, "clear", vs_list_clear);
+    NEW_NATIVE_FUNC_ATTR(this, "len", vs_list_len);
+    NEW_NATIVE_FUNC_ATTR(this, "get", vs_list_get);
+    NEW_NATIVE_FUNC_ATTR(this, "set", vs_list_set);
+    NEW_NATIVE_FUNC_ATTR(this, "append", vs_list_append);
+    NEW_NATIVE_FUNC_ATTR(this, "has_at", vs_list_has_at);
+    NEW_NATIVE_FUNC_ATTR(this, "remove_at", vs_list_remove_at);
 }
 
 VSListObject::~VSListObject() {
-    DECREF(vs_list_clear(this));
+    DECREF(vs_list_clear(this, NULL, 0));
 }
