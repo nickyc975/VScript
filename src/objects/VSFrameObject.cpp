@@ -9,14 +9,24 @@
 #include "objects/VSSetObject.hpp"
 #include "objects/VSStringObject.hpp"
 
-VSObject *vs_frame_str(VSObject *frameobj) {
-    VS_ENSURE_TYPE(frameobj, T_FRAME, "frame str");
+VSObject *vs_frame_str(VSObject *self, VSObject *const *, vs_size_t nargs) {
+    if (nargs != 0) {
+        ERR_NARGS("frame.__str__()", 0, nargs);
+        terminate(TERM_ERROR);
+    }
+
+    VS_ENSURE_TYPE(self, T_FRAME, "frame.__str__()");
 
     INCREF_RET(C_STRING_TO_STRING("frame"));
 }
 
-VSObject *vs_frame_bytes(VSObject *frameobj) {
-    VS_ENSURE_TYPE(frameobj, T_FRAME, "frame bytes");
+VSObject *vs_frame_bytes(VSObject *self, VSObject *const *, vs_size_t nargs) {
+    if (nargs != 0) {
+        ERR_NARGS("frame.__bytes__()", 0, nargs);
+        terminate(TERM_ERROR);
+    }
+
+    VS_ENSURE_TYPE(self, T_FRAME, "frame.__bytes__()");
 
     INCREF_RET(VS_NONE);
 }
@@ -24,9 +34,10 @@ VSObject *vs_frame_bytes(VSObject *frameobj) {
 VSFrameObject::VSFrameObject(VSCodeObject *code, VSTupleObject *args, VSTupleObject *cellvars, VSTupleObject *freevars, VSTupleObject *builtins, VSFrameObject *prev) {
     this->type = T_FRAME;
 
-    NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_default_eq, 2, true);
-    NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_frame_str, 1, false);
-    NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_frame_bytes, 1, false);
+    NEW_NATIVE_FUNC_ATTR(this, "__hash__", vs_default_hash);
+    NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_default_eq);
+    NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_frame_str);
+    NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_frame_bytes);
 
     this->pc = 0;
 
@@ -512,7 +523,8 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
                 VSObject *freevars = STACK_POP(stack);
 
                 std::string &name = STRING_TO_C_STRING(AS_CODE(code)->name);
-                VSFunctionObject *func = new VSDynamicFunctionObject(name, AS_CODE(code), AS_TUPLE(freevars), this->builtins);
+                VSFunctionObject *func = new VSDynamicFunctionObject(
+                    name, AS_CODE(code), AS_TUPLE(freevars), this->builtins, VS_FUNC_VARARGS);
                 STACK_PUSH(stack, func);
                 DECREF(freevars);
                 DECREF(code);
