@@ -20,7 +20,8 @@ typedef enum {
     T_OBJECT,
     T_CELL,
     T_CODE,
-    T_FRAME
+    T_FRAME,
+    T_FILE
 } TYPE;
 
 static char *TYPE_STR[] = {
@@ -39,7 +40,8 @@ static char *TYPE_STR[] = {
     "object",
     "cell",
     "code",
-    "frame"};
+    "frame",
+    "file"};
 
 #define VS_AS_OBJECT(obj) ((VSObject *)obj)
 
