@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run VScript",
+            "type": "cppdbg",
+            "request": "launch",
+            "targetArchitecture": "x64",
+            "program": "${workspaceRoot}/build/vs",
+            "miDebuggerPath": "/usr/bin/gdb",
+            "args": [
+                "code/bubble_sort.vs"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "externalConsole": true,
+            "preLaunchTask": "make"
+        }
+    ]
+}
