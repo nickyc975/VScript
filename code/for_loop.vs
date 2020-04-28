@@ -7,4 +7,4 @@ func for_loop(n) {
     return n;
 }
 
-print(for_loop(10000), "\n");
+print(for_loop(10000));

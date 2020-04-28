@@ -8,4 +8,4 @@ func while_loop(n) {
     return i;
 }
 
-print(while_loop(100000), "\n");
+print(while_loop(100000));
