@@ -710,7 +710,7 @@ void VSCompiler::gen_if_stmt(VSASTNode *node) {
     IfStmtNode *if_stmt = (IfStmtNode *)node;
 
     if (if_stmt->cond != NULL) {
-        this->gen_expr(if_stmt);
+        this->gen_expr(if_stmt->cond);
     } else {
         err("missing if condition");
         terminate(TERM_ERROR);
