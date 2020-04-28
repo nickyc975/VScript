@@ -89,7 +89,7 @@ OPCODE VSCompiler::get_b_op(TOKEN_TYPE tk) {
 }
 
 std::string VSCompiler::get_key(VSObject *value) {
-    VSObject *value_strobj = CALL_ATTR(value, "__str__", vs_tuple_pack(0));
+    VSObject *value_strobj = CALL_ATTR(value, "__str__", EMPTY_TUPLE());
     std::string value_str = STRING_TO_C_STRING(value_strobj);
     DECREF(value_strobj);
 

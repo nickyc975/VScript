@@ -42,7 +42,7 @@ VSObject *vs_set_str(VSObject *self, VSObject *const *, vs_size_t nargs) {
     std::string set_str = "{";
     VSSetObject *set = (VSSetObject *)self;
     for (auto obj : set->_set) {
-        VSObject *str = CALL_ATTR(obj, "__str__", vs_tuple_pack(0));
+        VSObject *str = CALL_ATTR(obj, "__str__", EMPTY_TUPLE());
         set_str.append(STRING_TO_C_STRING(str));
         set_str.append(", ");
         DECREF(str);

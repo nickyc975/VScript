@@ -16,7 +16,7 @@ class VSDictObject : public VSObject {
 private:
     struct __dict_hash__ {
         std::size_t operator()(const VSObject *o) const {
-            VSObject *res = CALL_ATTR(const_cast<VSObject *>(o), "__hash__", vs_tuple_pack(0));
+            VSObject *res = CALL_ATTR(const_cast<VSObject *>(o), "__hash__", EMPTY_TUPLE());
             VS_ENSURE_TYPE(res, T_INT, "as __hash__() result");
 
             std::size_t h = (std::size_t)INT_TO_C_INT(res);

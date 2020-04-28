@@ -15,7 +15,7 @@ VSObject *vs_char(VSObject *, VSObject *const *args, vs_size_t nargs) {
     }
 
     VSObject *obj = args[0];
-    VSObject *val = CALL_ATTR(obj, "__char__", vs_tuple_pack(0));
+    VSObject *val = CALL_ATTR(obj, "__char__", EMPTY_TUPLE());
     if (!VS_IS_TYPE(val, T_CHAR)) {
         err("%s.__char__() returned \"%s\" instead of char.", TYPE_STR[obj->type], TYPE_STR[val->type]);
         terminate(TERM_ERROR);

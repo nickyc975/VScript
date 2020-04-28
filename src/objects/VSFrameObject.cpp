@@ -222,7 +222,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
                 VSObject *l_val = STACK_POP(stack);
                 VSObject *r_val = STACK_POP(stack);
                 VSObject *temp = CALL_ATTR(l_val, "__eq__", vs_tuple_pack(1, r_val));
-                VSObject *res = CALL_ATTR(temp, "__not__", vs_tuple_pack(0));
+                VSObject *res = CALL_ATTR(temp, "__not__", EMPTY_TUPLE());
                 STACK_PUSH(stack, res);
                 DECREF(l_val);
                 DECREF(r_val);
@@ -258,14 +258,14 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
             }
             case OP_NOT: {
                 VSObject *val = STACK_POP(stack);
-                VSObject *res = CALL_ATTR(val, "__not__", vs_tuple_pack(0));
+                VSObject *res = CALL_ATTR(val, "__not__", EMPTY_TUPLE());
                 STACK_PUSH(stack, res);
                 DECREF(val);
                 break;
             }
             case OP_NEG: {
                 VSObject *val = STACK_POP(stack);
-                VSObject *res = CALL_ATTR(val, "__neg__", vs_tuple_pack(0));
+                VSObject *res = CALL_ATTR(val, "__neg__", EMPTY_TUPLE());
                 STACK_PUSH(stack, res);
                 DECREF(val);
                 break;

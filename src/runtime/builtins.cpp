@@ -42,7 +42,7 @@ VSTupleObject *builtins = vs_tuple_pack(
     VS_AS_OBJECT(new VSNativeFunctionObject("str", vs_str, NULL)));
 
 static void __vs_print_impl__(VSObject *obj) {
-    VSObject *objstr = CALL_ATTR(obj, "__str__", vs_tuple_pack(0));
+    VSObject *objstr = CALL_ATTR(obj, "__str__", EMPTY_TUPLE());
     if (objstr->type != T_STR) {
         err("__str__() of \"%s\" object returned \"%s\" instead of str object", TYPE_STR[obj->type], TYPE_STR[objstr->type]);
         terminate(TERM_ERROR);

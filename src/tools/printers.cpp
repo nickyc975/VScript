@@ -457,7 +457,7 @@ void fprint_code(FILE *file, VSCodeObject *code) {
                 if (object->type == T_CODE) {
                     fprintf(file, "%s\n", STRING_TO_C_STRING(((VSCodeObject *)object)->name).c_str());
                 } else {
-                    VSObject *strobj = CALL_ATTR(object, "__str__", vs_tuple_pack(0));
+                    VSObject *strobj = CALL_ATTR(object, "__str__", EMPTY_TUPLE());
                     fprintf(file, "%s\n", STRING_TO_C_STRING(strobj).c_str());
                     DECREF_EX(strobj);
                 }

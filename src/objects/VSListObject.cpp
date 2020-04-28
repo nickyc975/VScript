@@ -39,7 +39,7 @@ VSObject *vs_list_str(VSObject *self, VSObject *const *, vs_size_t nargs) {
     std::string list_str = "[";
     VSListObject *list = (VSListObject *)self;
     for (auto obj : list->items) {
-        VSObject *str = CALL_ATTR(obj, "__str__", vs_tuple_pack(0));
+        VSObject *str = CALL_ATTR(obj, "__str__", EMPTY_TUPLE());
         list_str.append(STRING_TO_C_STRING(str));
         list_str.append(", ");
         DECREF(str);

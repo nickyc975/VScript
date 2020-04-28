@@ -15,9 +15,12 @@ public:
     ~VSTupleObject();
 };
 
+extern const VSTupleObject *_EMPTY_TUPLE;
 extern VSTupleObject *vs_tuple_pack(vs_size_t nitems, ...);
 extern int vs_tuple_unpack(VSObject *tupleobj, vs_size_t nitems, ...);
 extern VSObject *vs_tuple_to_list(VSObject *tupleobj);
+
+#define EMPTY_TUPLE() NEW_REF(VSTupleObject *, _EMPTY_TUPLE)
 
 // convinient macros for tuple operations
 #define AS_TUPLE(obj) ((VSTupleObject *)obj)

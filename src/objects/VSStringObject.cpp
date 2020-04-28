@@ -14,7 +14,7 @@ VSObject *vs_str(VSObject *, VSObject *const *args, vs_size_t nargs) {
         INCREF_RET(new VSStringObject(""));
     } else if (nargs == 1) {
         VSObject *obj = args[0];
-        VSObject *val = CALL_ATTR(obj, "__str__", vs_tuple_pack(0));
+        VSObject *val = CALL_ATTR(obj, "__str__", EMPTY_TUPLE());
         if (!VS_IS_TYPE(val, T_STR)) {
             err("%s.__str__() returned \"%s\" instead of str.", TYPE_STR[obj->type], TYPE_STR[val->type]);
             terminate(TERM_ERROR);

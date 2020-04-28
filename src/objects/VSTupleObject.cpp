@@ -11,6 +11,8 @@
 #include "objects/VSNoneObject.hpp"
 #include "objects/VSStringObject.hpp"
 
+const VSTupleObject *_EMPTY_TUPLE = vs_tuple_pack(0);
+
 VSObject *vs_tuple(VSObject *, VSObject *const *args, vs_size_t nargs) {
     if (nargs == 0) {
         INCREF_RET(new VSTupleObject(0));

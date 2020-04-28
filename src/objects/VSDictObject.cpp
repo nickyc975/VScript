@@ -23,13 +23,13 @@ VSObject *vs_dict_str(VSObject *self, VSObject *const *, vs_size_t nargs) {
     std::string dict_str = "{";
     VSDictObject *dict = (VSDictObject *)self;
     for (auto entry : dict->_dict) {
-        VSObject *str = CALL_ATTR(entry.first, "__str__", vs_tuple_pack(0));
+        VSObject *str = CALL_ATTR(entry.first, "__str__", EMPTY_TUPLE());
         dict_str.append(STRING_TO_C_STRING(str));
         DECREF_EX(str);
 
         dict_str.append(": ");
 
-        str = CALL_ATTR(entry.second, "__str__", vs_tuple_pack(0));
+        str = CALL_ATTR(entry.second, "__str__", EMPTY_TUPLE());
         dict_str.append(STRING_TO_C_STRING(str));
         DECREF_EX(str);
 
@@ -119,7 +119,7 @@ VSObject *vs_dict_get(VSObject *self, VSObject *const *args, vs_size_t nargs) {
     if (iter != dict->_dict.end()) {
         INCREF_RET(iter->second);
     } else {
-        VSObject *strobj = CALL_ATTR(key, "__str__", vs_tuple_pack(0));
+        VSObject *strobj = CALL_ATTR(key, "__str__", EMPTY_TUPLE());
         VS_ENSURE_TYPE(strobj, T_STR, "as __str__() result");
 
         err("key \"%s\" not found.", STRING_TO_C_STRING(strobj).c_str());

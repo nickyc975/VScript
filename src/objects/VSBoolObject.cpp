@@ -18,7 +18,7 @@ VSObject *vs_bool(VSObject *, VSObject *const *args, vs_size_t nargs) {
 
     if (nargs == 1) {
         VSObject *obj = args[0];
-        VSObject *val = CALL_ATTR(obj, "__bool__", vs_tuple_pack(0));
+        VSObject *val = CALL_ATTR(obj, "__bool__", EMPTY_TUPLE());
         if (!VS_IS_TYPE(val, T_BOOL)) {
             err("%s.__bool__() returned \"%s\" instead of bool.", TYPE_STR[obj->type], TYPE_STR[val->type]);
             terminate(TERM_ERROR);
