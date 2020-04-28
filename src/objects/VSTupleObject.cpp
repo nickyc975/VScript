@@ -228,6 +228,7 @@ VSTupleObject::VSTupleObject(vs_size_t nitems) {
     NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_tuple_bytes);
     NEW_NATIVE_FUNC_ATTR(this, "__add__", vs_tuple_add);
     NEW_NATIVE_FUNC_ATTR(this, "copy", vs_tuple_copy);
+    NEW_NATIVE_FUNC_ATTR(this, "len", vs_tuple_len);
     NEW_NATIVE_FUNC_ATTR(this, "get", vs_tuple_get);
     NEW_NATIVE_FUNC_ATTR(this, "has_at", vs_tuple_has_at);
 }
