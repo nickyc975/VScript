@@ -95,8 +95,7 @@ inline VSObject *_stack_pop(cpt_stack_t &stack) {
         terminate(TERM_ERROR);
     }
 
-    VSObject *value = stack.top();
-    stack.pop();
+    VSObject *value = stack.top(); stack.pop();
     return value;
 }
 
@@ -106,13 +105,19 @@ inline void _stack_push(cpt_stack_t &stack, VSObject *value) {
         terminate(TERM_ERROR);
     }
 
-    INCREF(value);
     stack.push(value);
+    return;
 }
 
 #define STACK_TOP(stack) (stack.top())
 #define STACK_POP(stack) _stack_pop(stack)
 #define STACK_PUSH(stack, value) _stack_push(stack, value)
+#define STACK_PUSH_INCREF(stack, value) \
+    do {                                \
+        auto __value = (value);         \
+        _stack_push(stack, __value);    \
+        INCREF(__value);                \
+    } while (0);
 
 void VSFrameObject::eval(std::stack<VSObject *> &stack) {
     while (this->pc < this->code->ninsts) {
@@ -216,11 +221,12 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
             case OP_NEQ: {
                 VSObject *l_val = STACK_POP(stack);
                 VSObject *r_val = STACK_POP(stack);
-                VSObject *res = CALL_ATTR(l_val, "__eq__", vs_tuple_pack(1, r_val));
-                res = CALL_ATTR(res, "__not__", vs_tuple_pack(0));
+                VSObject *temp = CALL_ATTR(l_val, "__eq__", vs_tuple_pack(1, r_val));
+                VSObject *res = CALL_ATTR(temp, "__not__", vs_tuple_pack(0));
                 STACK_PUSH(stack, res);
                 DECREF(l_val);
                 DECREF(r_val);
+                DECREF(temp);
                 break;
             }
             case OP_AND: {
@@ -271,7 +277,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
                     VSObject *item = STACK_POP(stack);
                     tuple->items[i] = item;
                 }
-                STACK_PUSH(stack, tuple);
+                STACK_PUSH_INCREF(stack, tuple);
                 break;
             }
             case OP_BUILD_LIST: {
@@ -281,7 +287,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
                     VSObject *item = STACK_POP(stack);
                     list->items[i] = item;
                 }
-                STACK_PUSH(stack, list);
+                STACK_PUSH_INCREF(stack, list);
                 break;
             }
             case OP_BUILD_DICT: {
@@ -298,7 +304,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
                     DICT_SET(dict, key, value);
                     DECREF(pair);
                 }
-                STACK_PUSH(stack, dict);
+                STACK_PUSH_INCREF(stack, dict);
                 break;
             }
             case OP_BUILD_SET: {
@@ -311,7 +317,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
                         DECREF(item);
                     }
                 }
-                STACK_PUSH(stack, set);
+                STACK_PUSH_INCREF(stack, set);
                 break;
             }
             case OP_INDEX_LOAD: {
@@ -340,7 +346,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
                     terminate(TERM_ERROR);
                 }
                 VSObject *local = TUPLE_GET(this->locals, idx);
-                STACK_PUSH(stack, VS_CELL_GET(local));
+                STACK_PUSH_INCREF(stack, VS_CELL_GET(local));
                 break;
             }
             case OP_LOAD_FREE: {
@@ -350,7 +356,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
                     terminate(TERM_ERROR);
                 }
                 VSObject *free = TUPLE_GET(this->freevars, idx);
-                STACK_PUSH(stack, VS_CELL_GET(free));
+                STACK_PUSH_INCREF(stack, VS_CELL_GET(free));
                 break;
             }
             case OP_LOAD_CELL: {
@@ -360,7 +366,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
                     terminate(TERM_ERROR);
                 }
                 VSObject *cell = TUPLE_GET(this->cellvars, idx);
-                STACK_PUSH(stack, cell);
+                STACK_PUSH_INCREF(stack, cell);
                 break;
             }
             case OP_LOAD_LOCAL_CELL: {
@@ -370,7 +376,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
                     terminate(TERM_ERROR);
                 }
                 VSObject *local = TUPLE_GET(this->locals, idx);
-                STACK_PUSH(stack, local);
+                STACK_PUSH_INCREF(stack, local);
                 break;
                 break;
             }
@@ -381,7 +387,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
                     terminate(TERM_ERROR);
                 }
                 VSObject *free = TUPLE_GET(this->freevars, idx);
-                STACK_PUSH(stack, free);
+                STACK_PUSH_INCREF(stack, free);
                 break;
                 break;
             }
@@ -401,7 +407,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
                 }
 
                 VSObject *attr = GET_ATTR(obj, attrname);
-                STACK_PUSH(stack, attr);
+                STACK_PUSH_INCREF(stack, attr);
                 DECREF(obj);
                 break;
             }
@@ -478,7 +484,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
                 }
 
                 VSObject *obj = LIST_GET(this->code->consts, idx);
-                STACK_PUSH(stack, obj);
+                STACK_PUSH_INCREF(stack, obj);
                 break;
             }
             case OP_LOAD_BUILTIN: {
@@ -489,7 +495,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
                 }
 
                 VSObject *obj = TUPLE_GET(this->builtins, idx);
-                STACK_PUSH(stack, obj);
+                STACK_PUSH_INCREF(stack, obj);
                 break;
             }
             case OP_JMP: {
@@ -525,7 +531,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
                 std::string &name = STRING_TO_C_STRING(AS_CODE(code)->name);
                 VSFunctionObject *func = new VSDynamicFunctionObject(
                     name, AS_CODE(code), AS_TUPLE(freevars), this->builtins, VS_FUNC_VARARGS);
-                STACK_PUSH(stack, func);
+                STACK_PUSH_INCREF(stack, func);
                 DECREF(freevars);
                 DECREF(code);
                 break;
@@ -547,7 +553,6 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
                 VSObject *res = ((VSFunctionObject *)func)->call((VSTupleObject *)args);
                 STACK_PUSH(stack, res);
                 DECREF(func);
-                DECREF(args);
                 break;
             }
             case OP_RET: {

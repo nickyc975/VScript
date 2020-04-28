@@ -42,8 +42,7 @@ VSTupleObject *builtins = vs_tuple_pack(
     VS_AS_OBJECT(new VSNativeFunctionObject("str", vs_str, NULL)));
 
 static void __vs_print_impl__(VSObject *obj) {
-    VSTupleObject *args = vs_tuple_pack(0);
-    VSObject *objstr = CALL_ATTR(obj, "__str__", args);
+    VSObject *objstr = CALL_ATTR(obj, "__str__", vs_tuple_pack(0));
     if (objstr->type != T_STR) {
         err("__str__() of \"%s\" object returned \"%s\" instead of str object", TYPE_STR[obj->type], TYPE_STR[objstr->type]);
         terminate(TERM_ERROR);
@@ -53,7 +52,6 @@ static void __vs_print_impl__(VSObject *obj) {
     printf("%s", str.c_str());
 
     DECREF_EX(objstr);
-    DECREF_EX(args);
 }
 
 static VSObject *__vs_input__(VSObject *, VSObject *const *args, vs_size_t nargs) {

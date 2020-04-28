@@ -15,7 +15,7 @@ public:
 };
 
 #define AS_CELL(obj) ((VSCellObject *)obj)
-#define VS_CELL_GET(cell) NEW_REF(VSObject *, AS_CELL(cell)->item)
+#define VS_CELL_GET(cell) (AS_CELL(cell)->item)
 #define VS_CELL_SET(cell, value)                          \
     do {                                                  \
         VSObject *item = AS_CELL(cell)->item;             \

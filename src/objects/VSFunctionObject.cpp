@@ -87,6 +87,7 @@ VSObject *VSNativeFunctionObject::call(VSTupleObject *args) {
     VS_ENSURE_TYPE(args, T_TUPLE, "as args");
     VSObject *res = this->func(this->self, args->items, args->nitems);
     // check result
+    DECREF_EX(args);
     return res;
 }
 
@@ -127,6 +128,8 @@ VSObject *VSDynamicFunctionObject::call(VSTupleObject *args) {
 
     std::stack<VSObject *> stack = std::stack<VSObject *>();
     VSFrameObject *frame = new VSFrameObject(this->code, args, this->cellvars, this->freevars, this->builtins, NULL);
+    DECREF_EX(args);
+
     frame->eval(stack);
 
     if (stack.empty()) {
