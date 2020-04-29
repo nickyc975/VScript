@@ -70,13 +70,15 @@ inline VSObject *_CALL_ATTR(VSObject *obj, std::string &attrname, VSTupleObject 
         terminate(TERM_ERROR);
     }
 
-    VSObject *_func = obj->getattr(attrname);
-    if (!IS_TYPE(_func, T_FUNC)) {
+    VSObject *func = obj->getattr(attrname);
+    if (!IS_TYPE(func, T_FUNC)) {
         err("attribute \"%s\" of \"%s\" object is not function", attrname.c_str(), TYPE_STR[obj->type]);
         terminate(TERM_ERROR);
     }
 
-    return ((VSFunctionObject *)_func)->call(args);
+    VSObject *res = ((VSFunctionObject *)func)->call(args);
+    DECREF_EX(func);
+    return res;
 }
 
 #define CALL_ATTR(obj, attrname, args) _CALL_ATTR(obj, attrname, args)
