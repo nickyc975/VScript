@@ -8,12 +8,17 @@ extern VSObject *vs_int(VSObject *, VSObject *const *args, vs_size_t nargs);
 class VSIntObject : public VSObject {
 private:
     static VSIntObject *_VS_ZERO, *_VS_ONE;
+    static const str_func_map vs_int_methods;
 
 public:
     const cint_t _value;
 
     VSIntObject(cint_t value);
     ~VSIntObject();
+
+    bool hasattr(std::string &attrname) override;
+    VSObject *getattr(std::string &attrname) override;
+    void setattr(std::string &attrname, VSObject *attrvalue) override;
 
     static inline VSObject *ZERO() {
         if (_VS_ZERO == NULL) {
