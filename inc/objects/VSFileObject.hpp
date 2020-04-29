@@ -9,6 +9,7 @@ VSObject *vs_open(VSObject *, VSObject *const *args, vs_size_t nargs);
 class VSFileObject : public VSObject {
 public:
     static const vs_size_t BUFFER_SIZE = 4096;
+    static const str_func_map vs_file_methods;
 
     FILE *_file;
 
@@ -22,6 +23,10 @@ public:
 
     VSFileObject(FILE *file, VSStringObject *name);
     ~VSFileObject();
+
+    bool hasattr(std::string &attrname) override;
+    VSObject *getattr(std::string &attrname) override;
+    void setattr(std::string &attrname, VSObject *attrvalue) override;
 };
 
 #endif

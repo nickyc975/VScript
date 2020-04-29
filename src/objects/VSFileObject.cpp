@@ -6,13 +6,29 @@
 #include "objects/VSIntObject.hpp"
 #include "objects/VSNoneObject.hpp"
 
+NEW_IDENTIFIER(__hash__);
+NEW_IDENTIFIER(__eq__);
+NEW_IDENTIFIER(__str__);
+NEW_IDENTIFIER(__bytes__);
+NEW_IDENTIFIER(read);
+NEW_IDENTIFIER(readable);
+NEW_IDENTIFIER(readline);
+NEW_IDENTIFIER(write);
+NEW_IDENTIFIER(writable);
+NEW_IDENTIFIER(writeline);
+NEW_IDENTIFIER(flush);
+NEW_IDENTIFIER(seek);
+NEW_IDENTIFIER(seekable);
+NEW_IDENTIFIER(close);
+NEW_IDENTIFIER(closed);
+
 VSObject *vs_file_hash(VSObject *self, VSObject *const *, vs_size_t nargs) {
     if (nargs != 0) {
         ERR_NARGS("file.__hash__()", 0, nargs);
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_FILE, "file.__hash__()");
+    ENSURE_TYPE(self, T_FILE, "file.__hash__()");
 
     cint_t hash = (cint_t)std::hash<std::string>{}(((VSFileObject *)self)->name->_value);
     INCREF_RET(C_INT_TO_INT(hash));
@@ -29,7 +45,7 @@ VSObject *vs_file_eq(VSObject *self, VSObject *const *args, vs_size_t nargs) {
         INCREF_RET(VS_FALSE);
     }
 
-    VS_ENSURE_TYPE(self, T_FILE, "file.__eq__()");
+    ENSURE_TYPE(self, T_FILE, "file.__eq__()");
 
     cbool_t res = ((VSFileObject *)self)->name->_value == ((VSFileObject *)that)->name->_value;
     INCREF_RET(res ? VS_TRUE : VS_FALSE);
@@ -41,7 +57,7 @@ VSObject *vs_file_str(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_FILE, "file.__str__()");
+    ENSURE_TYPE(self, T_FILE, "file.__str__()");
 
     INCREF_RET(
         C_STRING_TO_STRING(
@@ -54,7 +70,7 @@ VSObject *vs_file_bytes(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_FILE, "file.__bytes__()");
+    ENSURE_TYPE(self, T_FILE, "file.__bytes__()");
 
     INCREF_RET(VS_NONE);
 }
@@ -65,7 +81,7 @@ VSObject *vs_file_read(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_FILE, "file.read()");
+    ENSURE_TYPE(self, T_FILE, "file.read()");
 
     VSFileObject *file = (VSFileObject *)self;
 
@@ -91,7 +107,7 @@ VSObject *vs_file_readable(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_FILE, "file.readable()");
+    ENSURE_TYPE(self, T_FILE, "file.readable()");
 
     cbool_t res = !(((VSFileObject *)self)->_file->_flags & _IO_NO_READS);
     INCREF_RET(res ? VS_TRUE : VS_FALSE);
@@ -103,7 +119,7 @@ VSObject *vs_file_readline(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_FILE, "file.readline()");
+    ENSURE_TYPE(self, T_FILE, "file.readline()");
 
     VSFileObject *file = (VSFileObject *)self;
 
@@ -133,7 +149,7 @@ VSObject *vs_file_writable(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_FILE, "file.__hash__()");
+    ENSURE_TYPE(self, T_FILE, "file.__hash__()");
 }
 
 VSObject *vs_file_writeline(VSObject *self, VSObject *const *args, vs_size_t nargs) {
@@ -146,7 +162,7 @@ VSObject *vs_file_flush(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_FILE, "file.__hash__()");
+    ENSURE_TYPE(self, T_FILE, "file.__hash__()");
 }
 
 VSObject *vs_file_seek(VSObject *self, VSObject *const *args, vs_size_t nargs) {
@@ -159,7 +175,7 @@ VSObject *vs_file_seekable(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_FILE, "file.__hash__()");
+    ENSURE_TYPE(self, T_FILE, "file.__hash__()");
 }
 
 VSObject *vs_file_close(VSObject *self, VSObject *const *, vs_size_t nargs) {
@@ -168,7 +184,7 @@ VSObject *vs_file_close(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_FILE, "file.__hash__()");
+    ENSURE_TYPE(self, T_FILE, "file.__hash__()");
 }
 
 VSObject *vs_file_closed(VSObject *self, VSObject *const *, vs_size_t nargs) {
@@ -177,8 +193,26 @@ VSObject *vs_file_closed(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_FILE, "file.__hash__()");
+    ENSURE_TYPE(self, T_FILE, "file.__hash__()");
 }
+
+const str_func_map VSFileObject::vs_file_methods = {
+    {ID___hash__, vs_file_hash},
+    {ID___eq__, vs_file_eq},
+    {ID___str__, vs_file_str},
+    {ID___bytes__, vs_file_bytes},
+    {ID_read, vs_file_read},
+    {ID_readable, vs_file_readable},
+    {ID_readline, vs_file_readline},
+    {ID_write, vs_file_write},
+    {ID_writable, vs_file_writable},
+    {ID_writeline, vs_file_writeline},
+    {ID_flush, vs_file_flush},
+    {ID_seek, vs_file_seek},
+    {ID_seekable, vs_file_seekable},
+    {ID_close, vs_file_close},
+    {ID_closed, vs_file_closed}
+};
 
 VSFileObject::VSFileObject(FILE *file, VSStringObject *name) {
     this->type = T_FILE;
@@ -188,27 +222,30 @@ VSFileObject::VSFileObject(FILE *file, VSStringObject *name) {
 
     this->name = name;
     INCREF(name);
-
-    this->attrs["name"] = new AttributeDef(true, this->name);
-
-    NEW_NATIVE_FUNC_ATTR(this, "__hash__", vs_file_hash);
-    NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_file_eq);
-    NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_file_str);
-    NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_file_bytes);
-    NEW_NATIVE_FUNC_ATTR(this, "read", vs_file_read);
-    NEW_NATIVE_FUNC_ATTR(this, "readable", vs_file_readable);
-    NEW_NATIVE_FUNC_ATTR(this, "readline", vs_file_readline);
-    NEW_NATIVE_FUNC_ATTR(this, "write", vs_file_write);
-    NEW_NATIVE_FUNC_ATTR(this, "writable", vs_file_writable);
-    NEW_NATIVE_FUNC_ATTR(this, "writeline", vs_file_writeline);
-    NEW_NATIVE_FUNC_ATTR(this, "flush", vs_file_flush);
-    NEW_NATIVE_FUNC_ATTR(this, "seek", vs_file_seek);
-    NEW_NATIVE_FUNC_ATTR(this, "seekable", vs_file_seekable);
-    NEW_NATIVE_FUNC_ATTR(this, "close", vs_file_close);
-    NEW_NATIVE_FUNC_ATTR(this, "closed", vs_file_closed);
 }
 
 VSFileObject::~VSFileObject() {
     fclose(this->_file);
     DECREF(this->name);
+}
+
+bool VSFileObject::hasattr(std::string &attrname) {
+    return vs_file_methods.find(attrname) != vs_file_methods.end();
+}
+
+VSObject *VSFileObject::getattr(std::string &attrname) {
+    auto iter = vs_file_methods.find(attrname);
+    if (iter == vs_file_methods.end()) {
+        ERR_NO_ATTR(this, attrname);
+        terminate(TERM_ERROR);
+    }
+
+    VSFunctionObject *attr = new VSNativeFunctionObject(
+        this, C_STRING_TO_STRING(attrname), vs_file_methods.at(attrname));
+    INCREF_RET(attr);
+}
+
+void VSFileObject::setattr(std::string &attrname, VSObject *attrvalue) {
+    err("Unable to apply setattr on native type: \"%s\"", TYPE_STR[this->type]);
+    terminate(TERM_ERROR);
 }
