@@ -11,6 +11,8 @@
 
 class VSFrameObject : public VSObject {
 private:
+    static const str_func_map vs_frame_methods;
+
     vs_addr_t pc;
 
     VSCodeObject *code;
@@ -36,6 +38,10 @@ public:
     ~VSFrameObject();
 
     void eval(std::stack<VSObject *> &stack);
+
+    bool hasattr(std::string &attrname) override;
+    VSObject *getattr(std::string &attrname) override;
+    void setattr(std::string &attrname, VSObject *attrvalue) override;
 };
 
 #endif

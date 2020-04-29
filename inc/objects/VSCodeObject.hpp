@@ -4,6 +4,8 @@
 #include <vector>
 
 #include "VSObject.hpp"
+#include "objects/VSListObject.hpp"
+#include "objects/VSStringObject.hpp"
 #include "opcode.hpp"
 
 class VSInst {
@@ -31,15 +33,15 @@ public:
     vs_size_t ncellvars;
     vs_size_t nfreevars;
 
-    VSObject *name;
-    VSObject *consts;
-    VSObject *lvars;
-    VSObject *names;
-    VSObject *cellvars;
-    VSObject *freevars;
+    VSStringObject *name;
+    VSListObject *consts;
+    VSListObject *lvars;
+    VSListObject *names;
+    VSListObject *cellvars;
+    VSListObject *freevars;
     std::vector<VSInst> code;
 
-    VSCodeObject(VSObject *name);
+    VSCodeObject(VSStringObject *name);
     ~VSCodeObject();
 
     bool hasattr(std::string &attrname) override;

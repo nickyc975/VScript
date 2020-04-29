@@ -9,13 +9,38 @@
 #include "objects/VSSetObject.hpp"
 #include "objects/VSStringObject.hpp"
 
+NEW_IDENTIFIER(__hash__);
+NEW_IDENTIFIER(__lt__);
+NEW_IDENTIFIER(__gt__);
+NEW_IDENTIFIER(__le__);
+NEW_IDENTIFIER(__ge__);
+NEW_IDENTIFIER(__eq__);
+NEW_IDENTIFIER(__str__);
+NEW_IDENTIFIER(__bytes__);
+NEW_IDENTIFIER(__neg__);
+NEW_IDENTIFIER(__add__);
+NEW_IDENTIFIER(__sub__);
+NEW_IDENTIFIER(__mul__);
+NEW_IDENTIFIER(__div__);
+NEW_IDENTIFIER(__mod__);
+NEW_IDENTIFIER(__not__);
+NEW_IDENTIFIER(__and__);
+NEW_IDENTIFIER(__or__);
+NEW_IDENTIFIER(__xor__);
+NEW_IDENTIFIER(__bool__);
+NEW_IDENTIFIER(__char__);
+NEW_IDENTIFIER(__int__);
+NEW_IDENTIFIER(__float__);
+NEW_IDENTIFIER(get);
+NEW_IDENTIFIER(set);
+
 VSObject *vs_frame_str(VSObject *self, VSObject *const *, vs_size_t nargs) {
     if (nargs != 0) {
         ERR_NARGS("frame.__str__()", 0, nargs);
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_FRAME, "frame.__str__()");
+    ENSURE_TYPE(self, T_FRAME, "frame.__str__()");
 
     INCREF_RET(C_STRING_TO_STRING("frame"));
 }
@@ -26,18 +51,20 @@ VSObject *vs_frame_bytes(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_FRAME, "frame.__bytes__()");
+    ENSURE_TYPE(self, T_FRAME, "frame.__bytes__()");
 
     INCREF_RET(VS_NONE);
 }
 
+const str_func_map VSFrameObject::vs_frame_methods = {
+    {ID___hash__, vs_default_hash},
+    {ID___eq__, vs_default_eq},
+    {ID___str__, vs_frame_str},
+    {ID___bytes__, vs_frame_bytes}
+};
+
 VSFrameObject::VSFrameObject(VSCodeObject *code, VSTupleObject *args, VSTupleObject *cellvars, VSTupleObject *freevars, VSTupleObject *builtins, VSFrameObject *prev) {
     this->type = T_FRAME;
-
-    NEW_NATIVE_FUNC_ATTR(this, "__hash__", vs_default_hash);
-    NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_default_eq);
-    NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_frame_str);
-    NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_frame_bytes);
 
     this->pc = 0;
 
@@ -87,6 +114,27 @@ VSFrameObject::~VSFrameObject() {
     DECREF_EX(this->prev);
 }
 
+bool VSFrameObject::hasattr(std::string &attrname) {
+    return vs_frame_methods.find(attrname) != vs_frame_methods.end();
+}
+
+VSObject *VSFrameObject::getattr(std::string &attrname) {
+    auto iter = vs_frame_methods.find(attrname);
+    if (iter == vs_frame_methods.end()) {
+        ERR_NO_ATTR(this, attrname);
+        terminate(TERM_ERROR);
+    }
+
+    VSFunctionObject *attr = new VSNativeFunctionObject(
+        this, C_STRING_TO_STRING(attrname), vs_frame_methods.at(attrname));
+    INCREF_RET(attr);
+}
+
+void VSFrameObject::setattr(std::string &attrname, VSObject *attrvalue) {
+    err("Unable to apply setattr on native type: \"%s\"", TYPE_STR[this->type]);
+    terminate(TERM_ERROR);
+}
+
 typedef std::stack<VSObject *> cpt_stack_t;
 
 inline VSObject *_stack_pop(cpt_stack_t &stack) {
@@ -131,7 +179,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
             case OP_ADD: {
                 VSObject *l_val = STACK_POP(stack);
                 VSObject *r_val = STACK_POP(stack);
-                VSObject *res = CALL_ATTR(l_val, "__add__", vs_tuple_pack(1, r_val));
+                VSObject *res = CALL_ATTR(l_val, ID___add__, vs_tuple_pack(1, r_val));
                 STACK_PUSH(stack, res);
                 DECREF(l_val);
                 DECREF(r_val);
@@ -140,7 +188,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
             case OP_SUB: {
                 VSObject *l_val = STACK_POP(stack);
                 VSObject *r_val = STACK_POP(stack);
-                VSObject *res = CALL_ATTR(l_val, "__sub__", vs_tuple_pack(1, r_val));
+                VSObject *res = CALL_ATTR(l_val, ID___sub__, vs_tuple_pack(1, r_val));
                 STACK_PUSH(stack, res);
                 DECREF(l_val);
                 DECREF(r_val);
@@ -149,7 +197,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
             case OP_MUL: {
                 VSObject *l_val = STACK_POP(stack);
                 VSObject *r_val = STACK_POP(stack);
-                VSObject *res = CALL_ATTR(l_val, "__mul__", vs_tuple_pack(1, r_val));
+                VSObject *res = CALL_ATTR(l_val, ID___mul__, vs_tuple_pack(1, r_val));
                 STACK_PUSH(stack, res);
                 DECREF(l_val);
                 DECREF(r_val);
@@ -158,7 +206,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
             case OP_DIV: {
                 VSObject *l_val = STACK_POP(stack);
                 VSObject *r_val = STACK_POP(stack);
-                VSObject *res = CALL_ATTR(l_val, "__div__", vs_tuple_pack(1, r_val));
+                VSObject *res = CALL_ATTR(l_val, ID___div__, vs_tuple_pack(1, r_val));
                 STACK_PUSH(stack, res);
                 DECREF(l_val);
                 DECREF(r_val);
@@ -167,7 +215,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
             case OP_MOD: {
                 VSObject *l_val = STACK_POP(stack);
                 VSObject *r_val = STACK_POP(stack);
-                VSObject *res = CALL_ATTR(l_val, "__mod__", vs_tuple_pack(1, r_val));
+                VSObject *res = CALL_ATTR(l_val, ID___mod__, vs_tuple_pack(1, r_val));
                 STACK_PUSH(stack, res);
                 DECREF(l_val);
                 DECREF(r_val);
@@ -176,7 +224,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
             case OP_LT: {
                 VSObject *l_val = STACK_POP(stack);
                 VSObject *r_val = STACK_POP(stack);
-                VSObject *res = CALL_ATTR(l_val, "__lt__", vs_tuple_pack(1, r_val));
+                VSObject *res = CALL_ATTR(l_val, ID___lt__, vs_tuple_pack(1, r_val));
                 STACK_PUSH(stack, res);
                 DECREF(l_val);
                 DECREF(r_val);
@@ -185,7 +233,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
             case OP_GT: {
                 VSObject *l_val = STACK_POP(stack);
                 VSObject *r_val = STACK_POP(stack);
-                VSObject *res = CALL_ATTR(l_val, "__gt__", vs_tuple_pack(1, r_val));
+                VSObject *res = CALL_ATTR(l_val, ID___gt__, vs_tuple_pack(1, r_val));
                 STACK_PUSH(stack, res);
                 DECREF(l_val);
                 DECREF(r_val);
@@ -194,7 +242,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
             case OP_LE: {
                 VSObject *l_val = STACK_POP(stack);
                 VSObject *r_val = STACK_POP(stack);
-                VSObject *res = CALL_ATTR(l_val, "__le__", vs_tuple_pack(1, r_val));
+                VSObject *res = CALL_ATTR(l_val, ID___le__, vs_tuple_pack(1, r_val));
                 STACK_PUSH(stack, res);
                 DECREF(l_val);
                 DECREF(r_val);
@@ -203,7 +251,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
             case OP_GE: {
                 VSObject *l_val = STACK_POP(stack);
                 VSObject *r_val = STACK_POP(stack);
-                VSObject *res = CALL_ATTR(l_val, "__ge__", vs_tuple_pack(1, r_val));
+                VSObject *res = CALL_ATTR(l_val, ID___ge__, vs_tuple_pack(1, r_val));
                 STACK_PUSH(stack, res);
                 DECREF(l_val);
                 DECREF(r_val);
@@ -212,7 +260,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
             case OP_EQ: {
                 VSObject *l_val = STACK_POP(stack);
                 VSObject *r_val = STACK_POP(stack);
-                VSObject *res = CALL_ATTR(l_val, "__eq__", vs_tuple_pack(1, r_val));
+                VSObject *res = CALL_ATTR(l_val, ID___eq__, vs_tuple_pack(1, r_val));
                 STACK_PUSH(stack, res);
                 DECREF(l_val);
                 DECREF(r_val);
@@ -221,8 +269,8 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
             case OP_NEQ: {
                 VSObject *l_val = STACK_POP(stack);
                 VSObject *r_val = STACK_POP(stack);
-                VSObject *temp = CALL_ATTR(l_val, "__eq__", vs_tuple_pack(1, r_val));
-                VSObject *res = CALL_ATTR(temp, "__not__", EMPTY_TUPLE());
+                VSObject *temp = CALL_ATTR(l_val, ID___eq__, vs_tuple_pack(1, r_val));
+                VSObject *res = CALL_ATTR(temp, ID___not__, EMPTY_TUPLE());
                 STACK_PUSH(stack, res);
                 DECREF(l_val);
                 DECREF(r_val);
@@ -232,7 +280,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
             case OP_AND: {
                 VSObject *l_val = STACK_POP(stack);
                 VSObject *r_val = STACK_POP(stack);
-                VSObject *res = CALL_ATTR(l_val, "__and__", vs_tuple_pack(1, r_val));
+                VSObject *res = CALL_ATTR(l_val, ID___and__, vs_tuple_pack(1, r_val));
                 STACK_PUSH(stack, res);
                 DECREF(l_val);
                 DECREF(r_val);
@@ -241,7 +289,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
             case OP_XOR: {
                 VSObject *l_val = STACK_POP(stack);
                 VSObject *r_val = STACK_POP(stack);
-                VSObject *res = CALL_ATTR(l_val, "__xor__", vs_tuple_pack(1, r_val));
+                VSObject *res = CALL_ATTR(l_val, ID___xor__, vs_tuple_pack(1, r_val));
                 STACK_PUSH(stack, res);
                 DECREF(l_val);
                 DECREF(r_val);
@@ -250,7 +298,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
             case OP_OR: {
                 VSObject *l_val = STACK_POP(stack);
                 VSObject *r_val = STACK_POP(stack);
-                VSObject *res = CALL_ATTR(l_val, "__or__", vs_tuple_pack(1, r_val));
+                VSObject *res = CALL_ATTR(l_val, ID___or__, vs_tuple_pack(1, r_val));
                 STACK_PUSH(stack, res);
                 DECREF(l_val);
                 DECREF(r_val);
@@ -258,14 +306,14 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
             }
             case OP_NOT: {
                 VSObject *val = STACK_POP(stack);
-                VSObject *res = CALL_ATTR(val, "__not__", EMPTY_TUPLE());
+                VSObject *res = CALL_ATTR(val, ID___not__, EMPTY_TUPLE());
                 STACK_PUSH(stack, res);
                 DECREF(val);
                 break;
             }
             case OP_NEG: {
                 VSObject *val = STACK_POP(stack);
-                VSObject *res = CALL_ATTR(val, "__neg__", EMPTY_TUPLE());
+                VSObject *res = CALL_ATTR(val, ID___neg__, EMPTY_TUPLE());
                 STACK_PUSH(stack, res);
                 DECREF(val);
                 break;
@@ -323,7 +371,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
             case OP_INDEX_LOAD: {
                 VSObject *obj = STACK_POP(stack);
                 VSObject *idx = STACK_POP(stack);
-                VSObject *val = CALL_ATTR(obj, "get", vs_tuple_pack(1, idx));
+                VSObject *val = CALL_ATTR(obj, ID_get, vs_tuple_pack(1, idx));
                 STACK_PUSH(stack, val);
                 DECREF(obj);
                 DECREF(val);
@@ -333,7 +381,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
                 VSObject *obj = STACK_POP(stack);
                 VSObject *idx = STACK_POP(stack);
                 VSObject *val = STACK_POP(stack);
-                CALL_ATTR(obj, "set", vs_tuple_pack(2, idx, val));
+                CALL_ATTR(obj, ID_set, vs_tuple_pack(2, idx, val));
                 DECREF(obj);
                 DECREF(idx);
                 DECREF(val);
@@ -401,13 +449,13 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
 
                 VSObject *attrnameobj = LIST_GET(this->code->names, idx);
                 std::string &attrname = STRING_TO_C_STRING(attrnameobj);
-                if (!HAS_ATTR(obj, attrname)) {
-                    ERR_ATTR_MISSING(obj, attrname);
+                if (!obj->hasattr(attrname)) {
+                    ERR_NO_ATTR(obj, attrname);
                     terminate(TERM_ERROR);
                 }
 
-                VSObject *attr = GET_ATTR(obj, attrname);
-                STACK_PUSH_INCREF(stack, attr);
+                VSObject *attr = obj->getattr(attrname);
+                STACK_PUSH(stack, attr);
                 DECREF(obj);
                 break;
             }
@@ -452,7 +500,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
             case OP_STORE_ATTR: {
                 vs_addr_t idx = inst.operand;
                 VSObject *obj = STACK_POP(stack);
-                VSObject *attr = STACK_POP(stack);
+                VSObject *attrvalue = STACK_POP(stack);
                 if (idx >= this->code->nnames) {
                     err("Internal error: invalid name index: %llu, max: %llu", idx, this->code->nnames - 1);
                     terminate(TERM_ERROR);
@@ -460,19 +508,13 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
 
                 VSObject *attrnameobj = LIST_GET(this->code->names, idx);
                 std::string &attrname = STRING_TO_C_STRING(attrnameobj);
-                if (!HAS_ATTR(obj, attrname)) {
-                    ERR_ATTR_MISSING(obj, attrname);
+                if (!obj->hasattr(attrname)) {
+                    ERR_NO_ATTR(obj, attrname);
                     terminate(TERM_ERROR);
                 }
 
-                AttributeDef *attrdef = obj->attrs[attrname];
-                if (attrdef->readonly) {
-                    err("attr \"%s\" of \"%s\" object is readonly", attrname.c_str(), TYPE_STR[obj->type]);
-                    terminate(TERM_ERROR);
-                }
-
-                DECREF(attrdef->attribute);
-                attrdef->attribute = attr;
+                obj->setattr(attrname, attrvalue);
+                DECREF(attrvalue);
                 DECREF(obj);
                 break;
             }
@@ -528,9 +570,8 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
                 VSObject *code = STACK_POP(stack);
                 VSObject *freevars = STACK_POP(stack);
 
-                std::string &name = STRING_TO_C_STRING(AS_CODE(code)->name);
                 VSFunctionObject *func = new VSDynamicFunctionObject(
-                    name, AS_CODE(code), AS_TUPLE(freevars), this->builtins, VS_FUNC_VARARGS);
+                    AS_CODE(code)->name, AS_CODE(code), AS_TUPLE(freevars), this->builtins, VS_FUNC_VARARGS);
                 STACK_PUSH_INCREF(stack, func);
                 DECREF(freevars);
                 DECREF(code);

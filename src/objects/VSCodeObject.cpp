@@ -1,12 +1,10 @@
 #include "objects/VSCodeObject.hpp"
 
 #include "error.hpp"
-#include "objects/VSIntObject.hpp"
 #include "objects/VSBoolObject.hpp"
 #include "objects/VSFunctionObject.hpp"
-#include "objects/VSListObject.hpp"
+#include "objects/VSIntObject.hpp"
 #include "objects/VSNoneObject.hpp"
-#include "objects/VSStringObject.hpp"
 #include "objects/VSTupleObject.hpp"
 
 NEW_IDENTIFIER(__hash__);
@@ -52,10 +50,9 @@ const str_func_map VSCodeObject::vs_code_methods = {
     {ID___hash__, vs_default_hash},
     {ID___eq__, vs_default_eq},
     {ID___str__, vs_code_str},
-    {ID___bytes__, vs_code_bytes}
-};
+    {ID___bytes__, vs_code_bytes}};
 
-VSCodeObject::VSCodeObject(VSObject *name) {
+VSCodeObject::VSCodeObject(VSStringObject *name) {
     this->type = T_CODE;
     this->name = name;
     INCREF(name);
