@@ -7,6 +7,7 @@ extern VSObject *vs_bool(VSObject *, VSObject *const *args, vs_size_t nargs);
 
 class VSBoolObject : public VSObject {
 private:
+    static const str_func_map vs_bool_methods;
     static VSBoolObject *_VS_TRUE, *_VS_FALSE;
     VSBoolObject(cbool_t value);
 
@@ -26,6 +27,10 @@ public:
         }
         return _VS_FALSE;
     }
+
+    bool hasattr(std::string &attrname) override;
+    VSObject *getattr(std::string &attrname) override;
+    void setattr(std::string &attrname, VSObject *attrvalue) override;
 };
 
 #define VS_TRUE VSBoolObject::TRUE()
