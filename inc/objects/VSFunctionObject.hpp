@@ -9,7 +9,7 @@
 
 class VSFunctionObject : public VSObject {
 public:
-    std::string name;
+    VSStringObject *name;
 
     VSFunctionObject();
     ~VSFunctionObject();
@@ -17,18 +17,20 @@ public:
     virtual VSObject *call(VSTupleObject *);
 };
 
-typedef VSObject *(*vs_native_func)(VSObject *, VSObject *const *, vs_size_t);
-
 class VSNativeFunctionObject : public VSFunctionObject {
 private:
+    static const str_func_map vs_native_func_methods;
+
     VSObject *self;
     vs_native_func func;
 
-    VSNativeFunctionObject(std::string name, vs_native_func func);
-
 public:
-    VSNativeFunctionObject(std::string name, vs_native_func func, VSObject *self);
+    VSNativeFunctionObject(VSObject *self, VSStringObject *name, vs_native_func func);
     ~VSNativeFunctionObject();
+
+    bool hasattr(std::string &attrname) override;
+    VSObject *getattr(std::string &attrname) override;
+    void setattr(std::string &attrname, VSObject *attrvalue) override;
 
     VSObject *call(VSTupleObject *args) override;
 };
@@ -37,6 +39,8 @@ public:
 
 class VSDynamicFunctionObject : public VSFunctionObject {
 private:
+    static const str_func_map vs_dynamic_func_methods;
+
     VSCodeObject *code;
     VSTupleObject *cellvars;
     VSTupleObject *freevars;
@@ -46,25 +50,29 @@ private:
 
 public:
     VSDynamicFunctionObject(
-        std::string name,
+        VSStringObject *name,
         VSCodeObject *code,
         VSTupleObject *freevars,
         VSTupleObject *builtins,
         int flags);
     ~VSDynamicFunctionObject();
 
+    bool hasattr(std::string &attrname) override;
+    VSObject *getattr(std::string &attrname) override;
+    void setattr(std::string &attrname, VSObject *attrvalue) override;
+
     VSObject *call(VSTupleObject *args) override;
 };
 
-inline VSObject *_CALL_ATTR(VSObject *obj, std::string attrname, VSTupleObject *args) {
-    if (!HAS_ATTR(obj, attrname)) {
-        ERR_ATTR_IS_NOT_FUNC(obj, attrname);
+inline VSObject *_CALL_ATTR(VSObject *obj, std::string &attrname, VSTupleObject *args) {
+    if (!obj->hasattr(attrname)) {
+        ERR_NO_ATTR(obj, attrname);
         terminate(TERM_ERROR);
     }
 
-    VSObject *_func = GET_ATTR(obj, attrname);
-    if (!VS_IS_TYPE(_func, T_FUNC)) {
-        ERR_ATTR_IS_NOT_FUNC(obj, attrname);
+    VSObject *_func = obj->getattr(attrname);
+    if (!IS_TYPE(_func, T_FUNC)) {
+        err("attribute \"%s\" of \"%s\" object is not function", attrname.c_str(), TYPE_STR[obj->type]);
         terminate(TERM_ERROR);
     }
 
@@ -72,8 +80,5 @@ inline VSObject *_CALL_ATTR(VSObject *obj, std::string attrname, VSTupleObject *
 }
 
 #define CALL_ATTR(obj, attrname, args) _CALL_ATTR(obj, attrname, args)
-
-#define NEW_NATIVE_FUNC_ATTR(obj, attrname, func) \
-    (obj)->attrs[(attrname)] = new AttributeDef(true, new VSNativeFunctionObject((attrname), (func), (obj)));
 
 #endif
