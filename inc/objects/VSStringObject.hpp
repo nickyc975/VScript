@@ -8,11 +8,18 @@
 extern VSObject *vs_str(VSObject *, VSObject *const *args, vs_size_t nargs);
 
 class VSStringObject : public VSObject {
+private:
+    static const str_func_map vs_str_methods;
+
 public:
     std::string _value;
 
     VSStringObject(std::string value);
     ~VSStringObject();
+
+    bool hasattr(std::string &attrname) override;
+    VSObject *getattr(std::string &attrname) override;
+    void setattr(std::string &attrname, VSObject *attrvalue) override;
 };
 
 #define AS_STRING(obj) ((VSStringObject *)obj)

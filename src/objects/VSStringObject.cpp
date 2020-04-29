@@ -9,13 +9,40 @@
 #include "objects/VSListObject.hpp"
 #include "objects/VSTupleObject.hpp"
 
+NEW_IDENTIFIER(__hash__);
+NEW_IDENTIFIER(__lt__);
+NEW_IDENTIFIER(__gt__);
+NEW_IDENTIFIER(__le__);
+NEW_IDENTIFIER(__ge__);
+NEW_IDENTIFIER(__eq__);
+NEW_IDENTIFIER(__str__);
+NEW_IDENTIFIER(__bytes__);
+NEW_IDENTIFIER(__add__);
+NEW_IDENTIFIER(__bool__);
+NEW_IDENTIFIER(__char__);
+NEW_IDENTIFIER(__int__);
+NEW_IDENTIFIER(__float__);
+NEW_IDENTIFIER(copy);
+NEW_IDENTIFIER(clear);
+NEW_IDENTIFIER(len);
+NEW_IDENTIFIER(get);
+NEW_IDENTIFIER(set);
+NEW_IDENTIFIER(append);
+NEW_IDENTIFIER(has);
+NEW_IDENTIFIER(has_at);
+NEW_IDENTIFIER(remove);
+NEW_IDENTIFIER(remove_at);
+NEW_IDENTIFIER(split);
+NEW_IDENTIFIER(substr);
+NEW_IDENTIFIER(locate);
+
 VSObject *vs_str(VSObject *, VSObject *const *args, vs_size_t nargs) {
     if (nargs == 0) {
         INCREF_RET(new VSStringObject(""));
     } else if (nargs == 1) {
         VSObject *obj = args[0];
-        VSObject *val = CALL_ATTR(obj, "__str__", EMPTY_TUPLE());
-        if (!VS_IS_TYPE(val, T_STR)) {
+        VSObject *val = CALL_ATTR(obj, ID___str__, EMPTY_TUPLE());
+        if (!IS_TYPE(val, T_STR)) {
             err("%s.__str__() returned \"%s\" instead of str.", TYPE_STR[obj->type], TYPE_STR[val->type]);
             terminate(TERM_ERROR);
         }
@@ -33,7 +60,7 @@ VSObject *vs_string_hash(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_STR, "str.__hash__()");
+    ENSURE_TYPE(self, T_STR, "str.__hash__()");
 
     std::size_t hash = std::hash<std::string>{}(((VSStringObject *)self)->_value);
     INCREF_RET(C_INT_TO_INT(hash));
@@ -46,8 +73,8 @@ VSObject *vs_string_lt(VSObject *self, VSObject *const *args, vs_size_t nargs) {
     }
 
     VSObject *that = args[0];
-    VS_ENSURE_TYPE(self, T_STR, "str.__lt__()");
-    VS_ENSURE_TYPE(that, T_STR, "str.__lt__()");
+    ENSURE_TYPE(self, T_STR, "str.__lt__()");
+    ENSURE_TYPE(that, T_STR, "str.__lt__()");
 
     cbool_t res = ((VSStringObject *)self)->_value < ((VSStringObject *)that)->_value;
     INCREF_RET(res ? VS_TRUE : VS_FALSE);
@@ -60,8 +87,8 @@ VSObject *vs_string_gt(VSObject *self, VSObject *const *args, vs_size_t nargs) {
     }
 
     VSObject *that = args[0];
-    VS_ENSURE_TYPE(self, T_STR, "str.__gt__()");
-    VS_ENSURE_TYPE(that, T_STR, "str.__gt__()");
+    ENSURE_TYPE(self, T_STR, "str.__gt__()");
+    ENSURE_TYPE(that, T_STR, "str.__gt__()");
 
     cbool_t res = ((VSStringObject *)self)->_value > ((VSStringObject *)that)->_value;
     INCREF_RET(res ? VS_TRUE : VS_FALSE);
@@ -74,8 +101,8 @@ VSObject *vs_string_le(VSObject *self, VSObject *const *args, vs_size_t nargs) {
     }
 
     VSObject *that = args[0];
-    VS_ENSURE_TYPE(self, T_STR, "str.__le__()");
-    VS_ENSURE_TYPE(that, T_STR, "str.__le__()");
+    ENSURE_TYPE(self, T_STR, "str.__le__()");
+    ENSURE_TYPE(that, T_STR, "str.__le__()");
 
     cbool_t res = ((VSStringObject *)self)->_value <= ((VSStringObject *)that)->_value;
     INCREF_RET(res ? VS_TRUE : VS_FALSE);
@@ -88,8 +115,8 @@ VSObject *vs_string_ge(VSObject *self, VSObject *const *args, vs_size_t nargs) {
     }
 
     VSObject *that = args[0];
-    VS_ENSURE_TYPE(self, T_STR, "str.__ge__()");
-    VS_ENSURE_TYPE(that, T_STR, "str.__ge__()");
+    ENSURE_TYPE(self, T_STR, "str.__ge__()");
+    ENSURE_TYPE(that, T_STR, "str.__ge__()");
 
     cbool_t res = ((VSStringObject *)self)->_value >= ((VSStringObject *)that)->_value;
     INCREF_RET(res ? VS_TRUE : VS_FALSE);
@@ -102,8 +129,8 @@ VSObject *vs_string_eq(VSObject *self, VSObject *const *args, vs_size_t nargs) {
     }
 
     VSObject *that = args[0];
-    VS_ENSURE_TYPE(self, T_STR, "str.__eq__()");
-    VS_ENSURE_TYPE(that, T_STR, "str.__eq__()");
+    ENSURE_TYPE(self, T_STR, "str.__eq__()");
+    ENSURE_TYPE(that, T_STR, "str.__eq__()");
 
     cbool_t res = ((VSStringObject *)self)->_value == ((VSStringObject *)that)->_value;
     INCREF_RET(res ? VS_TRUE : VS_FALSE);
@@ -115,7 +142,7 @@ VSObject *vs_string_str(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_STR, "str.__str__()");
+    ENSURE_TYPE(self, T_STR, "str.__str__()");
 
     std::string &str_val = STRING_TO_C_STRING(self);
     INCREF_RET(C_STRING_TO_STRING("\"" + str_val + "\""));
@@ -127,7 +154,7 @@ VSObject *vs_string_bytes(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_STR, "str.__bytes__()");
+    ENSURE_TYPE(self, T_STR, "str.__bytes__()");
 
     INCREF_RET(VS_NONE);
 }
@@ -139,8 +166,8 @@ VSObject *vs_string_add(VSObject *self, VSObject *const *args, vs_size_t nargs) 
     }
 
     VSObject *that = args[0];
-    VS_ENSURE_TYPE(self, T_STR, "str.__add__()");
-    VS_ENSURE_TYPE(that, T_STR, "str.__add__()");
+    ENSURE_TYPE(self, T_STR, "str.__add__()");
+    ENSURE_TYPE(that, T_STR, "str.__add__()");
 
     std::string res = ((VSStringObject *)self)->_value + ((VSStringObject *)that)->_value;
     INCREF_RET(C_STRING_TO_STRING(res));
@@ -152,7 +179,7 @@ VSObject *vs_string_bool(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_STR, "str.__bool__()");
+    ENSURE_TYPE(self, T_STR, "str.__bool__()");
 
     vs_size_t len = STRING_LEN(self);
     INCREF_RET(len ? VS_TRUE : VS_FALSE);
@@ -164,7 +191,7 @@ VSObject *vs_string_char(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_STR, "str.__char__()");
+    ENSURE_TYPE(self, T_STR, "str.__char__()");
 
     VSStringObject *str = (VSStringObject *)self;
     vs_size_t len = str->_value.length();
@@ -189,12 +216,12 @@ VSObject *vs_string_int(VSObject *self, VSObject *const *args, vs_size_t nargs) 
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_STR, "str.__int__()");
+    ENSURE_TYPE(self, T_STR, "str.__int__()");
 
     int base = 0;
     if (nargs == 1) {
         VSObject *baseobj = args[0];
-        VS_ENSURE_TYPE(baseobj, T_INT, "str.__int__()");
+        ENSURE_TYPE(baseobj, T_INT, "str.__int__()");
 
         base = (int)INT_TO_C_INT(baseobj);
         if (base < 0 || base == 1 || base > 36) {
@@ -226,7 +253,7 @@ VSObject *vs_string_float(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_STR, "str.__float__()");
+    ENSURE_TYPE(self, T_STR, "str.__float__()");
 
     char *end = NULL;
     VSStringObject *str = (VSStringObject *)self;
@@ -252,7 +279,7 @@ VSObject *vs_string_copy(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_STR, "str.copy()");
+    ENSURE_TYPE(self, T_STR, "str.copy()");
 
     VSStringObject *new_str = new VSStringObject(STRING_TO_C_STRING(self));
     INCREF_RET(new_str);
@@ -264,7 +291,7 @@ VSObject *vs_string_clear(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_STR, "str.clear()");
+    ENSURE_TYPE(self, T_STR, "str.clear()");
 
     ((VSStringObject *)self)->_value.clear();
     INCREF_RET(VS_NONE);
@@ -276,7 +303,7 @@ VSObject *vs_string_len(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_STR, "str.len()");
+    ENSURE_TYPE(self, T_STR, "str.len()");
 
     INCREF_RET(
         C_INT_TO_INT(
@@ -290,8 +317,8 @@ VSObject *vs_string_get(VSObject *self, VSObject *const *args, vs_size_t nargs) 
     }
 
     VSObject *idxobj = args[0];
-    VS_ENSURE_TYPE(self, T_STR, "str.get()");
-    VS_ENSURE_TYPE(idxobj, T_INT, "as str index");
+    ENSURE_TYPE(self, T_STR, "str.get()");
+    ENSURE_TYPE(idxobj, T_INT, "as str index");
 
     VSStringObject *str = (VSStringObject *)self;
     vs_size_t idx = (vs_size_t)INT_TO_C_INT(idxobj);
@@ -312,9 +339,9 @@ VSObject *vs_string_set(VSObject *self, VSObject *const *args, vs_size_t nargs) 
 
     VSObject *idxobj = args[0];
     VSObject *charobj = args[1];
-    VS_ENSURE_TYPE(self, T_STR, "str.set()");
-    VS_ENSURE_TYPE(idxobj, T_INT, "as str index");
-    VS_ENSURE_TYPE(charobj, T_CHAR, "as string content");
+    ENSURE_TYPE(self, T_STR, "str.set()");
+    ENSURE_TYPE(idxobj, T_INT, "as str index");
+    ENSURE_TYPE(charobj, T_CHAR, "as string content");
 
     VSStringObject *str = (VSStringObject *)self;
     vs_size_t idx = (vs_size_t)INT_TO_C_INT(idxobj);
@@ -336,8 +363,8 @@ VSObject *vs_string_append(VSObject *self, VSObject *const *args, vs_size_t narg
     }
 
     VSObject *charobj = args[0];
-    VS_ENSURE_TYPE(self, T_STR, "str.append()");
-    VS_ENSURE_TYPE(charobj, T_CHAR, "as string content");
+    ENSURE_TYPE(self, T_STR, "str.append()");
+    ENSURE_TYPE(charobj, T_CHAR, "as string content");
 
     VSStringObject *str = (VSStringObject *)self;
     char char_val = CHAR_TO_C_CHAR(charobj);
@@ -353,8 +380,8 @@ VSObject *vs_string_has(VSObject *self, VSObject *const *args, vs_size_t nargs) 
     }
 
     VSObject *charobj = args[0];
-    VS_ENSURE_TYPE(self, T_STR, "str.has()");
-    VS_ENSURE_TYPE(charobj, T_CHAR, "as string content");
+    ENSURE_TYPE(self, T_STR, "str.has()");
+    ENSURE_TYPE(charobj, T_CHAR, "as string content");
 
     VSStringObject *str = (VSStringObject *)self;
     char char_val = CHAR_TO_C_CHAR(charobj);
@@ -372,8 +399,8 @@ VSObject *vs_string_has_at(VSObject *self, VSObject *const *args, vs_size_t narg
     }
 
     VSObject *idxobj = args[0];
-    VS_ENSURE_TYPE(self, T_STR, "str.has_at()");
-    VS_ENSURE_TYPE(idxobj, T_INT, "as string index");
+    ENSURE_TYPE(self, T_STR, "str.has_at()");
+    ENSURE_TYPE(idxobj, T_INT, "as string index");
 
     VSStringObject *str = (VSStringObject *)self;
     vs_size_t idx = (vs_size_t)INT_TO_C_INT(idxobj);
@@ -388,8 +415,8 @@ VSObject *vs_string_remove(VSObject *self, VSObject *const *args, vs_size_t narg
     }
 
     VSObject *charobj = args[0];
-    VS_ENSURE_TYPE(self, T_STR, "str.remove()");
-    VS_ENSURE_TYPE(charobj, T_CHAR, "as string content");
+    ENSURE_TYPE(self, T_STR, "str.remove()");
+    ENSURE_TYPE(charobj, T_CHAR, "as string content");
 
     VSStringObject *str = (VSStringObject *)self;
     char char_val = CHAR_TO_C_CHAR(charobj);
@@ -409,8 +436,8 @@ VSObject *vs_string_remove_at(VSObject *self, VSObject *const *args, vs_size_t n
     }
 
     VSObject *idxobj = args[0];
-    VS_ENSURE_TYPE(self, T_STR, "str.remove_at()");
-    VS_ENSURE_TYPE(idxobj, T_INT, "as string index");
+    ENSURE_TYPE(self, T_STR, "str.remove_at()");
+    ENSURE_TYPE(idxobj, T_INT, "as string index");
 
     VSStringObject *str = (VSStringObject *)self;
     vs_size_t idx = (vs_size_t)INT_TO_C_INT(idxobj);
@@ -431,8 +458,8 @@ VSObject *vs_string_split(VSObject *self, VSObject *const *args, vs_size_t nargs
     }
 
     VSObject *sepobj = args[0];
-    VS_ENSURE_TYPE(self, T_STR, "str.split()");
-    VS_ENSURE_TYPE(sepobj, T_STR, "as seperator of str.split()");
+    ENSURE_TYPE(self, T_STR, "str.split()");
+    ENSURE_TYPE(sepobj, T_STR, "as seperator of str.split()");
 
     std::string &str = ((VSStringObject *)self)->_value;
     std::string &sep = ((VSStringObject *)sepobj)->_value;
@@ -463,9 +490,9 @@ VSObject *vs_string_substr(VSObject *self, VSObject *const *args, vs_size_t narg
 
     VSObject *startobj = args[0];
     VSObject *lengthobj = args[1];
-    VS_ENSURE_TYPE(self, T_STR, "str.substr()");
-    VS_ENSURE_TYPE(startobj, T_INT, "as start pos of str.substr()");
-    VS_ENSURE_TYPE(lengthobj, T_INT, "as length of str.substr()");
+    ENSURE_TYPE(self, T_STR, "str.substr()");
+    ENSURE_TYPE(startobj, T_INT, "as start pos of str.substr()");
+    ENSURE_TYPE(lengthobj, T_INT, "as length of str.substr()");
 
     std::string &str = ((VSStringObject *)self)->_value;
     cint_t start = ((VSIntObject *)startobj)->_value;
@@ -491,7 +518,7 @@ VSObject *vs_string_locate(VSObject *self, VSObject *const *args, vs_size_t narg
     }
 
     VSObject *contentobj = args[0];
-    VS_ENSURE_TYPE(self, T_STR, "str.locate()");
+    ENSURE_TYPE(self, T_STR, "str.locate()");
 
     cint_t pos = -1;
     std::string &str = ((VSStringObject *)self)->_value;
@@ -510,37 +537,60 @@ VSObject *vs_string_locate(VSObject *self, VSObject *const *args, vs_size_t narg
     INCREF_RET(C_INT_TO_INT(pos));
 }
 
+const str_func_map VSStringObject::vs_str_methods = {
+    {ID___hash__, vs_string_hash},
+    {ID___lt__, vs_string_lt},
+    {ID___gt__, vs_string_gt},
+    {ID___le__, vs_string_le},
+    {ID___ge__, vs_string_ge},
+    {ID___eq__, vs_string_eq},
+    {ID___str__, vs_string_str},
+    {ID___bytes__, vs_string_bytes},
+    {ID___add__, vs_string_add},
+    {ID___bool__, vs_string_bool},
+    {ID___char__, vs_string_char},
+    {ID___int__, vs_string_int},
+    {ID___float__, vs_string_float},
+    {ID_copy, vs_string_copy},
+    {ID_clear, vs_string_clear},
+    {ID_len, vs_string_len},
+    {ID_get, vs_string_get},
+    {ID_set, vs_string_set},
+    {ID_append, vs_string_append},
+    {ID_has, vs_string_has},
+    {ID_has_at, vs_string_has_at},
+    {ID_remove, vs_string_remove},
+    {ID_remove_at, vs_string_remove_at},
+    {ID_split, vs_string_split},
+    {ID_substr, vs_string_substr},
+    {ID_locate, vs_string_locate}
+};
+
 VSStringObject::VSStringObject(std::string value) {
     this->type = T_STR;
     this->_value = value;
-
-    NEW_NATIVE_FUNC_ATTR(this, "__hash__", vs_string_hash);
-    NEW_NATIVE_FUNC_ATTR(this, "__lt__", vs_string_lt);
-    NEW_NATIVE_FUNC_ATTR(this, "__gt__", vs_string_gt);
-    NEW_NATIVE_FUNC_ATTR(this, "__le__", vs_string_le);
-    NEW_NATIVE_FUNC_ATTR(this, "__ge__", vs_string_ge);
-    NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_string_eq);
-    NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_string_str);
-    NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_string_bytes);
-    NEW_NATIVE_FUNC_ATTR(this, "__add__", vs_string_add);
-    NEW_NATIVE_FUNC_ATTR(this, "__bool__", vs_string_bool);
-    NEW_NATIVE_FUNC_ATTR(this, "__char__", vs_string_char);
-    NEW_NATIVE_FUNC_ATTR(this, "__int__", vs_string_int);
-    NEW_NATIVE_FUNC_ATTR(this, "__float__", vs_string_float);
-    NEW_NATIVE_FUNC_ATTR(this, "copy", vs_string_copy);
-    NEW_NATIVE_FUNC_ATTR(this, "clear", vs_string_clear);
-    NEW_NATIVE_FUNC_ATTR(this, "len", vs_string_len);
-    NEW_NATIVE_FUNC_ATTR(this, "get", vs_string_get);
-    NEW_NATIVE_FUNC_ATTR(this, "set", vs_string_set);
-    NEW_NATIVE_FUNC_ATTR(this, "append", vs_string_append);
-    NEW_NATIVE_FUNC_ATTR(this, "has", vs_string_has);
-    NEW_NATIVE_FUNC_ATTR(this, "has_at", vs_string_has_at);
-    NEW_NATIVE_FUNC_ATTR(this, "remove", vs_string_remove);
-    NEW_NATIVE_FUNC_ATTR(this, "remove_at", vs_string_remove_at);
-    NEW_NATIVE_FUNC_ATTR(this, "split", vs_string_split);
-    NEW_NATIVE_FUNC_ATTR(this, "substr", vs_string_substr);
-    NEW_NATIVE_FUNC_ATTR(this, "locate", vs_string_locate);
 }
 
 VSStringObject::~VSStringObject() {
+}
+
+bool VSStringObject::hasattr(std::string &attrname) {
+    return vs_str_methods.find(attrname) != vs_str_methods.end();
+}
+
+VSObject *VSStringObject::getattr(std::string &attrname) {
+    auto iter = vs_str_methods.find(attrname);
+    if (iter == vs_str_methods.end()) {
+        ERR_NO_ATTR(this, attrname);
+        terminate(TERM_ERROR);
+    }
+
+    VSFunctionObject *attr = new VSNativeFunctionObject(
+        this, C_STRING_TO_STRING(attrname), vs_str_methods.at(attrname));
+    INCREF_RET(attr);
+}
+
+void VSStringObject::setattr(std::string &attrname, VSObject *attrvalue) {
+    err("Unable to apply setattr on native type: \"%s\"", TYPE_STR[this->type]);
+    terminate(TERM_ERROR);
 }
