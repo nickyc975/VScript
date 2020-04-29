@@ -44,76 +44,26 @@ static char *TYPE_STR[] = {
     "frame",
     "file"};
 
-#define VS_AS_OBJECT(obj) ((VSObject *)obj)
-
-#define VS_IS_TYPE(obj, ttype) (VS_AS_OBJECT(obj)->type == ttype)
-
-#define VS_ENSURE_TYPE(obj, ttype, op)                                        \
-    if (!VS_IS_TYPE(obj, ttype)) {                                            \
-        err("Can not apply \"" op "\" on type \"%s\".", TYPE_STR[obj->type]); \
-        terminate(TERM_ERROR);                                                \
-    }
-
-#define INCREF(obj)                      \
-    do {                                 \
-        if (obj != NULL) {               \
-            VS_AS_OBJECT(obj)->refcnt++; \
-        }                                \
-    } while (0);
-
-#define INCREF_RET(obj)  \
-    do {                 \
-        auto _obj = obj; \
-        INCREF(_obj);    \
-        return _obj;     \
-    } while (0);
-
-#define NEW_REF(type, obj) (type) _NEW_REF(VS_AS_OBJECT(obj))
-
-#define DECREF(obj)                                \
-    do {                                           \
-        auto _obj = obj;                           \
-        if (_obj != NULL) {                        \
-            VS_AS_OBJECT(_obj)->refcnt--;          \
-            if (VS_AS_OBJECT(_obj)->refcnt == 0) { \
-                delete _obj;                       \
-            }                                      \
-        }                                          \
-    } while (0);
-
-#define DECREF_EX(obj)                            \
-    do {                                          \
-        if (obj != NULL) {                        \
-            VS_AS_OBJECT(obj)->refcnt--;          \
-            if (VS_AS_OBJECT(obj)->refcnt == 0) { \
-                delete obj;                       \
-                obj = NULL;                       \
-            }                                     \
-        }                                         \
-    } while (0);
-
-class VSObject;
-
-class AttributeDef {
-public:
-    bool readonly;
-    VSObject *attribute;
-
-    AttributeDef(bool readonly, VSObject *attribute);
-    ~AttributeDef();
-};
-
-typedef std::unordered_map<std::string, AttributeDef *> str_attr_map;
+// static string management
+#define NEW_ID(str) static std::string ID##str = #str;
 
 class VSObject {
 public:
     TYPE type;
     vs_size_t refcnt;
-    str_attr_map attrs;
 
     VSObject();
     ~VSObject();
+
+    virtual bool hasattr(std::string &attrname);
+    virtual VSObject *getattr(std::string &attrname);
+    virtual void setattr(std::string &attrname, VSObject *attrvalue);
 };
+
+// Native function interface
+typedef VSObject *(*vs_native_func)(VSObject *, VSObject *const *, vs_size_t);
+
+typedef std::unordered_map<std::string, vs_native_func> str_func_map;
 
 inline VSObject *_NEW_REF(VSObject *obj) {
     if (obj != NULL) {
@@ -125,38 +75,55 @@ inline VSObject *_NEW_REF(VSObject *obj) {
 VSObject *vs_default_hash(VSObject *self, VSObject *const *args, vs_size_t nargs);
 VSObject *vs_default_eq(VSObject *self, VSObject *const *args, vs_size_t nargs);
 
-// static string management
-#define NEW_ID(str) static std::string ID##str = #str;
+#define AS_OBJECT(obj) ((VSObject *)obj)
 
-// attribute operation macros
-#define GET_ATTR(obj, attrname) ((obj)->attrs[(attrname)]->attribute)
+#define IS_TYPE(obj, ttype) (AS_OBJECT(obj)->type == ttype)
 
-#define SET_ATTR(obj, attrname, value)                               \
-    do {                                                             \
-        auto _obj = (obj);                                           \
-        auto _attrname = (attrname);                                 \
-        auto _value = (value);                                       \
-        auto _iter = _obj->attrs.find(_attrname);                    \
-        if (_iter != _obj->attrs.end()) {                            \
-            if (!_iter->second->readonly) {                          \
-                DECREF_EX(_iter->second->attribute);                 \
-                _obj->attrs[_attrname]->attribute = _value;          \
-                INCREF(_value);                                      \
-            }                                                        \
-        } else {                                                     \
-            _obj->attrs[_attrname] = new AttributeDef(false, _value) \
-        }                                                            \
+#define ENSURE_TYPE(obj, ttype, op)                                           \
+    if (!IS_TYPE(obj, ttype)) {                                               \
+        err("Can not apply \"" op "\" on type \"%s\".", TYPE_STR[obj->type]); \
+        terminate(TERM_ERROR);                                                \
+    }
+
+#define INCREF(obj)                   \
+    do {                              \
+        if (obj != NULL) {            \
+            AS_OBJECT(obj)->refcnt++; \
+        }                             \
     } while (0);
 
-#define HAS_ATTR(obj, attrname) ((obj)->attrs.find(attrname) != (obj)->attrs.end())
+#define INCREF_RET(obj)  \
+    do {                 \
+        auto _obj = obj; \
+        INCREF(_obj);    \
+        return _obj;     \
+    } while (0);
 
-#define ERR_ATTR_MISSING(obj, attrname) \
-    err("\"%s\" object does not has attr \"%s\"", TYPE_STR[obj->type], attrname.c_str());
+#define NEW_REF(type, obj) (type) _NEW_REF(AS_OBJECT(obj))
 
-#define ERR_ATTR_READONLY(obj, attrname) \
-    err("attr \"%s\" of \"%s\" object is readonly", attrname.c_str(), TYPE_STR[obj->type]);
+#define DECREF(obj)                             \
+    do {                                        \
+        auto _obj = obj;                        \
+        if (_obj != NULL) {                     \
+            AS_OBJECT(_obj)->refcnt--;          \
+            if (AS_OBJECT(_obj)->refcnt == 0) { \
+                delete _obj;                    \
+            }                                   \
+        }                                       \
+    } while (0);
 
-#define ERR_ATTR_IS_NOT_FUNC(obj, attrname) \
-    err("attr \"%s\" of \"%s\" object is not function", attrname.c_str(), TYPE_STR[obj->type]);
+#define DECREF_EX(obj)                         \
+    do {                                       \
+        if (obj != NULL) {                     \
+            AS_OBJECT(obj)->refcnt--;          \
+            if (AS_OBJECT(obj)->refcnt == 0) { \
+                delete obj;                    \
+                obj = NULL;                    \
+            }                                  \
+        }                                      \
+    } while (0);
+
+#define ERR_NO_ATTR(obj, attrname) \
+    err("\"%s\" object does not has attribute \"%s\"", TYPE_STR[obj->type], attrname.c_str());
 
 #endif
