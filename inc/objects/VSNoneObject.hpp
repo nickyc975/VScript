@@ -6,6 +6,7 @@
 class VSNoneObject : public VSObject {
 private:
     static VSNoneObject *_VS_NONE;
+    static const str_func_map vs_none_methods;
 
     VSNoneObject();
 
@@ -16,6 +17,10 @@ public:
         }
         return _VS_NONE;
     }
+
+    bool hasattr(std::string &attrname) override;
+    VSObject *getattr(std::string &attrname) override;
+    void setattr(std::string &attrname, VSObject *attrvalue) override;
 };
 
 #define VS_NONE VSNoneObject::NONE()
