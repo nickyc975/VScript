@@ -3,6 +3,18 @@
 #include "error.hpp"
 #include "objects/VSStringObject.hpp"
 
+NEW_IDENTIFIER(__hash__);
+NEW_IDENTIFIER(__eq__);
+NEW_IDENTIFIER(__str__);
+NEW_IDENTIFIER(__bytes__);
+NEW_IDENTIFIER(copy);
+NEW_IDENTIFIER(clear);
+NEW_IDENTIFIER(len);
+NEW_IDENTIFIER(get);
+NEW_IDENTIFIER(set);
+NEW_IDENTIFIER(has_at);
+NEW_IDENTIFIER(remove_at);
+
 VSObject *vs_dict(VSObject *, VSObject *const *, vs_size_t nargs) {
     if (nargs != 0) {
         ERR_NARGS("dict()", 0, nargs);
@@ -18,18 +30,18 @@ VSObject *vs_dict_str(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_DICT, "dict.__str__()");
+    ENSURE_TYPE(self, T_DICT, "dict.__str__()");
 
     std::string dict_str = "{";
     VSDictObject *dict = (VSDictObject *)self;
     for (auto entry : dict->_dict) {
-        VSObject *str = CALL_ATTR(entry.first, "__str__", EMPTY_TUPLE());
+        VSObject *str = CALL_ATTR(entry.first, ID___str__, EMPTY_TUPLE());
         dict_str.append(STRING_TO_C_STRING(str));
         DECREF_EX(str);
 
         dict_str.append(": ");
 
-        str = CALL_ATTR(entry.second, "__str__", EMPTY_TUPLE());
+        str = CALL_ATTR(entry.second, ID___str__, EMPTY_TUPLE());
         dict_str.append(STRING_TO_C_STRING(str));
         DECREF_EX(str);
 
@@ -50,7 +62,7 @@ VSObject *vs_dict_bytes(VSObject *self, VSObject *const *args, vs_size_t nargs) 
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_DICT, "dict.__bytes__()");
+    ENSURE_TYPE(self, T_DICT, "dict.__bytes__()");
 
     INCREF_RET(VS_NONE);
 }
@@ -61,7 +73,7 @@ VSObject *vs_dict_copy(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_DICT, "dict.copy()");
+    ENSURE_TYPE(self, T_DICT, "dict.copy()");
 
     VSDictObject *dict = (VSDictObject *)self;
     VSDictObject *new_dict = new VSDictObject();
@@ -70,7 +82,7 @@ VSObject *vs_dict_copy(VSObject *self, VSObject *const *, vs_size_t nargs) {
         INCREF(entry.first);
         INCREF(entry.second);
     }
-    INCREF_RET(VS_AS_OBJECT(new_dict));
+    INCREF_RET(AS_OBJECT(new_dict));
 }
 
 VSObject *vs_dict_clear(VSObject *self, VSObject *const *, vs_size_t nargs) {
@@ -79,7 +91,7 @@ VSObject *vs_dict_clear(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_DICT, "dict.clear()");
+    ENSURE_TYPE(self, T_DICT, "dict.clear()");
 
     VSDictObject *dict = (VSDictObject *)self;
     for (auto entry : dict->_dict) {
@@ -98,7 +110,7 @@ VSObject *vs_dict_len(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_DICT, "dict.len()");
+    ENSURE_TYPE(self, T_DICT, "dict.len()");
 
     INCREF_RET(
         C_INT_TO_INT(
@@ -111,7 +123,7 @@ VSObject *vs_dict_get(VSObject *self, VSObject *const *args, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_DICT, "dict.get()");
+    ENSURE_TYPE(self, T_DICT, "dict.get()");
 
     VSObject *key = args[0];
     VSDictObject *dict = (VSDictObject *)self;
@@ -119,8 +131,8 @@ VSObject *vs_dict_get(VSObject *self, VSObject *const *args, vs_size_t nargs) {
     if (iter != dict->_dict.end()) {
         INCREF_RET(iter->second);
     } else {
-        VSObject *strobj = CALL_ATTR(key, "__str__", EMPTY_TUPLE());
-        VS_ENSURE_TYPE(strobj, T_STR, "as __str__() result");
+        VSObject *strobj = CALL_ATTR(key, ID___str__, EMPTY_TUPLE());
+        ENSURE_TYPE(strobj, T_STR, "as __str__() result");
 
         err("key \"%s\" not found.", STRING_TO_C_STRING(strobj).c_str());
         terminate(TERM_ERROR);
@@ -134,7 +146,7 @@ VSObject *vs_dict_set(VSObject *self, VSObject *const *args, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_DICT, "dict.set()");
+    ENSURE_TYPE(self, T_DICT, "dict.set()");
 
     VSObject *key = args[0];
     VSObject *value = args[1];
@@ -157,7 +169,7 @@ VSObject *vs_dict_has_at(VSObject *self, VSObject *const *args, vs_size_t nargs)
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_DICT, "dict.has_at()");
+    ENSURE_TYPE(self, T_DICT, "dict.has_at()");
 
     VSObject *key = args[0];
     VSDictObject *dict = (VSDictObject *)self;
@@ -171,7 +183,7 @@ VSObject *vs_dict_remove_at(VSObject *self, VSObject *const *args, vs_size_t nar
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_DICT, "dict.remove_at()");
+    ENSURE_TYPE(self, T_DICT, "dict.remove_at()");
 
     VSObject *key = args[0];
     VSDictObject *dict = (VSDictObject *)self;
@@ -184,22 +196,46 @@ VSObject *vs_dict_remove_at(VSObject *self, VSObject *const *args, vs_size_t nar
     INCREF_RET(VS_NONE);
 }
 
+const str_func_map VSDictObject::vs_dict_methods = {
+    {ID___hash__, vs_default_hash},
+    {ID___eq__, vs_default_eq},
+    {ID___str__, vs_dict_str},
+    {ID___bytes__, vs_dict_bytes},
+    {ID_copy, vs_dict_copy},
+    {ID_clear, vs_dict_clear},
+    {ID_len, vs_dict_len},
+    {ID_get, vs_dict_get},
+    {ID_set, vs_dict_set},
+    {ID_has_at, vs_dict_has_at},
+    {ID_remove_at, vs_dict_remove_at}
+};
+
 VSDictObject::VSDictObject() {
     this->type = T_DICT;
     this->_dict = std::unordered_map<VSObject *, VSObject *, __dict_hash__, __dict_equal_to__>();
-
-    NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_default_eq);
-    NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_dict_str);
-    NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_dict_bytes);
-    NEW_NATIVE_FUNC_ATTR(this, "copy", vs_dict_copy);
-    NEW_NATIVE_FUNC_ATTR(this, "clear", vs_dict_clear);
-    NEW_NATIVE_FUNC_ATTR(this, "len", vs_dict_len);
-    NEW_NATIVE_FUNC_ATTR(this, "get", vs_dict_get);
-    NEW_NATIVE_FUNC_ATTR(this, "set", vs_dict_set);
-    NEW_NATIVE_FUNC_ATTR(this, "has_at", vs_dict_has_at);
-    NEW_NATIVE_FUNC_ATTR(this, "remove_at", vs_dict_remove_at);
 }
 
 VSDictObject::~VSDictObject() {
     DECREF(vs_dict_clear(this, NULL, 0));
+}
+
+bool VSDictObject::hasattr(std::string &attrname) {
+    return vs_dict_methods.find(attrname) != vs_dict_methods.end();
+}
+
+VSObject *VSDictObject::getattr(std::string &attrname) {
+    auto iter = vs_dict_methods.find(attrname);
+    if (iter == vs_dict_methods.end()) {
+        ERR_NO_ATTR(this, attrname);
+        terminate(TERM_ERROR);
+    }
+
+    VSFunctionObject *attr = new VSNativeFunctionObject(
+        this, C_STRING_TO_STRING(attrname), vs_dict_methods.at(attrname));
+    INCREF_RET(attr);
+}
+
+void VSDictObject::setattr(std::string &attrname, VSObject *attrvalue) {
+    err("Unable to apply setattr on native type: \"%s\"", TYPE_STR[this->type]);
+    terminate(TERM_ERROR);
 }
