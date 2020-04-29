@@ -62,6 +62,7 @@ VSNativeFunctionObject::VSNativeFunctionObject(VSObject *self, VSStringObject *n
 }
 
 VSNativeFunctionObject::~VSNativeFunctionObject() {
+    DECREF_EX(this->name);
     DECREF_EX(this->self);
 }
 
@@ -142,6 +143,7 @@ VSDynamicFunctionObject::VSDynamicFunctionObject(VSStringObject *name, VSCodeObj
 }
 
 VSDynamicFunctionObject::~VSDynamicFunctionObject() {
+    DECREF_EX(this->name);
     DECREF_EX(this->code);
     DECREF_EX(this->cellvars);
     DECREF_EX(this->freevars);
