@@ -6,5 +6,5 @@ func f(n) {
 
 var a = [1, 2, 3, f];
 
-print(a[0], "\n");
-print(a[3](a[2]), "\n");
+print(a[0]);
+print(a[3](a[2]));

@@ -5,4 +5,4 @@ for (var i = 0; i < 500000; i += 1)
 {
     a += b;
 }
-print(len(a), "\n");
+print(a.len());

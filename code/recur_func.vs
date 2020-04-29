@@ -8,4 +8,4 @@ func fib(n) {
     }
 }
 
-print(fib(40), "\n");
+print(fib(30), "\n");
