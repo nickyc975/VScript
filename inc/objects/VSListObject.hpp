@@ -8,14 +8,21 @@
 extern VSObject *vs_list(VSObject *, VSObject *const *args, vs_size_t nargs);
 
 class VSListObject : public VSObject {
+private:
+    static const str_func_map vs_list_methods;
+
 public:
     std::vector<VSObject *> items;
 
     VSListObject(vs_size_t nitems);
     ~VSListObject();
+
+    bool hasattr(std::string &attrname) override;
+    VSObject *getattr(std::string &attrname) override;
+    void setattr(std::string &attrname, VSObject *attrvalue) override;
 };
 
-extern VSObject *vs_list_pack(vs_size_t nitems, ...);
+extern VSListObject *vs_list_pack(vs_size_t nitems, ...);
 extern int vs_list_unpack(VSObject *listobj, vs_size_t nitems, ...);
 extern VSObject *vs_list_to_tuple(VSObject *listobj);
 
