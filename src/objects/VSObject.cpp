@@ -12,6 +12,18 @@ VSObject::VSObject() {
 VSObject::~VSObject() {
 }
 
+bool VSObject::hasattr(std::string &attrname) {
+    return false;
+}
+
+VSObject *VSObject::getattr(std::string &attrname) {
+    INCREF_RET(VS_NONE);
+}
+
+void VSObject::setattr(std::string &attrname, VSObject *attrvalue) {
+    return;
+}
+
 VSObject *vs_default_hash(VSObject *self, VSObject *const *args, vs_size_t nargs) {
     if (nargs != 0) {
         ERR_NARGS("default __hash__()", 0, nargs);
