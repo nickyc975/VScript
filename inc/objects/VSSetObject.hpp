@@ -14,10 +14,13 @@ extern VSObject *vs_set(VSObject *, VSObject *const *args, vs_size_t nargs);
 
 class VSSetObject : public VSObject {
 private:
+    static const str_func_map vs_set_methods;
+
     struct __set_hash__ {
         std::size_t operator()(const VSObject *o) const {
-            VSObject *res = CALL_ATTR(const_cast<VSObject *>(o), "__hash__", EMPTY_TUPLE());
-            VS_ENSURE_TYPE(res, T_INT, "as __hash__() result");
+            NEW_IDENTIFIER(__hash__);
+            VSObject *res = CALL_ATTR(const_cast<VSObject *>(o), ID___hash__, EMPTY_TUPLE());
+            ENSURE_TYPE(res, T_INT, "as __hash__() result");
 
             std::size_t h = (std::size_t)INT_TO_C_INT(res);
             DECREF_EX(res);
@@ -31,8 +34,9 @@ private:
                 return false;
             }
 
-            VSObject *resobj = CALL_ATTR(const_cast<VSObject *>(a), "__eq__", vs_tuple_pack(1, b));
-            VS_ENSURE_TYPE(resobj, T_BOOL, "as __eq__() result");
+            NEW_IDENTIFIER(__eq__);
+            VSObject *resobj = CALL_ATTR(const_cast<VSObject *>(a), ID___eq__, vs_tuple_pack(1, b));
+            ENSURE_TYPE(resobj, T_BOOL, "as __eq__() result");
 
             bool res = (bool)BOOL_TO_C_BOOL(resobj);
             DECREF_EX(resobj);
@@ -45,6 +49,10 @@ public:
 
     VSSetObject();
     ~VSSetObject();
+
+    bool hasattr(std::string &attrname) override;
+    VSObject *getattr(std::string &attrname) override;
+    void setattr(std::string &attrname, VSObject *attrvalue) override;
 };
 
 // convinient macros for set operations

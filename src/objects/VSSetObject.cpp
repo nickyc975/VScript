@@ -4,6 +4,17 @@
 #include "objects/VSListObject.hpp"
 #include "objects/VSStringObject.hpp"
 
+NEW_IDENTIFIER(__hash__);
+NEW_IDENTIFIER(__eq__);
+NEW_IDENTIFIER(__str__);
+NEW_IDENTIFIER(__bytes__);
+NEW_IDENTIFIER(copy);
+NEW_IDENTIFIER(clear);
+NEW_IDENTIFIER(len);
+NEW_IDENTIFIER(append);
+NEW_IDENTIFIER(has);
+NEW_IDENTIFIER(remove);
+
 VSObject *vs_set(VSObject *, VSObject *const *args, vs_size_t nargs) {
     if (nargs == 0) {
         INCREF_RET(new VSSetObject());
@@ -37,12 +48,12 @@ VSObject *vs_set_str(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_SET, "set.__str__()");
+    ENSURE_TYPE(self, T_SET, "set.__str__()");
 
     std::string set_str = "{";
     VSSetObject *set = (VSSetObject *)self;
     for (auto obj : set->_set) {
-        VSObject *str = CALL_ATTR(obj, "__str__", EMPTY_TUPLE());
+        VSObject *str = CALL_ATTR(obj, ID___str__, EMPTY_TUPLE());
         set_str.append(STRING_TO_C_STRING(str));
         set_str.append(", ");
         DECREF(str);
@@ -62,7 +73,7 @@ VSObject *vs_set_bytes(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_SET, "set.__bytes__()");
+    ENSURE_TYPE(self, T_SET, "set.__bytes__()");
 
     INCREF_RET(VS_NONE);
 }
@@ -73,7 +84,7 @@ VSObject *vs_set_copy(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_SET, "set.copy()");
+    ENSURE_TYPE(self, T_SET, "set.copy()");
 
     VSSetObject *set = (VSSetObject *)self;
     VSSetObject *new_set = new VSSetObject();
@@ -81,7 +92,7 @@ VSObject *vs_set_copy(VSObject *self, VSObject *const *, vs_size_t nargs) {
         new_set->_set.insert(item);
         INCREF(item);
     }
-    INCREF_RET(VS_AS_OBJECT(new_set));
+    INCREF_RET(AS_OBJECT(new_set));
 }
 
 VSObject *vs_set_clear(VSObject *self, VSObject *const *, vs_size_t nargs) {
@@ -90,7 +101,7 @@ VSObject *vs_set_clear(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_SET, "set.clear()");
+    ENSURE_TYPE(self, T_SET, "set.clear()");
 
     VSSetObject *set = (VSSetObject *)self;
     for (auto item : set->_set) {
@@ -106,7 +117,7 @@ VSObject *vs_set_len(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_SET, "set.len()");
+    ENSURE_TYPE(self, T_SET, "set.len()");
 
     INCREF_RET(
         C_INT_TO_INT(
@@ -119,7 +130,7 @@ VSObject *vs_set_append(VSObject *self, VSObject *const *args, vs_size_t nargs) 
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_SET, "set.append()");
+    ENSURE_TYPE(self, T_SET, "set.append()");
 
     VSObject *item = args[0];
     VSSetObject *set = (VSSetObject *)self;
@@ -136,7 +147,7 @@ VSObject *vs_set_has(VSObject *self, VSObject *const *args, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_SET, "set.has()");
+    ENSURE_TYPE(self, T_SET, "set.has()");
 
     VSObject *item = args[0];
     VSSetObject *set = (VSSetObject *)self;
@@ -150,7 +161,7 @@ VSObject *vs_set_remove(VSObject *self, VSObject *const *args, vs_size_t nargs) 
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_SET, "set.remove()");
+    ENSURE_TYPE(self, T_SET, "set.remove()");
 
     VSObject *item = args[0];
     VSSetObject *set = (VSSetObject *)self;
@@ -162,22 +173,45 @@ VSObject *vs_set_remove(VSObject *self, VSObject *const *args, vs_size_t nargs) 
     INCREF_RET(VS_NONE);
 }
 
+const str_func_map VSSetObject::vs_set_methods = {
+    {ID___hash__, vs_default_hash},
+    {ID___eq__, vs_default_eq},
+    {ID___str__, vs_set_str},
+    {ID___bytes__, vs_set_bytes},
+    {ID_copy, vs_set_copy},
+    {ID_clear, vs_set_clear},
+    {ID_len, vs_set_len},
+    {ID_append, vs_set_append},
+    {ID_has, vs_set_has},
+    {ID_remove, vs_set_remove}
+};
+
 VSSetObject::VSSetObject() {
     this->type = T_SET;
     this->_set = std::unordered_set<VSObject *, __set_hash__, __set_equal_to__>();
-
-    NEW_NATIVE_FUNC_ATTR(this, "__hash__", vs_default_hash);
-    NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_default_eq);
-    NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_set_str);
-    NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_set_bytes);
-    NEW_NATIVE_FUNC_ATTR(this, "copy", vs_set_copy);
-    NEW_NATIVE_FUNC_ATTR(this, "clear", vs_set_clear);
-    NEW_NATIVE_FUNC_ATTR(this, "len", vs_set_len);
-    NEW_NATIVE_FUNC_ATTR(this, "append", vs_set_append);
-    NEW_NATIVE_FUNC_ATTR(this, "has", vs_set_has);
-    NEW_NATIVE_FUNC_ATTR(this, "remove", vs_set_remove);
 }
 
 VSSetObject::~VSSetObject() {
     DECREF(vs_set_clear(this, NULL, 0));
+}
+
+bool VSSetObject::hasattr(std::string &attrname) {
+    return vs_set_methods.find(attrname) != vs_set_methods.end();
+}
+
+VSObject *VSSetObject::getattr(std::string &attrname) {
+    auto iter = vs_set_methods.find(attrname);
+    if (iter == vs_set_methods.end()) {
+        ERR_NO_ATTR(this, attrname);
+        terminate(TERM_ERROR);
+    }
+
+    VSFunctionObject *attr = new VSNativeFunctionObject(
+        this, C_STRING_TO_STRING(attrname), vs_set_methods.at(attrname));
+    INCREF_RET(attr);
+}
+
+void VSSetObject::setattr(std::string &attrname, VSObject *attrvalue) {
+    err("Unable to apply setattr on native type: \"%s\"", TYPE_STR[this->type]);
+    terminate(TERM_ERROR);
 }
