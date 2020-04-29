@@ -422,6 +422,7 @@ void init_printer() {
 // }
 
 void fprint_code(FILE *file, VSCodeObject *code) {
+    NEW_IDENTIFIER(__str__);
     int count = 0;
     VSObject *object;
     fprint_indent(file);
@@ -457,7 +458,7 @@ void fprint_code(FILE *file, VSCodeObject *code) {
                 if (object->type == T_CODE) {
                     fprintf(file, "%s\n", STRING_TO_C_STRING(((VSCodeObject *)object)->name).c_str());
                 } else {
-                    VSObject *strobj = CALL_ATTR(object, "__str__", EMPTY_TUPLE());
+                    VSObject *strobj = CALL_ATTR(object, ID___str__, EMPTY_TUPLE());
                     fprintf(file, "%s\n", STRING_TO_C_STRING(strobj).c_str());
                     DECREF_EX(strobj);
                 }

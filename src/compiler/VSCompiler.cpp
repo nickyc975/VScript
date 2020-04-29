@@ -89,7 +89,8 @@ OPCODE VSCompiler::get_b_op(TOKEN_TYPE tk) {
 }
 
 std::string VSCompiler::get_key(VSObject *value) {
-    VSObject *value_strobj = CALL_ATTR(value, "__str__", EMPTY_TUPLE());
+    NEW_IDENTIFIER(__str__);
+    VSObject *value_strobj = CALL_ATTR(value, ID___str__, EMPTY_TUPLE());
     std::string value_str = STRING_TO_C_STRING(value_strobj);
     DECREF(value_strobj);
 
@@ -619,7 +620,7 @@ void VSCompiler::gen_func_decl(VSASTNode *node) {
         p_table->put(name, new SymtableEntry(SYM_VAR, name, p_code->nlvars, 0));
     }
 
-    ENTER_FUNC(name);
+    ENTER_FUNC((VSStringObject *)name);
 
     Symtable *table = this->symtables.top();
     // Add function code to parent code consts.

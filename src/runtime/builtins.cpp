@@ -32,17 +32,18 @@ name_addr_map *builtin_addrs = &_builtin_addrs_struct;
 
 VSTupleObject *builtins = vs_tuple_pack(
     8,
-    VS_AS_OBJECT(new VSNativeFunctionObject("input", __vs_input__, NULL)),
-    VS_AS_OBJECT(new VSNativeFunctionObject("print", __vs_print__, NULL)),
-    VS_AS_OBJECT(NULL),
-    VS_AS_OBJECT(new VSNativeFunctionObject("bool", vs_bool, NULL)),
-    VS_AS_OBJECT(new VSNativeFunctionObject("char", vs_char, NULL)),
-    VS_AS_OBJECT(new VSNativeFunctionObject("int", vs_int, NULL)),
-    VS_AS_OBJECT(new VSNativeFunctionObject("float", vs_float, NULL)),
-    VS_AS_OBJECT(new VSNativeFunctionObject("str", vs_str, NULL)));
+    AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("input"), __vs_input__)),
+    AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("print"), __vs_print__)),
+    AS_OBJECT(NULL),
+    AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("bool"), vs_bool)),
+    AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("char"), vs_char)),
+    AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("int"), vs_int)),
+    AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("float"), vs_float)),
+    AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("str"), vs_str)));
 
 static void __vs_print_impl__(VSObject *obj) {
-    VSObject *objstr = CALL_ATTR(obj, "__str__", EMPTY_TUPLE());
+    NEW_IDENTIFIER(__str__);
+    VSObject *objstr = CALL_ATTR(obj, ID___str__, EMPTY_TUPLE());
     if (objstr->type != T_STR) {
         err("__str__() of \"%s\" object returned \"%s\" instead of str object", TYPE_STR[obj->type], TYPE_STR[objstr->type]);
         terminate(TERM_ERROR);
