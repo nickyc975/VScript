@@ -6,11 +6,18 @@
 extern VSObject *vs_char(VSObject *, VSObject *const *args, vs_size_t nargs);
 
 class VSCharObject : public VSObject {
+private:
+    static const str_func_map vs_char_methods;
+
 public:
     const cchar_t _value;
 
     VSCharObject(cchar_t value);
     ~VSCharObject();
+
+    bool hasattr(std::string &attrname) override;
+    VSObject *getattr(std::string &attrname) override;
+    void setattr(std::string &attrname, VSObject *attrvalue) override;
 };
 
 #define AS_CHAR(obj) ((VSCharObject *)obj)
