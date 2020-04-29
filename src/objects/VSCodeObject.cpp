@@ -9,13 +9,18 @@
 #include "objects/VSStringObject.hpp"
 #include "objects/VSTupleObject.hpp"
 
+NEW_IDENTIFIER(__hash__);
+NEW_IDENTIFIER(__eq__);
+NEW_IDENTIFIER(__str__);
+NEW_IDENTIFIER(__bytes__);
+
 VSObject *vs_code_str(VSObject *self, VSObject *const *, vs_size_t nargs) {
     if (nargs != 0) {
         ERR_NARGS("code.__str__()", 0, nargs);
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_CODE, "code.__str__()");
+    ENSURE_TYPE(self, T_CODE, "code.__str__()");
 
     INCREF_RET(C_STRING_TO_STRING("code"));
 }
@@ -26,7 +31,7 @@ VSObject *vs_code_bytes(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_CODE, "code.__bytes__()");
+    ENSURE_TYPE(self, T_CODE, "code.__bytes__()");
 
     INCREF_RET(VS_NONE);
 }
@@ -42,6 +47,13 @@ VSInst &VSInst::operator=(VSInst &inst) {
     this->operand = inst.operand;
     return *this;
 }
+
+const str_func_map VSCodeObject::vs_code_methods = {
+    {ID___hash__, vs_default_hash},
+    {ID___eq__, vs_default_eq},
+    {ID___str__, vs_code_str},
+    {ID___bytes__, vs_code_bytes}
+};
 
 VSCodeObject::VSCodeObject(VSObject *name) {
     this->type = T_CODE;
@@ -65,11 +77,6 @@ VSCodeObject::VSCodeObject(VSObject *name) {
 
     // set constants
     this->add_const(VS_NONE);
-
-    NEW_NATIVE_FUNC_ATTR(this, "__hash__", vs_default_hash);
-    NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_default_eq);
-    NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_code_str);
-    NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_code_bytes);
 }
 
 VSCodeObject::~VSCodeObject() {
@@ -79,6 +86,27 @@ VSCodeObject::~VSCodeObject() {
     DECREF_EX(this->names);
     DECREF_EX(this->cellvars);
     DECREF_EX(this->freevars);
+}
+
+bool VSCodeObject::hasattr(std::string &attrname) {
+    return vs_code_methods.find(attrname) != vs_code_methods.end();
+}
+
+VSObject *VSCodeObject::getattr(std::string &attrname) {
+    auto iter = vs_code_methods.find(attrname);
+    if (iter == vs_code_methods.end()) {
+        ERR_NO_ATTR(this, attrname);
+        terminate(TERM_ERROR);
+    }
+
+    VSFunctionObject *attr = new VSNativeFunctionObject(
+        this, C_STRING_TO_STRING(attrname), vs_code_methods.at(attrname));
+    INCREF_RET(attr);
+}
+
+void VSCodeObject::setattr(std::string &attrname, VSObject *attrvalue) {
+    err("Unable to apply setattr on native type: \"%s\"", TYPE_STR[this->type]);
+    terminate(TERM_ERROR);
 }
 
 void VSCodeObject::add_inst(VSInst inst) {

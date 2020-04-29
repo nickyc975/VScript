@@ -19,6 +19,9 @@ public:
 };
 
 class VSCodeObject : public VSObject {
+private:
+    static const str_func_map vs_code_methods;
+
 public:
     vs_size_t ninsts;
     vs_size_t nconsts;
@@ -38,6 +41,10 @@ public:
 
     VSCodeObject(VSObject *name);
     ~VSCodeObject();
+
+    bool hasattr(std::string &attrname) override;
+    VSObject *getattr(std::string &attrname) override;
+    void setattr(std::string &attrname, VSObject *attrvalue) override;
 
     void add_inst(VSInst inst);
     void add_const(VSObject *object);
