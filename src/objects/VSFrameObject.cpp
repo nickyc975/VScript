@@ -568,7 +568,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
                 VSObject *freevars = STACK_POP(stack);
 
                 VSFunctionObject *func = new VSDynamicFunctionObject(
-                    AS_CODE(code)->name, AS_CODE(code), AS_TUPLE(freevars), this->builtins, VS_FUNC_VARARGS);
+                    AS_CODE(code)->name, AS_CODE(code), AS_TUPLE(freevars), this->builtins, 0);
                 STACK_PUSH_INCREF(stack, func);
                 DECREF(freevars);
                 DECREF(code);

@@ -75,7 +75,7 @@ static VSObject *__vs_input__(VSObject *, VSObject *const *args, vs_size_t nargs
             ungetc(c, stdin);
         }
     }
-    return C_STRING_TO_STRING(str);
+    INCREF_RET(C_STRING_TO_STRING(str));
 }
 
 static VSObject *__vs_print__(VSObject *, VSObject *const *args, vs_size_t nargs) {
@@ -84,5 +84,5 @@ static VSObject *__vs_print__(VSObject *, VSObject *const *args, vs_size_t nargs
         printf(" ");
     }
     printf("\n");
-    return VS_NONE;
+    INCREF_RET(VS_NONE);
 }

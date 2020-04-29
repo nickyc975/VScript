@@ -180,10 +180,13 @@ VSObject *VSDynamicFunctionObject::call(VSTupleObject *args) {
     }
 
     std::stack<VSObject *> stack = std::stack<VSObject *>();
-    VSFrameObject *frame = new VSFrameObject(this->code, args, this->cellvars, this->freevars, this->builtins, NULL);
+    VSFrameObject *frame = new VSFrameObject(
+        this->code, args, this->cellvars, this->freevars, this->builtins, NULL);
     DECREF_EX(args);
 
+    INCREF(frame);
     frame->eval(stack);
+    DECREF(frame);
 
     if (stack.empty()) {
         INCREF_RET(VS_NONE);
