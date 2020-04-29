@@ -38,7 +38,8 @@ private:
             }
 
             NEW_IDENTIFIER(__eq__);
-            VSObject *resobj = CALL_ATTR(const_cast<VSObject *>(a), ID___eq__, vs_tuple_pack(1, b));
+            VSObject *resobj = CALL_ATTR(
+                const_cast<VSObject *>(a), ID___eq__, vs_tuple_pack(1, const_cast<VSObject *>(b)));
             if (!IS_TYPE(resobj, T_BOOL)) {
                 err("%s.__eq__() returned \"%s\" instead of bool", TYPE_STR[a->type], TYPE_STR[resobj->type]);
                 terminate(TERM_ERROR);

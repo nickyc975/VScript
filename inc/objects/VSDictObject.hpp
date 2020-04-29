@@ -38,7 +38,8 @@ private:
             }
 
             NEW_IDENTIFIER(__eq__);
-            VSObject *resobj = CALL_ATTR(const_cast<VSObject *>(a), ID___eq__, vs_tuple_pack(1, b));
+            VSObject *resobj = CALL_ATTR(
+                const_cast<VSObject *>(a), ID___eq__, vs_tuple_pack(1, const_cast<VSObject *>(b)));
             if (!IS_TYPE(resobj, T_BOOL)) {
                 err("%s.__eq__() returned \"%s\" instead of bool", TYPE_STR[a->type], TYPE_STR[resobj->type]);
                 terminate(TERM_ERROR);
@@ -67,18 +68,18 @@ public:
 #define DICT_GET(obj, key) (AS_DICT(obj)->_dict[key])
 #define DICT_HAS(obj, key) (AS_DICT(obj)->_dict.find(key) != AS_DICT(obj)->_dict.end())
 
-#define DICT_SET(obj, key, val)        \
-    do {                              \
-        auto _key = (key);            \
-        auto _val = (val);            \
+#define DICT_SET(obj, key, val)         \
+    do {                                \
+        auto _key = (key);              \
+        auto _val = (val);              \
         auto _dict = AS_DICT(obj);      \
-        if (DICT_HAS(obj, _key)) {     \
+        if (DICT_HAS(obj, _key)) {      \
             DECREF(_dict->_dict[_key]); \
-        } else {                      \
-            INCREF(_key);             \
-        }                             \
+        } else {                        \
+            INCREF(_key);               \
+        }                               \
         _dict->_dict[_key] = _val;      \
-        INCREF(_val);                 \
+        INCREF(_val);                   \
     } while (0);
 
 #endif
