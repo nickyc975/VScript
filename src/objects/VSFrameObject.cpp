@@ -374,7 +374,6 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
                 VSObject *val = CALL_ATTR(obj, ID_get, vs_tuple_pack(1, idx));
                 STACK_PUSH(stack, val);
                 DECREF(obj);
-                DECREF(val);
                 break;
             }
             case OP_INDEX_STORE: {
@@ -426,7 +425,6 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
                 VSObject *local = TUPLE_GET(this->locals, idx);
                 STACK_PUSH_INCREF(stack, local);
                 break;
-                break;
             }
             case OP_LOAD_FREE_CELL: {
                 vs_addr_t idx = inst.operand;
@@ -436,7 +434,6 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
                 }
                 VSObject *free = TUPLE_GET(this->freevars, idx);
                 STACK_PUSH_INCREF(stack, free);
-                break;
                 break;
             }
             case OP_LOAD_ATTR: {

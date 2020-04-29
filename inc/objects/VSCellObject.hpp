@@ -23,17 +23,18 @@ public:
 
 #define AS_CELL(obj) ((VSCellObject *)obj)
 #define VS_CELL_GET(cell) (AS_CELL(cell)->item)
-#define VS_CELL_SET(cell, value)                          \
-    do {                                                  \
-        VSObject *item = AS_CELL(cell)->item;             \
-        if (!AS_CELL(cell)->mut) {                        \
-            err("modifying immutable cell at %p", cell);  \
-            break;                                        \
-        }                                                 \
-        if (item != NULL) {                               \
-            DECREF(item);                                 \
-        }                                                 \
-        AS_CELL(cell)->item = NEW_REF(VSObject *, value); \
+#define VS_CELL_SET(cell, value)                         \
+    do {                                                 \
+        VSObject *item = AS_CELL(cell)->item;            \
+        if (!AS_CELL(cell)->mut) {                       \
+            err("modifying immutable cell at %p", cell); \
+            break;                                       \
+        }                                                \
+        if (item != NULL) {                              \
+            DECREF(item);                                \
+        }                                                \
+        AS_CELL(cell)->item = value;                     \
+        INCREF(value);                                   \
     } while (0);
 
 #endif

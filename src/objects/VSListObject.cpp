@@ -194,8 +194,10 @@ VSObject *vs_list_set(VSObject *self, VSObject *const *args, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
+    DECREF(list->items[idx]);
     list->items[idx] = item;
     INCREF(item);
+
     INCREF_RET(VS_NONE);
 }
 
