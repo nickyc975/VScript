@@ -23,6 +23,7 @@ public:
     static inline VSObject *ZERO() {
         if (_VS_ZERO == NULL) {
             _VS_ZERO = new VSIntObject(0);
+            INCREF(_VS_ZERO);
         }
         return _VS_ZERO;
     }
@@ -30,6 +31,7 @@ public:
     static inline VSObject *ONE() {
         if (_VS_ONE == NULL) {
             _VS_ONE = new VSIntObject(1);
+            INCREF(_VS_ONE);
         }
         return _VS_ONE;
     }

@@ -101,6 +101,30 @@ VSObject *vs_default_eq(VSObject *self, VSObject *const *args, vs_size_t nargs);
 
 #define NEW_REF(type, obj) (type) _NEW_REF(AS_OBJECT(obj))
 
+#ifdef VS_NO_GC
+
+#define DECREF(obj)                             \
+    do {                                        \
+        auto _obj = obj;                        \
+        if (_obj != NULL) {                     \
+            AS_OBJECT(_obj)->refcnt--;          \
+            if (AS_OBJECT(_obj)->refcnt == 0) { \
+            }                                   \
+        }                                       \
+    } while (0);
+
+#define DECREF_EX(obj)                         \
+    do {                                       \
+        if (obj != NULL) {                     \
+            AS_OBJECT(obj)->refcnt--;          \
+            if (AS_OBJECT(obj)->refcnt == 0) { \
+                obj = NULL;                    \
+            }                                  \
+        }                                      \
+    } while (0);
+
+#else
+
 #define DECREF(obj)                             \
     do {                                        \
         auto _obj = obj;                        \
@@ -122,6 +146,8 @@ VSObject *vs_default_eq(VSObject *self, VSObject *const *args, vs_size_t nargs);
             }                                  \
         }                                      \
     } while (0);
+
+#endif
 
 #define ERR_NO_ATTR(obj, attrname) \
     err("\"%s\" object does not has attribute \"%s\"", TYPE_STR[obj->type], attrname.c_str());

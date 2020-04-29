@@ -8,6 +8,7 @@ extern VSObject *vs_tuple(VSObject *, VSObject *const *args, vs_size_t nargs);
 
 class VSTupleObject : public VSObject {
 private:
+    static VSTupleObject *_EMPTY_TUPLE;
     static const str_func_map vs_tuple_methods;
 
 public:
@@ -20,14 +21,21 @@ public:
     bool hasattr(std::string &attrname) override;
     VSObject *getattr(std::string &attrname) override;
     void setattr(std::string &attrname, VSObject *attrvalue) override;
+
+    static inline VSTupleObject *EMPTY_TUPLE() {
+        if (_EMPTY_TUPLE == NULL) {
+            _EMPTY_TUPLE = new VSTupleObject(0);
+            INCREF(_EMPTY_TUPLE);
+        }
+        INCREF_RET(_EMPTY_TUPLE);
+    }
 };
 
-extern const VSTupleObject *_EMPTY_TUPLE;
 extern VSTupleObject *vs_tuple_pack(vs_size_t nitems, ...);
 extern int vs_tuple_unpack(VSObject *tupleobj, vs_size_t nitems, ...);
 extern VSObject *vs_tuple_to_list(VSObject *tupleobj);
 
-#define EMPTY_TUPLE() NEW_REF(VSTupleObject *, _EMPTY_TUPLE)
+#define EMPTY_TUPLE() VSTupleObject::EMPTY_TUPLE()
 
 // convinient macros for tuple operations
 #define AS_TUPLE(obj) ((VSTupleObject *)obj)

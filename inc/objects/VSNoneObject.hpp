@@ -14,6 +14,7 @@ public:
     static inline VSObject *NONE() {
         if (_VS_NONE == NULL) {
             _VS_NONE = new VSNoneObject();
+            INCREF(_VS_NONE);
         }
         return _VS_NONE;
     }

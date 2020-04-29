@@ -17,6 +17,7 @@ public:
     static inline VSObject *TRUE() {
         if (_VS_TRUE == NULL) {
             _VS_TRUE = new VSBoolObject(1);
+            INCREF(_VS_TRUE);
         }
         return _VS_TRUE;
     }
@@ -24,6 +25,7 @@ public:
     static inline VSObject *FALSE() {
         if (_VS_FALSE == NULL) {
             _VS_FALSE = new VSBoolObject(0);
+            INCREF(_VS_FALSE);
         }
         return _VS_FALSE;
     }

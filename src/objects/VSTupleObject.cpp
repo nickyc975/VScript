@@ -21,7 +21,7 @@ NEW_IDENTIFIER(len);
 NEW_IDENTIFIER(get);
 NEW_IDENTIFIER(has_at);
 
-const VSTupleObject *_EMPTY_TUPLE = vs_tuple_pack(0);
+VSTupleObject *VSTupleObject::_EMPTY_TUPLE = NULL;
 
 VSObject *vs_tuple(VSObject *, VSObject *const *args, vs_size_t nargs) {
     if (nargs == 0) {
