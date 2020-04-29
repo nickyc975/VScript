@@ -50,7 +50,21 @@ VSObject *vs_tuple_str(VSObject *self, VSObject *const *, vs_size_t nargs) {
 
     ENSURE_TYPE(self, T_TUPLE, "tuple.__str__()");
 
-    INCREF_RET(C_STRING_TO_STRING("tuple"));
+    std::string tuple_str = "(";
+    VSTupleObject *tuple = (VSTupleObject *)self;
+    for (vs_size_t i = 0; i < tuple->nitems; i++) {
+        VSObject *str = CALL_ATTR(tuple->items[i], ID___str__, EMPTY_TUPLE());
+        tuple_str.append(STRING_TO_C_STRING(str));
+        tuple_str.append(", ");
+        DECREF(str);
+    }
+    if (tuple_str.back() == ' ') {
+        tuple_str.pop_back();
+        tuple_str.pop_back();
+    }
+    tuple_str.append(")");
+
+    INCREF_RET(C_STRING_TO_STRING(tuple_str));
 }
 
 VSObject *vs_tuple_bytes(VSObject *self, VSObject *const *, vs_size_t nargs) {
