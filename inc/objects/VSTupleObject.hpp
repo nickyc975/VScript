@@ -7,12 +7,19 @@
 extern VSObject *vs_tuple(VSObject *, VSObject *const *args, vs_size_t nargs);
 
 class VSTupleObject : public VSObject {
+private:
+    static const str_func_map vs_tuple_methods;
+
 public:
     vs_size_t nitems;
     VSObject **items;
 
     VSTupleObject(vs_size_t nitems);
     ~VSTupleObject();
+
+    bool hasattr(std::string &attrname) override;
+    VSObject *getattr(std::string &attrname) override;
+    void setattr(std::string &attrname, VSObject *attrvalue) override;
 };
 
 extern const VSTupleObject *_EMPTY_TUPLE;

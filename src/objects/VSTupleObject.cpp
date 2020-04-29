@@ -11,6 +11,16 @@
 #include "objects/VSNoneObject.hpp"
 #include "objects/VSStringObject.hpp"
 
+NEW_IDENTIFIER(__hash__);
+NEW_IDENTIFIER(__eq__);
+NEW_IDENTIFIER(__str__);
+NEW_IDENTIFIER(__bytes__);
+NEW_IDENTIFIER(__add__);
+NEW_IDENTIFIER(copy);
+NEW_IDENTIFIER(len);
+NEW_IDENTIFIER(get);
+NEW_IDENTIFIER(has_at);
+
 const VSTupleObject *_EMPTY_TUPLE = vs_tuple_pack(0);
 
 VSObject *vs_tuple(VSObject *, VSObject *const *args, vs_size_t nargs) {
@@ -38,7 +48,7 @@ VSObject *vs_tuple_str(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_TUPLE, "tuple.__str__()");
+    ENSURE_TYPE(self, T_TUPLE, "tuple.__str__()");
 
     INCREF_RET(C_STRING_TO_STRING("tuple"));
 }
@@ -49,7 +59,7 @@ VSObject *vs_tuple_bytes(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_TUPLE, "tuple.__bytes__()");
+    ENSURE_TYPE(self, T_TUPLE, "tuple.__bytes__()");
 
     INCREF_RET(VS_NONE);
 }
@@ -61,8 +71,8 @@ VSObject *vs_tuple_add(VSObject *self, VSObject *const *args, vs_size_t nargs) {
     }
 
     VSObject *that = args[0];
-    VS_ENSURE_TYPE(self, T_TUPLE, "tuple.__add__()");
-    VS_ENSURE_TYPE(that, T_TUPLE, "tuple.__add__()");
+    ENSURE_TYPE(self, T_TUPLE, "tuple.__add__()");
+    ENSURE_TYPE(that, T_TUPLE, "tuple.__add__()");
 
     VSTupleObject *tuple_a = (VSTupleObject *)self;
     VSTupleObject *tuple_b = (VSTupleObject *)that;
@@ -80,7 +90,7 @@ VSObject *vs_tuple_add(VSObject *self, VSObject *const *args, vs_size_t nargs) {
         INCREF(item);
     }
 
-    INCREF_RET(VS_AS_OBJECT(tuple));
+    INCREF_RET(AS_OBJECT(tuple));
 }
 
 VSObject *vs_tuple_copy(VSObject *self, VSObject *const *, vs_size_t nargs) {
@@ -89,7 +99,7 @@ VSObject *vs_tuple_copy(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_TUPLE, "tuple.__copy__()");
+    ENSURE_TYPE(self, T_TUPLE, "tuple.__copy__()");
 
     VSTupleObject *old_tuple = (VSTupleObject *)self;
     VSTupleObject *new_tuple = new VSTupleObject(old_tuple->nitems);
@@ -99,7 +109,7 @@ VSObject *vs_tuple_copy(VSObject *self, VSObject *const *, vs_size_t nargs) {
         new_tuple->items[i] = item;
         INCREF(item);
     }
-    INCREF_RET(VS_AS_OBJECT(new_tuple));
+    INCREF_RET(AS_OBJECT(new_tuple));
 }
 
 VSObject *vs_tuple_len(VSObject *self, VSObject *const *, vs_size_t nargs) {
@@ -108,7 +118,7 @@ VSObject *vs_tuple_len(VSObject *self, VSObject *const *, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VS_ENSURE_TYPE(self, T_TUPLE, "tuple.__len__()");
+    ENSURE_TYPE(self, T_TUPLE, "tuple.__len__()");
 
     cint_t len = ((VSTupleObject *)self)->nitems;
     INCREF_RET(C_INT_TO_INT(len));
@@ -121,8 +131,8 @@ VSObject *vs_tuple_get(VSObject *self, VSObject *const *args, vs_size_t nargs) {
     }
 
     VSObject *idxobj = args[0];
-    VS_ENSURE_TYPE(self, T_TUPLE, "tuple.get()");
-    VS_ENSURE_TYPE(idxobj, T_INT, "as tuple index");
+    ENSURE_TYPE(self, T_TUPLE, "tuple.get()");
+    ENSURE_TYPE(idxobj, T_INT, "as tuple index");
 
     VSTupleObject *tuple = (VSTupleObject *)self;
     vs_size_t idx = (vs_size_t)INT_TO_C_INT(idxobj);
@@ -142,7 +152,7 @@ VSObject *vs_tuple_has(VSObject *self, VSObject *const *args, vs_size_t nargs) {
     }
 
     VSObject *item = args[0];
-    VS_ENSURE_TYPE(self, T_TUPLE, "tuple.has()");
+    ENSURE_TYPE(self, T_TUPLE, "tuple.has()");
 
     INCREF_RET(VS_FALSE);
 }
@@ -154,8 +164,8 @@ VSObject *vs_tuple_has_at(VSObject *self, VSObject *const *args, vs_size_t nargs
     }
 
     VSObject *idxobj = args[0];
-    VS_ENSURE_TYPE(self, T_TUPLE, "tuple.has_at()");
-    VS_ENSURE_TYPE(idxobj, T_INT, "as tuple index");
+    ENSURE_TYPE(self, T_TUPLE, "tuple.has_at()");
+    ENSURE_TYPE(idxobj, T_INT, "as tuple index");
 
     VSTupleObject *tuple = (VSTupleObject *)self;
     vs_size_t idx = (vs_size_t)INT_TO_C_INT(idxobj);
@@ -179,7 +189,7 @@ VSTupleObject *vs_tuple_pack(vs_size_t nitems, ...) {
 }
 
 int vs_tuple_unpack(VSObject *tupleobj, vs_size_t nitems, ...) {
-    VS_ENSURE_TYPE(tupleobj, T_TUPLE, "tuple unpack");
+    ENSURE_TYPE(tupleobj, T_TUPLE, "tuple unpack");
 
     VSTupleObject *tuple = (VSTupleObject *)tupleobj;
     if (nitems >= tuple->nitems) {
@@ -199,7 +209,7 @@ int vs_tuple_unpack(VSObject *tupleobj, vs_size_t nitems, ...) {
 }
 
 VSObject *vs_tuple_to_list(VSObject *tupleobj) {
-    VS_ENSURE_TYPE(tupleobj, T_TUPLE, "tuple to list");
+    ENSURE_TYPE(tupleobj, T_TUPLE, "tuple to list");
 
     VSTupleObject *tuple = (VSTupleObject *)tupleobj;
 
@@ -212,6 +222,18 @@ VSObject *vs_tuple_to_list(VSObject *tupleobj) {
     INCREF_RET(list);
 }
 
+const str_func_map VSTupleObject::vs_tuple_methods = {
+    {ID___hash__, vs_default_hash},
+    {ID___eq__, vs_default_eq},
+    {ID___str__, vs_tuple_str},
+    {ID___bytes__, vs_tuple_bytes},
+    {ID___add__, vs_tuple_add},
+    {ID_copy, vs_tuple_copy},
+    {ID_len, vs_tuple_len},
+    {ID_get, vs_tuple_get},
+    {ID_has_at, vs_tuple_has_at}
+};
+
 VSTupleObject::VSTupleObject(vs_size_t nitems) {
     this->type = T_TUPLE;
     this->nitems = nitems;
@@ -223,16 +245,6 @@ VSTupleObject::VSTupleObject(vs_size_t nitems) {
         terminate(TERM_ERROR);
     }
     memset(this->items, NULL, size);
-
-    NEW_NATIVE_FUNC_ATTR(this, "__hash__", vs_default_hash);
-    NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_default_eq);
-    NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_tuple_str);
-    NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_tuple_bytes);
-    NEW_NATIVE_FUNC_ATTR(this, "__add__", vs_tuple_add);
-    NEW_NATIVE_FUNC_ATTR(this, "copy", vs_tuple_copy);
-    NEW_NATIVE_FUNC_ATTR(this, "len", vs_tuple_len);
-    NEW_NATIVE_FUNC_ATTR(this, "get", vs_tuple_get);
-    NEW_NATIVE_FUNC_ATTR(this, "has_at", vs_tuple_has_at);
 }
 
 VSTupleObject::~VSTupleObject() {
@@ -240,4 +252,25 @@ VSTupleObject::~VSTupleObject() {
         DECREF(this->items[i]);
     }
     free(this->items);
+}
+
+bool VSTupleObject::hasattr(std::string &attrname) {
+    return vs_tuple_methods.find(attrname) != vs_tuple_methods.end();
+}
+
+VSObject *VSTupleObject::getattr(std::string &attrname) {
+    auto iter = vs_tuple_methods.find(attrname);
+    if (iter == vs_tuple_methods.end()) {
+        ERR_NO_ATTR(this, attrname);
+        terminate(TERM_ERROR);
+    }
+
+    VSFunctionObject *attr = new VSNativeFunctionObject(
+        this, C_STRING_TO_STRING(attrname), vs_tuple_methods.at(attrname));
+    INCREF_RET(attr);
+}
+
+void VSTupleObject::setattr(std::string &attrname, VSObject *attrvalue) {
+    err("Unable to apply setattr on native type: \"%s\"", TYPE_STR[this->type]);
+    terminate(TERM_ERROR);
 }
