@@ -53,7 +53,7 @@ public:
     vs_size_t refcnt;
 
     VSObject();
-    ~VSObject();
+    virtual ~VSObject();
 
     virtual bool hasattr(std::string &attrname);
     virtual VSObject *getattr(std::string &attrname);

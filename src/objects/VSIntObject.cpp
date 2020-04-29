@@ -326,6 +326,9 @@ VSIntObject::VSIntObject(cint_t value) : _value(value) {
     this->type = T_INT;
 }
 
+VSIntObject::~VSIntObject() {
+}
+
 bool VSIntObject::hasattr(std::string &attrname) {
     return vs_int_methods.find(attrname) != vs_int_methods.end();
 }

@@ -258,7 +258,7 @@ VSTupleObject::VSTupleObject(vs_size_t nitems) {
         err("unable to malloc memory of size: %lu\n", size);
         terminate(TERM_ERROR);
     }
-    memset(this->items, NULL, size);
+    memset(this->items, 0, size);
 }
 
 VSTupleObject::~VSTupleObject() {
