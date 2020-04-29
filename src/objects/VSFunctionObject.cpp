@@ -6,6 +6,11 @@
 #include "objects/VSFrameObject.hpp"
 #include "objects/VSStringObject.hpp"
 
+NEW_IDENTIFIER(__hash__);
+NEW_IDENTIFIER(__eq__);
+NEW_IDENTIFIER(__str__);
+NEW_IDENTIFIER(__bytes__);
+
 /* Base function type definition */
 VSFunctionObject::VSFunctionObject() {
     this->type = T_FUNC;
@@ -42,10 +47,10 @@ VSObject *vs_native_func_bytes(VSObject *funcobj, VSObject *const *, vs_size_t n
 /* end native function attributes */
 
 const str_func_map VSNativeFunctionObject::vs_native_func_methods = {
-    {"__hash__", vs_default_hash},
-    {"__eq__", vs_default_eq},
-    {"__str__", vs_native_func_str},
-    {"__bytes", vs_native_func_bytes}
+    {ID___hash__, vs_default_hash},
+    {ID___eq__, vs_default_eq},
+    {ID___str__, vs_native_func_str},
+    {ID___bytes__, vs_native_func_bytes}
 };
 
 VSNativeFunctionObject::VSNativeFunctionObject(VSObject *self, VSStringObject *name, vs_native_func func) {
@@ -114,10 +119,10 @@ VSObject *vs_dynamic_func_bytes(VSObject *funcobj, VSObject *const *, vs_size_t 
 /* end dynamic function attributes */
 
 const str_func_map VSDynamicFunctionObject::vs_dynamic_func_methods = {
-    {"__hash__", vs_default_hash},
-    {"__eq__", vs_default_eq},
-    {"__str__", vs_dynamic_func_str},
-    {"__bytes", vs_dynamic_func_bytes}
+    {ID___hash__, vs_default_hash},
+    {ID___eq__, vs_default_eq},
+    {ID___str__, vs_dynamic_func_str},
+    {ID___bytes__, vs_dynamic_func_bytes}
 };
 
 /* Dynamic function type definition */

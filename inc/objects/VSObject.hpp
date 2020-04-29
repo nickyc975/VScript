@@ -45,7 +45,7 @@ static char *TYPE_STR[] = {
     "file"};
 
 // static string management
-#define NEW_ID(str) static std::string ID##str = #str;
+#define NEW_IDENTIFIER(str) static std::string ID_##str = #str;
 
 class VSObject {
 public:
