@@ -6,12 +6,19 @@
 extern VSObject *vs_cell(VSObject *, VSObject *const *args, vs_size_t nargs);
 
 class VSCellObject : public VSObject {
+private:
+    static const str_func_map vs_cell_methods;
+
 public:
     bool mut;
     VSObject *item;
 
     VSCellObject(VSObject *item);
     ~VSCellObject();
+
+    bool hasattr(std::string &attrname) override;
+    VSObject *getattr(std::string &attrname) override;
+    void setattr(std::string &attrname, VSObject *attrvalue) override;
 };
 
 #define AS_CELL(obj) ((VSCellObject *)obj)

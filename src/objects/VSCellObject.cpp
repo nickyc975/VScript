@@ -9,6 +9,11 @@
 #include "objects/VSNoneObject.hpp"
 #include "objects/VSStringObject.hpp"
 
+NEW_IDENTIFIER(__hash__);
+NEW_IDENTIFIER(__eq__);
+NEW_IDENTIFIER(__str__);
+NEW_IDENTIFIER(__bytes__);
+
 VSObject *vs_cell(VSObject *, VSObject *const *args, vs_size_t nargs) {
     if (nargs != 1) {
         ERR_NARGS("cell()", 1, nargs);
@@ -16,7 +21,7 @@ VSObject *vs_cell(VSObject *, VSObject *const *args, vs_size_t nargs) {
     }
 
     VSCellObject *cell = new VSCellObject(args[0]);
-    INCREF_RET(VS_AS_OBJECT(cell));
+    INCREF_RET(AS_OBJECT(cell));
 }
 
 VSObject *vs_cell_hash(VSObject *self, VSObject *const *, vs_size_t nargs) {
@@ -25,7 +30,7 @@ VSObject *vs_cell_hash(VSObject *self, VSObject *const *, vs_size_t nargs) {
         ERR_NARGS("cell.__hash__()", 0, nargs);
         terminate(TERM_ERROR);
     }
-    VS_ENSURE_TYPE(self, T_CELL, "cell.__hash__()");
+    ENSURE_TYPE(self, T_CELL, "cell.__hash__()");
     INCREF_RET(C_INT_TO_INT((cint_t)self));
 }
 
@@ -35,7 +40,7 @@ VSObject *vs_cell_str(VSObject *self, VSObject *const *, vs_size_t nargs) {
         ERR_NARGS("cell.__hash__()", 0, nargs);
         terminate(TERM_ERROR);
     }
-    VS_ENSURE_TYPE(self, T_CELL, "cell.__hash__()");
+    ENSURE_TYPE(self, T_CELL, "cell.__hash__()");
     INCREF_RET(C_STRING_TO_STRING("cell"));
 }
 
@@ -45,22 +50,45 @@ VSObject *vs_cell_bytes(VSObject *self, VSObject *const *, vs_size_t nargs) {
         ERR_NARGS("cell.__hash__()", 0, nargs);
         terminate(TERM_ERROR);
     }
-    VS_ENSURE_TYPE(self, T_CELL, "cell.__hash__()");
+    ENSURE_TYPE(self, T_CELL, "cell.__hash__()");
     INCREF_RET(VS_NONE);
 }
+
+const str_func_map VSCellObject::vs_cell_methods = {
+   {ID___hash__, vs_cell_hash},
+   {ID___eq__, vs_default_eq},
+   {ID___str__, vs_cell_str},
+   {ID___bytes__, vs_cell_bytes}
+};
 
 VSCellObject::VSCellObject(VSObject *item) {
     this->type = T_CELL;
     this->mut = true;
     this->item = item;
     INCREF(item);
-
-    NEW_NATIVE_FUNC_ATTR(this, "__hash__", vs_cell_hash);
-    NEW_NATIVE_FUNC_ATTR(this, "__eq__", vs_default_eq);
-    NEW_NATIVE_FUNC_ATTR(this, "__str__", vs_cell_str);
-    NEW_NATIVE_FUNC_ATTR(this, "__bytes__", vs_cell_bytes);
 }
 
 VSCellObject::~VSCellObject() {
     DECREF_EX(this->item);
+}
+
+bool VSCellObject::hasattr(std::string &attrname) {
+    return vs_cell_methods.find(attrname) != vs_cell_methods.end();
+}
+
+VSObject *VSCellObject::getattr(std::string &attrname) {
+    auto iter = vs_cell_methods.find(attrname);
+    if (iter == vs_cell_methods.end()) {
+        ERR_NO_ATTR(this, attrname);
+        terminate(TERM_ERROR);
+    }
+
+    VSFunctionObject *attr = new VSNativeFunctionObject(
+        this, C_STRING_TO_STRING(attrname), vs_cell_methods.at(attrname));
+    INCREF_RET(attr);
+}
+
+void VSCellObject::setattr(std::string &attrname, VSObject *attrvalue) {
+    err("Unable to apply setattr on native type: \"%s\"", TYPE_STR[this->type]);
+    terminate(TERM_ERROR);
 }
