@@ -56,7 +56,7 @@ VSObject *vs_dict_str(VSObject *self, VSObject *const *, vs_size_t nargs) {
     INCREF_RET(C_STRING_TO_STRING(dict_str));
 }
 
-VSObject *vs_dict_bytes(VSObject *self, VSObject *const *args, vs_size_t nargs) {
+VSObject *vs_dict_bytes(VSObject *self, VSObject *const *, vs_size_t nargs) {
     if (nargs != 0) {
         ERR_NARGS("dict.__bytes__()", 0, nargs);
         terminate(TERM_ERROR);
@@ -235,7 +235,7 @@ VSObject *VSDictObject::getattr(std::string &attrname) {
     INCREF_RET(attr);
 }
 
-void VSDictObject::setattr(std::string &attrname, VSObject *attrvalue) {
+void VSDictObject::setattr(std::string &, VSObject *) {
     err("Unable to apply setattr on native type: \"%s\"", TYPE_STR[this->type]);
     terminate(TERM_ERROR);
 }

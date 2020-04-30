@@ -88,7 +88,7 @@ VSObject *VSCellObject::getattr(std::string &attrname) {
     INCREF_RET(attr);
 }
 
-void VSCellObject::setattr(std::string &attrname, VSObject *attrvalue) {
+void VSCellObject::setattr(std::string &, VSObject *) {
     err("Unable to apply setattr on native type: \"%s\"", TYPE_STR[this->type]);
     terminate(TERM_ERROR);
 }

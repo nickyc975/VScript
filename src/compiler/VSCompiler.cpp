@@ -365,14 +365,14 @@ void VSCompiler::gen_return(VSASTNode *node) {
     code->add_inst(VSInst(OP_RET));
 }
 
-void VSCompiler::gen_break(VSASTNode *node) {
+void VSCompiler::gen_break(VSASTNode *) {
     VSCodeObject *code = this->codeobjects.top();
     auto breaks = this->breakposes.top();
     breaks->push_back(code->ninsts);
     code->add_inst(VSInst(OP_JMP, 0));
 }
 
-void VSCompiler::gen_continue(VSASTNode *node) {
+void VSCompiler::gen_continue(VSASTNode *) {
     VSCodeObject *code = this->codeobjects.top();
     auto continues = this->continueposes.top();
     continues->push_back(code->ninsts);

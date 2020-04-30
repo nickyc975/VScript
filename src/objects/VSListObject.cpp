@@ -40,6 +40,7 @@ VSObject *vs_list(VSObject *, VSObject *const *args, vs_size_t nargs) {
 
     ERR_NARGS("list()", 1, nargs);
     terminate(TERM_ERROR);
+    return NULL;
 }
 
 VSObject *vs_list_str(VSObject *self, VSObject *const *, vs_size_t nargs) {
@@ -217,7 +218,7 @@ VSObject *vs_list_append(VSObject *self, VSObject *const *args, vs_size_t nargs)
 }
 
 // TODO: implement list.__has__()
-VSObject *vs_list_has(VSObject *self, VSObject *const *args, vs_size_t nargs) {
+VSObject *vs_list_has(VSObject *self, VSObject *const *, vs_size_t nargs) {
     if (nargs != 1) {
         ERR_NARGS("list.has()", 1, nargs);
         terminate(TERM_ERROR);
@@ -225,9 +226,9 @@ VSObject *vs_list_has(VSObject *self, VSObject *const *args, vs_size_t nargs) {
 
     ENSURE_TYPE(self, T_LIST, "list.has()");
 
-    VSObject *item = args[0];
-    VSListObject *list = (VSListObject *)self;
-    INCREF_RET(VS_TRUE);
+    // VSObject *item = args[0];
+    // VSListObject *list = (VSListObject *)self;
+    INCREF_RET(VS_FALSE);
 }
 
 VSObject *vs_list_has_at(VSObject *self, VSObject *const *args, vs_size_t nargs) {
@@ -247,7 +248,7 @@ VSObject *vs_list_has_at(VSObject *self, VSObject *const *args, vs_size_t nargs)
 }
 
 // TODO: implement list.__remove__()
-VSObject *vs_list_remove(VSObject *self, VSObject *const *args, vs_size_t nargs) {
+VSObject *vs_list_remove(VSObject *self, VSObject *const *, vs_size_t nargs) {
     if (nargs != 1) {
         ERR_NARGS("list.remove()", 1, nargs);
         terminate(TERM_ERROR);
@@ -255,7 +256,7 @@ VSObject *vs_list_remove(VSObject *self, VSObject *const *args, vs_size_t nargs)
 
     ENSURE_TYPE(self, T_LIST, "list.remove()");
 
-    VSListObject *list = (VSListObject *)self;
+    // VSListObject *list = (VSListObject *)self;
     INCREF_RET(VS_NONE);
 }
 
@@ -372,7 +373,7 @@ VSObject *VSListObject::getattr(std::string &attrname) {
     INCREF_RET(attr);
 }
 
-void VSListObject::setattr(std::string &attrname, VSObject *attrvalue) {
+void VSListObject::setattr(std::string &, VSObject *) {
     err("Unable to apply setattr on native type: \"%s\"", TYPE_STR[this->type]);
     terminate(TERM_ERROR);
 }

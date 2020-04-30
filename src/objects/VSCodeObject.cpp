@@ -101,7 +101,7 @@ VSObject *VSCodeObject::getattr(std::string &attrname) {
     INCREF_RET(attr);
 }
 
-void VSCodeObject::setattr(std::string &attrname, VSObject *attrvalue) {
+void VSCodeObject::setattr(std::string &, VSObject *) {
     err("Unable to apply setattr on native type: \"%s\"", TYPE_STR[this->type]);
     terminate(TERM_ERROR);
 }

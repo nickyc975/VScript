@@ -56,6 +56,7 @@ VSObject *vs_int(VSObject *, VSObject *const *args, vs_size_t nargs) {
 
     ERR_NARGS("int()", 2, nargs);
     terminate(TERM_ERROR);
+    return NULL;
 }
 
 VSObject *vs_int_hash(VSObject *self, VSObject *const *, vs_size_t nargs) {
@@ -345,7 +346,7 @@ VSObject *VSIntObject::getattr(std::string &attrname) {
     INCREF_RET(attr);
 }
 
-void VSIntObject::setattr(std::string &attrname, VSObject *attrvalue) {
+void VSIntObject::setattr(std::string &, VSObject *) {
     err("Unable to apply setattr on native type: \"%s\"", TYPE_STR[this->type]);
     terminate(TERM_ERROR);
 }

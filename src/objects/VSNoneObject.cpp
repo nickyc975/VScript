@@ -62,7 +62,7 @@ VSObject *VSNoneObject::getattr(std::string &attrname) {
     INCREF_RET(attr);
 }
 
-void VSNoneObject::setattr(std::string &attrname, VSObject *attrvalue) {
+void VSNoneObject::setattr(std::string &, VSObject *) {
     err("Unable to apply setattr on native type: \"%s\"", TYPE_STR[this->type]);
     terminate(TERM_ERROR);
 }

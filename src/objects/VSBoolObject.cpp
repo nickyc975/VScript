@@ -46,6 +46,7 @@ VSObject *vs_bool(VSObject *, VSObject *const *args, vs_size_t nargs) {
 
     ERR_NARGS("bool()", 1, nargs);
     terminate(TERM_ERROR);
+    return NULL;
 }
 
 VSObject *vs_bool_hash(VSObject *self, VSObject *const *, vs_size_t nargs) {
@@ -289,7 +290,7 @@ VSObject *VSBoolObject::getattr(std::string &attrname) {
     INCREF_RET(attr);
 }
 
-void VSBoolObject::setattr(std::string &attrname, VSObject *attrvalue) {
+void VSBoolObject::setattr(std::string &, VSObject *) {
     err("Unable to apply setattr on native type: \"%s\"", TYPE_STR[this->type]);
     terminate(TERM_ERROR);
 }

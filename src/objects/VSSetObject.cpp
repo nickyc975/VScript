@@ -40,6 +40,7 @@ VSObject *vs_set(VSObject *, VSObject *const *args, vs_size_t nargs) {
 
     ERR_NARGS("set()", 1, nargs);
     terminate(TERM_ERROR);
+    return NULL;
 }
 
 VSObject *vs_set_str(VSObject *self, VSObject *const *, vs_size_t nargs) {
@@ -211,7 +212,7 @@ VSObject *VSSetObject::getattr(std::string &attrname) {
     INCREF_RET(attr);
 }
 
-void VSSetObject::setattr(std::string &attrname, VSObject *attrvalue) {
+void VSSetObject::setattr(std::string &, VSObject *) {
     err("Unable to apply setattr on native type: \"%s\"", TYPE_STR[this->type]);
     terminate(TERM_ERROR);
 }

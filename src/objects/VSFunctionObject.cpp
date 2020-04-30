@@ -19,7 +19,7 @@ VSFunctionObject::VSFunctionObject() {
 VSFunctionObject::~VSFunctionObject() {
 }
 
-VSObject *VSFunctionObject::call(VSTupleObject *args) {
+VSObject *VSFunctionObject::call(VSTupleObject *) {
     INCREF_RET(VS_NONE);
 }
 
@@ -82,7 +82,7 @@ VSObject *VSNativeFunctionObject::getattr(std::string &attrname) {
     INCREF_RET(attr);
 }
 
-void VSNativeFunctionObject::setattr(std::string &attrname, VSObject *attrvalue) {
+void VSNativeFunctionObject::setattr(std::string &, VSObject *) {
     err("Unable to apply setattr on native type: \"%s\"", TYPE_STR[this->type]);
     terminate(TERM_ERROR);
 }
@@ -166,7 +166,7 @@ VSObject *VSDynamicFunctionObject::getattr(std::string &attrname) {
     INCREF_RET(attr);
 }
 
-void VSDynamicFunctionObject::setattr(std::string &attrname, VSObject *attrvalue) {
+void VSDynamicFunctionObject::setattr(std::string &, VSObject *) {
     err("Unable to apply setattr on native type: \"%s\"", TYPE_STR[this->type]);
     terminate(TERM_ERROR);
 }

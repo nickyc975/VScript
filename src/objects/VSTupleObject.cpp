@@ -40,6 +40,7 @@ VSObject *vs_tuple(VSObject *, VSObject *const *args, vs_size_t nargs) {
 
     ERR_NARGS("tuple()", 1, nargs);
     terminate(TERM_ERROR);
+    return NULL;
 }
 
 VSObject *vs_tuple_str(VSObject *self, VSObject *const *, vs_size_t nargs) {
@@ -159,13 +160,13 @@ VSObject *vs_tuple_get(VSObject *self, VSObject *const *args, vs_size_t nargs) {
 }
 
 // TODO: implement tuple.__has__()
-VSObject *vs_tuple_has(VSObject *self, VSObject *const *args, vs_size_t nargs) {
+VSObject *vs_tuple_has(VSObject *self, VSObject *const *, vs_size_t nargs) {
     if (nargs != 1) {
         ERR_NARGS("tuple.has()", 1, nargs);
         terminate(TERM_ERROR);
     }
 
-    VSObject *item = args[0];
+    // VSObject *item = args[0];
     ENSURE_TYPE(self, T_TUPLE, "tuple.has()");
 
     INCREF_RET(VS_FALSE);
@@ -284,7 +285,7 @@ VSObject *VSTupleObject::getattr(std::string &attrname) {
     INCREF_RET(attr);
 }
 
-void VSTupleObject::setattr(std::string &attrname, VSObject *attrvalue) {
+void VSTupleObject::setattr(std::string &, VSObject *) {
     err("Unable to apply setattr on native type: \"%s\"", TYPE_STR[this->type]);
     terminate(TERM_ERROR);
 }

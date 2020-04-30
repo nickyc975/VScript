@@ -54,6 +54,7 @@ VSObject *vs_str(VSObject *, VSObject *const *args, vs_size_t nargs) {
 
     ERR_NARGS("str()", 1, nargs);
     terminate(TERM_ERROR);
+    return NULL;
 }
 
 VSObject *vs_string_hash(VSObject *self, VSObject *const *, vs_size_t nargs) {
@@ -147,7 +148,7 @@ VSObject *vs_string_str(VSObject *self, VSObject *const *, vs_size_t nargs) {
     ENSURE_TYPE(self, T_STR, "str.__str__()");
 
     std::string &str_val = STRING_TO_C_STRING(self);
-    INCREF_RET(C_STRING_TO_STRING("\"" + str_val + "\""));
+    INCREF_RET(C_STRING_TO_STRING(str_val));
 }
 
 VSObject *vs_string_bytes(VSObject *self, VSObject *const *, vs_size_t nargs) {
@@ -500,7 +501,7 @@ VSObject *vs_string_substr(VSObject *self, VSObject *const *args, vs_size_t narg
     cint_t start = ((VSIntObject *)startobj)->_value;
     cint_t length = ((VSIntObject *)lengthobj)->_value;
 
-    if (start < 0 || start >= str.length()) {
+    if (start < 0 || ((size_t)start) >= str.length()) {
         err("invalid substr start pos: %lld in str.substr()", start);
         terminate(TERM_ERROR);
     }
@@ -535,7 +536,7 @@ VSObject *vs_string_locate(VSObject *self, VSObject *const *args, vs_size_t narg
         terminate(TERM_ERROR);   
     }
 
-    pos = pos == str.npos ? -1 : pos;
+    pos = ((size_t)pos) == str.npos ? -1 : pos;
     INCREF_RET(C_INT_TO_INT(pos));
 }
 
@@ -592,7 +593,7 @@ VSObject *VSStringObject::getattr(std::string &attrname) {
     INCREF_RET(attr);
 }
 
-void VSStringObject::setattr(std::string &attrname, VSObject *attrvalue) {
+void VSStringObject::setattr(std::string &, VSObject *) {
     err("Unable to apply setattr on native type: \"%s\"", TYPE_STR[this->type]);
     terminate(TERM_ERROR);
 }

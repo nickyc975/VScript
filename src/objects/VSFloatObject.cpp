@@ -42,6 +42,7 @@ VSObject *vs_float(VSObject *, VSObject *const *args, vs_size_t nargs) {
         ERR_NARGS("float()", 1, nargs);
         terminate(TERM_ERROR);
     }
+    return NULL;
 }
 
 VSObject *vs_float_hash(VSObject *self, VSObject *const *, vs_size_t nargs) {
@@ -212,7 +213,7 @@ VSObject *vs_float_bool(VSObject *self, VSObject *const *, vs_size_t nargs) {
     INCREF_RET(res ? VS_TRUE : VS_FALSE);
 }
 
-VSObject *vs_float_char(VSObject *self, VSObject *const *args, vs_size_t nargs) {
+VSObject *vs_float_char(VSObject *self, VSObject *const *, vs_size_t nargs) {
     if (nargs != 0) {
         ERR_NARGS("float.__char__()", 0, nargs);
         terminate(TERM_ERROR);
@@ -224,7 +225,7 @@ VSObject *vs_float_char(VSObject *self, VSObject *const *args, vs_size_t nargs) 
     INCREF_RET(C_CHAR_TO_CHAR((cchar_t)res));
 }
 
-VSObject *vs_float_int(VSObject *self, VSObject *const *args, vs_size_t nargs) {
+VSObject *vs_float_int(VSObject *self, VSObject *const *, vs_size_t nargs) {
     if (nargs != 0) {
         ERR_NARGS("float.__int__()", 0, nargs);
         terminate(TERM_ERROR);
@@ -236,7 +237,7 @@ VSObject *vs_float_int(VSObject *self, VSObject *const *args, vs_size_t nargs) {
     INCREF_RET(C_INT_TO_INT((cint_t)res));
 }
 
-VSObject *vs_float_float(VSObject *self, VSObject *const *args, vs_size_t nargs) {
+VSObject *vs_float_float(VSObject *self, VSObject *const *, vs_size_t nargs) {
     if (nargs != 0) {
         ERR_NARGS("float.__float__()", 0, nargs);
         terminate(TERM_ERROR);
@@ -247,7 +248,7 @@ VSObject *vs_float_float(VSObject *self, VSObject *const *args, vs_size_t nargs)
     INCREF_RET(self);
 }
 
-VSObject *vs_float_str(VSObject *self, VSObject *const *args, vs_size_t nargs) {
+VSObject *vs_float_str(VSObject *self, VSObject *const *, vs_size_t nargs) {
     if (nargs != 0) {
         ERR_NARGS("float.__str__()", 0, nargs);
         terminate(TERM_ERROR);
@@ -259,7 +260,7 @@ VSObject *vs_float_str(VSObject *self, VSObject *const *args, vs_size_t nargs) {
     INCREF_RET(C_STRING_TO_STRING(std::to_string(val)));
 }
 
-VSObject *vs_float_bytes(VSObject *self, VSObject *const *args, vs_size_t nargs) {
+VSObject *vs_float_bytes(VSObject *self, VSObject *const *, vs_size_t nargs) {
     if (nargs != 0) {
         ERR_NARGS("float.__bytes__()", 0, nargs);
         terminate(TERM_ERROR);
@@ -313,7 +314,7 @@ VSObject *VSFloatObject::getattr(std::string &attrname) {
     INCREF_RET(attr);
 }
 
-void VSFloatObject::setattr(std::string &attrname, VSObject *attrvalue) {
+void VSFloatObject::setattr(std::string &, VSObject *) {
     err("Unable to apply setattr on native type: \"%s\"", TYPE_STR[this->type]);
     terminate(TERM_ERROR);
 }
