@@ -10,6 +10,7 @@
 #include "objects/VSListObject.hpp"
 #include "objects/VSSetObject.hpp"
 #include "objects/VSStringObject.hpp"
+#include "objects/VSTupleObject.hpp"
 
 static VSObject *__vs_input__(VSObject *, VSObject *const *args, vs_size_t nargs);
 static VSObject *__vs_print__(VSObject *, VSObject *const *args, vs_size_t nargs);
@@ -23,15 +24,19 @@ name_addr_map _builtin_addrs_struct = {
     {"int", 5},
     {"float", 6},
     {"str", 7},
-    {"hasattr", 8},
-    {"getattr", 9},
-    {"setattr", 10},
-    {"removeattr", 11}};
+    {"tuple", 8},
+    {"list", 9},
+    {"dict", 10},
+    {"set", 11},
+    {"hasattr", 12},
+    {"getattr", 13},
+    {"setattr", 14},
+    {"removeattr", 15}};
 
 name_addr_map *builtin_addrs = &_builtin_addrs_struct;
 
 VSTupleObject *builtins = vs_tuple_pack(
-    8,
+    12,
     AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("input"), __vs_input__)),
     AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("print"), __vs_print__)),
     AS_OBJECT(NULL),
@@ -39,7 +44,11 @@ VSTupleObject *builtins = vs_tuple_pack(
     AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("char"), vs_char)),
     AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("int"), vs_int)),
     AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("float"), vs_float)),
-    AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("str"), vs_str)));
+    AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("str"), vs_str)),
+    AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("tuple"), vs_tuple)),
+    AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("list"), vs_list)),
+    AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("dict"), vs_dict)),
+    AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("set"), vs_set)));
 
 static void __vs_print_impl__(VSObject *obj) {
     NEW_IDENTIFIER(__str__);
