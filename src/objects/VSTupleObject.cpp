@@ -9,6 +9,7 @@
 #include "objects/VSIntObject.hpp"
 #include "objects/VSListObject.hpp"
 #include "objects/VSNoneObject.hpp"
+#include "objects/VSSetObject.hpp"
 #include "objects/VSStringObject.hpp"
 
 NEW_IDENTIFIER(__hash__);
@@ -32,6 +33,15 @@ VSObject *vs_tuple(VSObject *, VSObject *const *args, vs_size_t nargs) {
             INCREF_RET(obj);
         } else if (obj->type == T_LIST) {
             return vs_list_to_tuple(obj);
+        } else if (obj->type == T_SET) {
+            int i = 0;
+            VSSetObject *set = (VSSetObject *)obj;
+            VSTupleObject *tuple = new VSTupleObject(set->_set.size());
+            for (auto item : set->_set) {
+                TUPLE_SET(tuple, i, item);
+                i++;
+            }
+            INCREF_RET(tuple);
         } else {
             err("can not cast \"%s\" object to tuple", TYPE_STR[obj->type]);
             INCREF_RET(VS_NONE);
@@ -246,8 +256,7 @@ const str_func_map VSTupleObject::vs_tuple_methods = {
     {ID_copy, vs_tuple_copy},
     {ID_len, vs_tuple_len},
     {ID_get, vs_tuple_get},
-    {ID_has_at, vs_tuple_has_at}
-};
+    {ID_has_at, vs_tuple_has_at}};
 
 VSTupleObject::VSTupleObject(vs_size_t nitems) {
     this->type = T_TUPLE;

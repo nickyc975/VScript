@@ -32,6 +32,13 @@ VSObject *vs_set(VSObject *, VSObject *const *args, vs_size_t nargs) {
                 SET_APPEND(set, LIST_GET(obj, i));
             }
             INCREF_RET(set);
+        } else if (obj->type == T_SET) {
+            VSSetObject *set = new VSSetObject();
+            VSSetObject *old = (VSSetObject *)obj;
+            for (auto item : old->_set) {
+                SET_APPEND(set, item);
+            }
+            INCREF_RET(set);
         } else {
             err("can not cast \"%s\" object to set", TYPE_STR[obj->type]);
             INCREF_RET(VS_NONE);

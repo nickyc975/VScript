@@ -6,6 +6,7 @@
 #include "objects/VSBoolObject.hpp"
 #include "objects/VSFunctionObject.hpp"
 #include "objects/VSIntObject.hpp"
+#include "objects/VSSetObject.hpp"
 #include "objects/VSStringObject.hpp"
 #include "objects/VSTupleObject.hpp"
 
@@ -32,6 +33,13 @@ VSObject *vs_list(VSObject *, VSObject *const *args, vs_size_t nargs) {
             INCREF_RET(obj);
         } else if (obj->type == T_TUPLE) {
             return vs_tuple_to_list(obj);
+        } else if (obj->type == T_SET) {
+            VSSetObject *set = (VSSetObject *)obj;
+            VSListObject *list = new VSListObject(0);
+            for (auto item : set->_set) {
+                LIST_APPEND(list, item);
+            }
+            INCREF_RET(list);
         } else {
             err("can not cast \"%s\" object to list", TYPE_STR[obj->type]);
             INCREF_RET(VS_NONE);
@@ -345,8 +353,7 @@ const str_func_map VSListObject::vs_list_methods = {
     {ID_set, vs_list_set},
     {ID_append, vs_list_append},
     {ID_has_at, vs_list_has_at},
-    {ID_remove_at, vs_list_remove_at}
-};
+    {ID_remove_at, vs_list_remove_at}};
 
 VSListObject::VSListObject(vs_size_t nitems) {
     this->type = T_LIST;
