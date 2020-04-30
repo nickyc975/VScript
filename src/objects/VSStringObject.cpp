@@ -1,5 +1,7 @@
 #include "objects/VSStringObject.hpp"
 
+#include <errno.h>
+
 #include "error.hpp"
 #include "objects/VSBoolObject.hpp"
 #include "objects/VSCharObject.hpp"

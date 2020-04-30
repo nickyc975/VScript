@@ -1,5 +1,7 @@
 #include "compiler/VSTokenizer.hpp"
 
+#include <errno.h>
+
 #include "error.hpp"
 #include "objects/VSBoolObject.hpp"
 #include "objects/VSCharObject.hpp"
@@ -41,7 +43,7 @@ char VSTokenizer::getchar() {
     if (c == '\n') {
         this->ln++;
         this->col = 1;
-    } else if (c != EOF) {
+    } else if (!feof(this->file)) {
         this->col++;
     }
     return c;
@@ -62,7 +64,7 @@ int VSTokenizer::ungetchar() {
 
 char VSTokenizer::peekchar() {
     char c = fgetc(this->file);
-    if (c != EOF) {
+    if (!feof(this->file)) {
         fseek(this->file, -1, SEEK_CUR);
     }
     return c;
@@ -71,7 +73,7 @@ char VSTokenizer::peekchar() {
 int VSTokenizer::seek(int steps) {
     int seeked = 0;
     if (steps > 0) {
-        while (seeked < steps && this->peekchar() != EOF) {
+        while (seeked < steps && !feof(this->file)) {
             this->getchar();
             seeked++;
         }
@@ -130,7 +132,7 @@ int VSTokenizer::getword(std::string &str) {
     int i = 0;
     char c = this->peekchar();
 
-    while (!IS_WORD_CHAR(c) && c != EOF) {
+    while (!IS_WORD_CHAR(c) && !feof(this->file)) {
         this->getchar();
         c = this->peekchar();
     }
@@ -145,12 +147,12 @@ int VSTokenizer::getword(std::string &str) {
 int VSTokenizer::getquoted(std::string &str) {
     int i = 0;
     char c = this->peekchar();
-    if (c == EOF || !IS_QUOTE(c)) {
+    if (feof(this->file) || !IS_QUOTE(c)) {
         return i;
     }
 
     APPEND_CHAR(str, c, i);
-    while (c != EOF && !IS_QUOTE(c)) {
+    while (!feof(this->file) && !IS_QUOTE(c)) {
         if (c == '\\') {
             this->getchar();
             c = this->escape(this->peekchar());
@@ -158,7 +160,7 @@ int VSTokenizer::getquoted(std::string &str) {
         APPEND_CHAR(str, c, i);
     }
 
-    if (c != EOF) {
+    if (!feof(this->file)) {
         APPEND_CHAR(str, c, i);
     }
     return i;
@@ -167,7 +169,7 @@ int VSTokenizer::getquoted(std::string &str) {
 int VSTokenizer::getstr(std::string &str, int len) {
     int i = 0;
     char c = this->peekchar();
-    while (i < len - 1 && c != EOF) {
+    while (i < len - 1 && !feof(this->file)) {
         APPEND_CHAR(str, c, i);
     }
     return i;
@@ -320,7 +322,7 @@ VSToken *VSTokenizer::reco_kwd(std::string &literal) {
 }
 
 bool VSTokenizer::hastoken() {
-    return this->peektoken() != NULL || this->peekchar() != EOF;
+    return this->peektoken() != NULL || !feof(this->file);
 }
 
 VSToken *VSTokenizer::gettoken() {
@@ -423,7 +425,7 @@ begain:
                     this->getchar();
                     this->peek = NEW_SYM_TOKEN(TK_DIV_ASSIGN, "/=");
                 } else if (this->peekchar() == '/') {
-                    while (this->peekchar() != EOF && this->getchar() != '\n')
+                    while (!feof(this->file) && this->getchar() != '\n')
                         ;
                     goto begain;
                 } else {
@@ -521,12 +523,11 @@ begain:
             case '\t':
             case '\r':
                 goto begain;
-            case EOF:
-                this->peek = NULL;
-                break;
             default:
                 this->peek = NULL;
-                ERR_WITH_POS(this->ln, this->col, "illegal token: \"%c\"\n", tk_char);
+                if (!feof(this->file)) {
+                    ERR_WITH_POS(this->ln, this->col, "illegal token: \"%c\"\n", tk_char);
+                }
                 break;
         }
 
