@@ -43,6 +43,7 @@ const str_func_map VSBaseObject::vs_object_methods = {
     {"__bytes__", vs_object_bytes}};
 
 VSBaseObject::VSBaseObject() {
+    this->type = T_OBJECT;
     this->attrs = std::unordered_map<std::string, VSObject *>();
 }
 

@@ -150,6 +150,6 @@ VSObject *vs_default_eq(VSObject *self, VSObject *const *args, vs_size_t nargs);
 #endif
 
 #define ERR_NO_ATTR(obj, attrname) \
-    err("\"%s\" object does not has attribute \"%s\"", TYPE_STR[obj->type], attrname.c_str());
+    err("\"%s\" object does not have attribute \"%s\"", TYPE_STR[obj->type], attrname.c_str());
 
 #endif

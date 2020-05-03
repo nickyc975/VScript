@@ -11,17 +11,22 @@ func Person(name, age) {
         return person.age;
     }
 
+    func __str__() {
+        return person.name + " " + str(person.age);
+    }
+
     setattr(person, "name", name);
     setattr(person, "age", age);
     setattr(person, "getName", getName);
     setattr(person, "getAge", getAge);
+    setattr(person, "__str__", __str__);
 
     return person;
 }
 
 // Construct a Person object.
 var person = Person("Nicky", 22);
+print(person);
 
-// Call methods.
-print("name:", person.getName());
-print("age:", person.getAge());
+person = Person("Sherry", 20);
+print(person);
