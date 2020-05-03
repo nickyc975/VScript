@@ -59,6 +59,7 @@
         "node",
         "numb",
         "reco",
+        "setattr",
         "vsast"
     ]
 }
