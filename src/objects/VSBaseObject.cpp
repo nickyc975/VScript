@@ -5,7 +5,7 @@
 #include "objects/VSNoneObject.hpp"
 #include "objects/VSStringObject.hpp"
 
-VSObject *vs_object(VSObject *, VSObject *const *args, vs_size_t nargs) {
+VSObject *vs_object(VSObject *, VSObject *const *, vs_size_t nargs) {
     if (nargs != 0) {
         ERR_NARGS("object()", 0, nargs);
         terminate(TERM_ERROR);

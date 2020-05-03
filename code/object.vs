@@ -1,5 +1,5 @@
 // Define a Person object constructor.
-// The constructor creates an object and bind Person attributes on it.
+// The constructor creates an object and binds Person attributes to it.
 func Person(name, age) {
     var person = object();
 
