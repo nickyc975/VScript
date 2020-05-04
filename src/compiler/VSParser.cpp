@@ -302,9 +302,11 @@ VSASTNode *VSParser::read_unary_expr() {
     if (PEEKTOKEN()->tk_type == TK_SUB || PEEKTOKEN()->tk_type == TK_NOT) {
         token = GETTOKEN();
     }
+
     VSASTNode *node = this->read_postfix_expr();
-    if (node == NULL || !HASTOKEN())
+    if (node == NULL)
         return node;
+
     if (token != NULL) {
         node = new UOPNode(token->tk_type, node);
     }
