@@ -5,6 +5,7 @@
 #include "objects/VSBoolObject.hpp"
 #include "objects/VSCharObject.hpp"
 #include "objects/VSDictObject.hpp"
+#include "objects/VSFileObject.hpp"
 #include "objects/VSFloatObject.hpp"
 #include "objects/VSFunctionObject.hpp"
 #include "objects/VSIntObject.hpp"
@@ -12,6 +13,12 @@
 #include "objects/VSSetObject.hpp"
 #include "objects/VSStringObject.hpp"
 #include "objects/VSTupleObject.hpp"
+
+static const VSFileObject *VS_STDIN = NEW_REF(
+    VSFileObject *, new VSFileObject(stdin, C_STRING_TO_STRING("stdin")));
+
+static const VSFileObject *VS_STDOUT = NEW_REF(
+    VSFileObject *, new VSFileObject(stdout, C_STRING_TO_STRING("stdout")));
 
 static void vs_print_impl(VSObject *obj) {
     NEW_IDENTIFIER(__str__);
@@ -132,15 +139,17 @@ name_addr_map _builtin_addrs_struct = {
     {"hasattr", 13},
     {"getattr", 14},
     {"setattr", 15},
-    {"removeattr", 16}};
+    {"removeattr", 16},
+    {"stdin", 17},
+    {"stdout", 18}};
 
 name_addr_map *builtin_addrs = &_builtin_addrs_struct;
 
 VSTupleObject *builtins = vs_tuple_pack(
-    17,
+    19,
     AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("input"), vs_input)),
     AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("print"), vs_print)),
-    AS_OBJECT(NULL),
+    AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("open"), vs_open)),
     AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("bool"), vs_bool)),
     AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("char"), vs_char)),
     AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("int"), vs_int)),
@@ -154,4 +163,6 @@ VSTupleObject *builtins = vs_tuple_pack(
     AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("hasattr"), vs_hasattr)),
     AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("getattr"), vs_getattr)),
     AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("setattr"), vs_setattr)),
-    AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("removeattr"), vs_removeattr)));
+    AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("removeattr"), vs_removeattr)),
+    AS_OBJECT(VS_STDIN),
+    AS_OBJECT(VS_STDOUT));
