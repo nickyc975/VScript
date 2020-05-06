@@ -35,8 +35,6 @@ public:
     VSObject *call(VSTupleObject *args) override;
 };
 
-#define VS_FUNC_VARARGS 0x1
-
 class VSDynamicFunctionObject : public VSFunctionObject {
 private:
     static const str_func_map vs_dynamic_func_methods;

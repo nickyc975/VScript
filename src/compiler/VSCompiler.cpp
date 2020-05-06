@@ -626,6 +626,9 @@ void VSCompiler::gen_func_decl(VSASTNode *node) {
     // Add function code to parent code consts.
     VSCodeObject *code = this->codeobjects.top();
 
+    // Set flags.
+    code->flags |= func->va_args ? VS_FUNC_VARARGS : 0;
+
     // Add function arg names to function locals.
     for (auto argnode : func->args) {
         VSObject *argname;

@@ -64,6 +64,8 @@ set_declaration:L_CURLY value_list_expression R_CURLY
 
 anony_function_declaration:LAMBDA L_PAREN R_PAREN compound_statement
 anony_function_declaration:LAMBDA L_PAREN parameter_list R_PAREN compound_statement
+anony_function_declaration:LAMBDA L_PAREN MUL IDENTIFIER R_PAREN compound_statement
+anony_function_declaration:LAMBDA L_PAREN parameter_list COMMA MUL IDENTIFIER R_PAREN compound_statement
 
 assignment_operator:ASSIGN
 assignment_operator:MUL_ASSIGN
@@ -97,6 +99,8 @@ parameter_list:parameter_list COMMA IDENTIFIER
 
 function_declaration:FUNC IDENTIFIER L_PAREN R_PAREN compound_statement
 function_declaration:FUNC IDENTIFIER L_PAREN parameter_list R_PAREN compound_statement
+function_declaration:FUNC IDENTIFIER L_PAREN MUL IDENTIFIER R_PAREN compound_statement
+function_declaration:FUNC IDENTIFIER L_PAREN parameter_list COMMA MUL IDENTIFIER R_PAREN compound_statement
 
 elif_statement:ELIF L_PAREN logical_or_expression R_PAREN compound_statement
 elif_statement:elif_statement ELIF L_PAREN logical_or_expression R_PAREN compound_statement

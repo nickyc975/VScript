@@ -282,11 +282,13 @@ public:
 
 class FuncDeclNode : public VSASTNode {
 public:
+    bool va_args;
     IdentNode *name;
     std::vector<VSASTNode *> args;
     VSASTNode *body;
 
     FuncDeclNode(IdentNode *name) : name(name) {
+        this->va_args = false;
         this->node_type = name != NULL ? AST_FUNC_DECL : AST_LAMBDA_DECL;
         this->args = std::vector<VSASTNode *>();
         this->body = NULL;

@@ -76,7 +76,15 @@ VSFrameObject::VSFrameObject(VSCodeObject *code, VSTupleObject *args, VSTupleObj
     this->locals = new VSTupleObject(this->nlocals);
     for (vs_size_t i = 0; i < this->nlocals; i++) {
         if (i < code->nargs) {
-            TUPLE_SET(this->locals, i, new VSCellObject(TUPLE_GET(args, i)));
+            if (i < code->nargs - 1 || !(code->flags & VS_FUNC_VARARGS)) {
+                TUPLE_SET(this->locals, i, new VSCellObject(TUPLE_GET(args, i)));
+            } else {
+                VSTupleObject *va_args = new VSTupleObject(TUPLE_LEN(args) - code->nargs + 1);
+                for (vs_size_t j = i; j < TUPLE_LEN(args); j++) {
+                    TUPLE_SET(va_args, j - i, TUPLE_GET(args, j));
+                }
+                TUPLE_SET(this->locals, i, new VSCellObject(va_args));
+            }
         } else {
             TUPLE_SET(this->locals, i, new VSCellObject(VS_NONE));
         }
@@ -564,11 +572,12 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
                 break;
             }
             case OP_BUILD_FUNC: {
-                VSObject *code = STACK_POP(stack);
+                VSObject *codeobj = STACK_POP(stack);
                 VSObject *freevars = STACK_POP(stack);
+                VSCodeObject *code = (VSCodeObject *)codeobj;
 
                 VSFunctionObject *func = new VSDynamicFunctionObject(
-                    AS_CODE(code)->name, AS_CODE(code), AS_TUPLE(freevars), this->builtins, 0);
+                    code->name, code, AS_TUPLE(freevars), this->builtins, code->flags);
                 STACK_PUSH_INCREF(stack, func);
                 DECREF(freevars);
                 DECREF(code);

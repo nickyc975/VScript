@@ -96,22 +96,33 @@ VSToken *VSParser::expect(int ntypes, ...) {
 void VSParser::read_func_def(FuncDeclNode *func) {
     // read func args
     ENSURE_TOKEN();
-    if (PEEKTOKEN()->tk_type != TK_R_PAREN) {
-        VSToken *token = this->expect(1, TK_IDENTIFIER);
-        if (token != NULL) {
-            IdentNode *arg = new IdentNode(token->literal);
-            func->add_arg(arg);
-        }
 
-        ENSURE_TOKEN();
-        while (PEEKTOKEN()->tk_type == TK_COMMA) {
-            POPTOKEN(1, TK_COMMA);
-            token = this->expect(1, TK_IDENTIFIER);
+    if (PEEKTOKEN()->tk_type != TK_R_PAREN) {
+        VSToken *token = NULL;
+        while (PEEKTOKEN()->tk_type == TK_IDENTIFIER)
+        {
+            token = GETTOKEN();
             if (token != NULL) {
                 IdentNode *arg = new IdentNode(token->literal);
                 func->add_arg(arg);
             }
+
             ENSURE_TOKEN();
+            if (PEEKTOKEN()->tk_type != TK_COMMA) {
+                break;
+            }
+            POPTOKEN(1, TK_COMMA);
+        }
+
+        ENSURE_TOKEN();
+        if (PEEKTOKEN()->tk_type == TK_MUL) {
+            POPTOKEN(1, TK_MUL);
+            token = this->expect(1, TK_IDENTIFIER);
+            if (token != NULL) {
+                func->va_args = true;
+                IdentNode *arg = new IdentNode(token->literal);
+                func->add_arg(arg);
+            }
         }
     }
     POPTOKEN(1, TK_R_PAREN);

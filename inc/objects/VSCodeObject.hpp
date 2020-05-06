@@ -20,11 +20,14 @@ public:
     VSInst &operator=(VSInst &inst);
 };
 
+#define VS_FUNC_VARARGS 0x1
+
 class VSCodeObject : public VSObject {
 private:
     static const str_func_map vs_code_methods;
 
 public:
+    int flags;
     vs_size_t ninsts;
     vs_size_t nconsts;
     vs_size_t nargs;

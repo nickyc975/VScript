@@ -174,7 +174,12 @@ void VSDynamicFunctionObject::setattr(std::string &, VSObject *) {
 VSObject *VSDynamicFunctionObject::call(VSTupleObject *args) {
     assert(args != NULL);
     vs_size_t nargs = TUPLE_LEN(args);
-    if (nargs < this->code->nargs || (nargs > this->code->nargs && !(VS_FUNC_VARARGS & this->flags))) {
+    bool va_args = VS_FUNC_VARARGS & this->flags;
+
+    if (va_args && nargs < this->code->nargs - 1) {
+        ERR_NARGS(this->name->_value.c_str(), this->code->nargs - 1, nargs);
+        terminate(TERM_ERROR);
+    } else if (!va_args && nargs != this->code->nargs) {
         ERR_NARGS(this->name->_value.c_str(), this->code->nargs, nargs);
         terminate(TERM_ERROR);
     }

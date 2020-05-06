@@ -57,6 +57,7 @@ VSCodeObject::VSCodeObject(VSStringObject *name) {
     this->name = name;
     INCREF(name);
 
+    this->flags = 0;
     this->ninsts = 0;
     this->nconsts = 0;
     this->nargs = 0;
