@@ -15,10 +15,10 @@
 #include "objects/VSTupleObject.hpp"
 
 static const VSFileObject *VS_STDIN = NEW_REF(
-    VSFileObject *, new VSFileObject(stdin, C_STRING_TO_STRING("stdin")));
+    VSFileObject *, new VSFileObject(stdin, C_STRING_TO_STRING("stdin"), FILE_READABLE));
 
 static const VSFileObject *VS_STDOUT = NEW_REF(
-    VSFileObject *, new VSFileObject(stdout, C_STRING_TO_STRING("stdout")));
+    VSFileObject *, new VSFileObject(stdout, C_STRING_TO_STRING("stdout"), FILE_WRITABLE));
 
 static void vs_print_impl(VSObject *obj) {
     NEW_IDENTIFIER(__str__);

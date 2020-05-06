@@ -41,7 +41,27 @@ VSObject *vs_open(VSObject *, VSObject *const *args, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    INCREF_RET(new VSFileObject(_file, (VSStringObject *)args[0]));
+    int flags = FILE_SEEKABLE;
+    for (auto c : mode) {
+        switch (c) {
+            case 'r':
+                flags |= FILE_READABLE;
+                break;
+            case 'a':
+                flags |= FILE_WRITABLE | FILE_APPENDING;
+                break;
+            case 'w':
+                flags |= FILE_WRITABLE;
+            case 'x':
+                flags |= FILE_WRITABLE | FILE_CREATED;
+            case '+':
+                flags |= FILE_READABLE | FILE_WRITABLE;
+            default:
+                break;
+        }
+    }
+
+    INCREF_RET(new VSFileObject(_file, (VSStringObject *)args[0], flags));
 }
 
 VSObject *vs_file_hash(VSObject *self, VSObject *const *, vs_size_t nargs) {
@@ -114,7 +134,7 @@ VSObject *vs_file_read(VSObject *self, VSObject *const *args, vs_size_t nargs) {
 
     VSFileObject *file = (VSFileObject *)self;
 
-    if (file->_file->_flags & _IO_NO_READS) {
+    if (!(file->flags & FILE_READABLE)) {
         err("file \"%s\" is not readable", file->name->_value.c_str());
         terminate(TERM_ERROR);
     }
@@ -122,8 +142,7 @@ VSObject *vs_file_read(VSObject *self, VSObject *const *args, vs_size_t nargs) {
     vs_size_t read = 0;
     char c = fgetc(file->_file);
     std::string str = std::string();
-    while (!feof(file->_file) && read < len)
-    {
+    while (!feof(file->_file) && read < len) {
         read++;
         str.push_back(c);
         c = fgetc(file->_file);
@@ -157,7 +176,7 @@ VSObject *vs_file_readable(VSObject *self, VSObject *const *, vs_size_t nargs) {
 
     ENSURE_TYPE(self, T_FILE, "file.readable()");
 
-    cbool_t res = !(((VSFileObject *)self)->_file->_flags & _IO_NO_READS);
+    cbool_t res = (((VSFileObject *)self)->flags & FILE_READABLE);
     INCREF_RET(res ? VS_TRUE : VS_FALSE);
 }
 
@@ -171,7 +190,7 @@ VSObject *vs_file_readline(VSObject *self, VSObject *const *, vs_size_t nargs) {
 
     VSFileObject *file = (VSFileObject *)self;
 
-    if (file->_file->_flags & _IO_NO_READS) {
+    if (!(file->flags & FILE_READABLE)) {
         err("file \"%s\" is not readable", file->name->_value.c_str());
         terminate(TERM_ERROR);
     }
@@ -210,7 +229,7 @@ VSObject *vs_file_write(VSObject *self, VSObject *const *args, vs_size_t nargs) 
     VSFileObject *file = (VSFileObject *)self;
     std::string &str = STRING_TO_C_STRING(args[0]);
 
-    if (file->_file->_flags & _IO_NO_WRITES) {
+    if (!(file->flags & FILE_WRITABLE)) {
         err("file \"%s\" is not writable", file->name->_value.c_str());
         terminate(TERM_ERROR);
     }
@@ -231,7 +250,7 @@ VSObject *vs_file_writable(VSObject *self, VSObject *const *, vs_size_t nargs) {
 
     ENSURE_TYPE(self, T_FILE, "file.writable()");
 
-    cbool_t res = !(((VSFileObject *)self)->_file->_flags & _IO_NO_WRITES);
+    cbool_t res = (((VSFileObject *)self)->flags & FILE_WRITABLE);
     INCREF_RET(res ? VS_TRUE : VS_FALSE);
 }
 
@@ -247,7 +266,7 @@ VSObject *vs_file_writeline(VSObject *self, VSObject *const *args, vs_size_t nar
     VSFileObject *file = (VSFileObject *)self;
     std::string &str = STRING_TO_C_STRING(args[0]);
 
-    if (file->_file->_flags & _IO_NO_WRITES) {
+    if (!(file->flags & FILE_WRITABLE)) {
         err("file \"%s\" is not writable", file->name->_value.c_str());
         terminate(TERM_ERROR);
     }
@@ -316,7 +335,7 @@ VSObject *vs_file_seekable(VSObject *self, VSObject *const *, vs_size_t nargs) {
     }
 
     ENSURE_TYPE(self, T_FILE, "file.seekable()");
-    INCREF_RET(((VSFileObject *)self)->closed ? VS_TRUE : VS_FALSE);
+    INCREF_RET((((VSFileObject *)self)->flags & FILE_CLOSED) ? VS_TRUE : VS_FALSE);
 }
 
 VSObject *vs_file_close(VSObject *self, VSObject *const *, vs_size_t nargs) {
@@ -328,9 +347,9 @@ VSObject *vs_file_close(VSObject *self, VSObject *const *, vs_size_t nargs) {
     ENSURE_TYPE(self, T_FILE, "file.close()");
 
     VSFileObject *file = (VSFileObject *)self;
-    if (!file->closed) {
+    if (!(file->flags & FILE_CLOSED)) {
         fclose(file->_file);
-        file->closed = true;
+        file->flags |= FILE_CLOSED;
     }
     INCREF_RET(VS_NONE);
 }
@@ -342,7 +361,7 @@ VSObject *vs_file_closed(VSObject *self, VSObject *const *, vs_size_t nargs) {
     }
 
     ENSURE_TYPE(self, T_FILE, "file.closed()");
-    INCREF_RET(((VSFileObject *)self)->closed ? VS_TRUE : VS_FALSE);
+    INCREF_RET((((VSFileObject *)self)->flags & FILE_CLOSED) ? VS_TRUE : VS_FALSE);
 }
 
 const str_func_map VSFileObject::vs_file_methods = {
@@ -361,21 +380,20 @@ const str_func_map VSFileObject::vs_file_methods = {
     {ID_seek, vs_file_seek},
     {ID_seekable, vs_file_seekable},
     {ID_close, vs_file_close},
-    {ID_closed, vs_file_closed}
-};
+    {ID_closed, vs_file_closed}};
 
-VSFileObject::VSFileObject(FILE *file, VSStringObject *name) {
+VSFileObject::VSFileObject(FILE *file, VSStringObject *name, int flags) {
     this->type = T_FILE;
+    this->flags = flags;
     this->_file = file;
-    this->closed = false;
     this->name = name;
     INCREF(name);
 }
 
 VSFileObject::~VSFileObject() {
-    if (!this->closed) {
+    if (!(this->flags & FILE_CLOSED)) {
         fclose(this->_file);
-        this->closed = true;
+        this->flags |= FILE_CLOSED;
     }
     DECREF(this->name);
 }
@@ -396,7 +414,7 @@ VSObject *VSFileObject::getattr(std::string &attrname) {
     INCREF_RET(attr);
 }
 
-void VSFileObject::setattr(std::string &attrname, VSObject *attrvalue) {
+void VSFileObject::setattr(std::string &, VSObject *) {
     err("Unable to apply setattr on native type: \"%s\"", TYPE_STR[this->type]);
     terminate(TERM_ERROR);
 }
