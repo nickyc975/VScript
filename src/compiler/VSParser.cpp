@@ -248,6 +248,10 @@ VSASTNode *VSParser::read_primary_expr() {
             node = new IdentNode(token->literal);
             DECREF(token);
             break;
+        case TK_YIELD:
+            POPTOKEN(1, TK_YIELD);
+            
+            break;
         case TK_L_PAREN:
             POPTOKEN(1, TK_L_PAREN);
             node = this->read_tuple_decl_or_expr();

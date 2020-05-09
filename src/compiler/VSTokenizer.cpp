@@ -313,6 +313,10 @@ VSToken *VSTokenizer::reco_kwd(std::string &literal) {
                 token = NEW_KWD_TOKEN(TK_WHILE);
             }
             break;
+        case 'y':
+            if (literal == "yield") {
+                token = NEW_KWD_TOKEN(TK_YIELD);
+            }
         default:
             break;
     }

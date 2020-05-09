@@ -52,6 +52,7 @@ typedef enum {
     TK_VAR,
     TK_FUNC,
     TK_LAMBDA,
+    TK_YIELD,
     TK_RETURN,
 
     // if statement keywords
@@ -130,6 +131,7 @@ static char *TOKEN_STR[] =
         "VAR",
         "FUNC",
         "LAMBDA",
+        "YIELD",
         "RETURN",
         "IF",
         "ELIF",

@@ -1,5 +1,6 @@
 primary_expression:CONSTANT
 primary_expression:IDENTIFIER
+primary_expression:YIELD
 primary_expression:L_PAREN logical_or_expression R_PAREN
 primary_expression:tuple_declaration
 primary_expression:list_declaration
@@ -118,6 +119,8 @@ iteration_statement:FOR L_PAREN expression_statement expression_statement expres
 
 jump_statement:CONTINUE SEMICOLON
 jump_statement:BREAK SEMICOLON
+jump_statement:YIELD SEMICOLON
+jump_statement:YIELD logical_or_expression SEMICOLON;
 jump_statement:RETURN SEMICOLON
 jump_statement:RETURN logical_or_expression SEMICOLON
 

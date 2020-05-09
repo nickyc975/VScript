@@ -45,4 +45,5 @@ VAR         var
 VAL         val
 CONTINUE    continue
 BREAK       break
+YIELD       yield
 RETURN      return

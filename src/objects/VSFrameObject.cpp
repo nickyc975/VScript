@@ -603,6 +603,7 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
                 break;
             }
             case OP_RET: {
+                this->pc = this->code->ninsts;
                 return;
             }
             case OP_NOP: {
@@ -613,4 +614,9 @@ void VSFrameObject::eval(std::stack<VSObject *> &stack) {
         }
         this->pc++;
     }
+}
+
+bool VSFrameObject::done()
+{
+    return this->pc >= this->code->ninsts;
 }

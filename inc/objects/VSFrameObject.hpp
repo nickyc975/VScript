@@ -38,6 +38,7 @@ public:
     ~VSFrameObject();
 
     void eval(std::stack<VSObject *> &stack);
+    bool done();
 
     bool hasattr(std::string &attrname) override;
     VSObject *getattr(std::string &attrname) override;
