@@ -7,8 +7,8 @@ CXXFLAGS=-I inc -g -Wall -Wextra -Wno-write-strings
 SRCS=error.cpp VSCellObject.cpp VSBoolObject.cpp VSCharObject.cpp VSFloatObject.cpp VSIntObject.cpp \
 	 VSDictObject.cpp VSNoneObject.cpp VSObject.cpp VSStringObject.cpp VSFunctionObject.cpp \
 	 VSTupleObject.cpp VSListObject.cpp VSSetObject.cpp VSBaseObject.cpp VSCodeObject.cpp \
-	 VSFrameObject.cpp VSFileObject.cpp Symtable.cpp VSTokenizer.cpp VSParser.cpp VSCompiler.cpp \
-	 printers.cpp builtins.cpp vs.cpp
+	 VSFrameObject.cpp VSFileObject.cpp builtins.cpp Symtable.cpp VSTokenizer.cpp VSParser.cpp \
+	 VSCompiler.cpp VSInterpretor.cpp printers.cpp vs.cpp
 
 OBJECTS=$(SRCS:.cpp=.o)
 

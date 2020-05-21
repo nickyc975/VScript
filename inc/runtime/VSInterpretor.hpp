@@ -11,22 +11,20 @@ typedef std::stack<VSObject *> cpt_stack_t;
 
 class VSInterpretor {
 public:
-    VSTupleObject *builtins;
-
-    VSInterpretor(VSTupleObject *builtins);
+    VSInterpretor();
     ~VSInterpretor();
 
     void exec(
-        vs_addr_t &pc,
         cpt_stack_t &stack,
+        vs_addr_t &pc,
         VSCodeObject *code, 
         VSTupleObject *locals, 
         VSTupleObject *freevars, 
         VSTupleObject *cellvars, 
         VSTupleObject *globals
-    );
+    ) const;
 
-    void eval(cpt_stack_t &stack, VSFrameObject *frame);
+    void eval(cpt_stack_t &stack, VSFrameObject *frame) const;
 };
 
 extern const VSInterpretor INTERPRETOR;

@@ -1,5 +1,46 @@
 #include "runtime/VSInterpretor.hpp"
 
+#include <cassert>
+
+#include "runtime/builtins.hpp"
+#include "objects/VSCellObject.hpp"
+#include "objects/VSListObject.hpp"
+#include "objects/VSDictObject.hpp"
+#include "objects/VSSetObject.hpp"
+
+
+NEW_IDENTIFIER(__hash__);
+NEW_IDENTIFIER(__lt__);
+NEW_IDENTIFIER(__gt__);
+NEW_IDENTIFIER(__le__);
+NEW_IDENTIFIER(__ge__);
+NEW_IDENTIFIER(__eq__);
+NEW_IDENTIFIER(__str__);
+NEW_IDENTIFIER(__bytes__);
+NEW_IDENTIFIER(__call__);
+NEW_IDENTIFIER(__neg__);
+NEW_IDENTIFIER(__add__);
+NEW_IDENTIFIER(__sub__);
+NEW_IDENTIFIER(__mul__);
+NEW_IDENTIFIER(__div__);
+NEW_IDENTIFIER(__mod__);
+NEW_IDENTIFIER(__not__);
+NEW_IDENTIFIER(__and__);
+NEW_IDENTIFIER(__or__);
+NEW_IDENTIFIER(__xor__);
+NEW_IDENTIFIER(__bool__);
+NEW_IDENTIFIER(__char__);
+NEW_IDENTIFIER(__int__);
+NEW_IDENTIFIER(__float__);
+NEW_IDENTIFIER(get);
+NEW_IDENTIFIER(set);
+
+VSInterpretor::VSInterpretor() {
+}
+
+VSInterpretor::~VSInterpretor() {
+}
+
 inline VSObject *_stack_pop(cpt_stack_t &stack) {
     if (stack.empty()) {
         err("Internal error: unexpected empty compute stack");
@@ -31,8 +72,12 @@ inline void _stack_push(cpt_stack_t &stack, VSObject *value) {
     } while (0);
 
 void VSInterpretor::exec(
-    vs_addr_t &pc, cpt_stack_t &stack, VSCodeObject *code, VSTupleObject *locals,
-    VSTupleObject *freevars, VSTupleObject *cellvars, VSTupleObject *globals) {
+    cpt_stack_t &stack, vs_addr_t &pc, VSCodeObject *code, VSTupleObject *locals,
+    VSTupleObject *freevars, VSTupleObject *cellvars, VSTupleObject *globals) const {
+
+    vs_size_t nlocals = TUPLE_LEN(locals);
+    vs_size_t nfreevars = TUPLE_LEN(freevars);
+    vs_size_t ncellvars = TUPLE_LEN(cellvars);
     while (pc < code->ninsts) {
         VSInst inst = code->code[pc];
         switch (inst.opcode) {
@@ -253,63 +298,63 @@ void VSInterpretor::exec(
             }
             case OP_LOAD_LOCAL: {
                 vs_addr_t idx = inst.operand;
-                if (idx >= this->nlocals) {
-                    err("Internal error: invalid local var index: %llu, max: %llu", idx, this->nlocals - 1);
+                if (idx >= nlocals) {
+                    err("Internal error: invalid local var index: %llu, max: %llu", idx, nlocals - 1);
                     terminate(TERM_ERROR);
                 }
-                VSObject *local = TUPLE_GET(this->locals, idx);
+                VSObject *local = TUPLE_GET(locals, idx);
                 STACK_PUSH_INCREF(stack, VS_CELL_GET(local));
                 break;
             }
             case OP_LOAD_FREE: {
                 vs_addr_t idx = inst.operand;
-                if (idx >= this->nfreevars) {
-                    err("Internal error: invalid free var index: %llu, max: %llu", idx, this->nfreevars - 1);
+                if (idx >= nfreevars) {
+                    err("Internal error: invalid free var index: %llu, max: %llu", idx, nfreevars - 1);
                     terminate(TERM_ERROR);
                 }
-                VSObject *free = TUPLE_GET(this->freevars, idx);
+                VSObject *free = TUPLE_GET(freevars, idx);
                 STACK_PUSH_INCREF(stack, VS_CELL_GET(free));
                 break;
             }
             case OP_LOAD_CELL: {
                 vs_addr_t idx = inst.operand;
-                if (idx >= this->ncellvars) {
-                    err("Internal error: invalid cell var index: %llu, max: %llu", idx, this->ncellvars - 1);
+                if (idx >= ncellvars) {
+                    err("Internal error: invalid cell var index: %llu, max: %llu", idx, ncellvars - 1);
                     terminate(TERM_ERROR);
                 }
-                VSObject *cell = TUPLE_GET(this->cellvars, idx);
+                VSObject *cell = TUPLE_GET(cellvars, idx);
                 STACK_PUSH_INCREF(stack, cell);
                 break;
             }
             case OP_LOAD_LOCAL_CELL: {
                 vs_addr_t idx = inst.operand;
-                if (idx >= this->nlocals) {
-                    err("Internal error: invalid local var index: %llu, max: %llu", idx, this->nlocals - 1);
+                if (idx >= nlocals) {
+                    err("Internal error: invalid local var index: %llu, max: %llu", idx, nlocals - 1);
                     terminate(TERM_ERROR);
                 }
-                VSObject *local = TUPLE_GET(this->locals, idx);
+                VSObject *local = TUPLE_GET(locals, idx);
                 STACK_PUSH_INCREF(stack, local);
                 break;
             }
             case OP_LOAD_FREE_CELL: {
                 vs_addr_t idx = inst.operand;
-                if (idx >= this->nfreevars) {
-                    err("Internal error: invalid free var index: %llu, max: %llu", idx, this->nfreevars - 1);
+                if (idx >= nfreevars) {
+                    err("Internal error: invalid free var index: %llu, max: %llu", idx, nfreevars - 1);
                     terminate(TERM_ERROR);
                 }
-                VSObject *free = TUPLE_GET(this->freevars, idx);
+                VSObject *free = TUPLE_GET(freevars, idx);
                 STACK_PUSH_INCREF(stack, free);
                 break;
             }
             case OP_LOAD_ATTR: {
                 VSObject *obj = STACK_POP(stack);
                 vs_addr_t idx = inst.operand;
-                if (idx >= this->code->nnames) {
-                    err("Internal error: invalid name index: %llu, max: %llu", idx, this->code->nnames - 1);
+                if (idx >= code->nnames) {
+                    err("Internal error: invalid name index: %llu, max: %llu", idx, code->nnames - 1);
                     terminate(TERM_ERROR);
                 }
 
-                VSObject *attrnameobj = LIST_GET(this->code->names, idx);
+                VSObject *attrnameobj = LIST_GET(code->names, idx);
                 std::string &attrname = STRING_TO_C_STRING(attrnameobj);
                 if (!obj->hasattr(attrname)) {
                     ERR_NO_ATTR(obj, attrname);
@@ -324,12 +369,12 @@ void VSInterpretor::exec(
             case OP_STORE_LOCAL: {
                 vs_addr_t idx = inst.operand;
                 VSObject *val = STACK_POP(stack);
-                if (idx >= this->nlocals) {
-                    err("Internal error: invalid local var index: %llu, max: %llu", idx, this->nlocals - 1);
+                if (idx >= nlocals) {
+                    err("Internal error: invalid local var index: %llu, max: %llu", idx, nlocals - 1);
                     terminate(TERM_ERROR);
                 }
 
-                VSObject *cell = TUPLE_GET(this->locals, idx);
+                VSObject *cell = TUPLE_GET(locals, idx);
                 VS_CELL_SET(cell, val);
                 DECREF(val);
                 break;
@@ -337,12 +382,12 @@ void VSInterpretor::exec(
             case OP_STORE_FREE: {
                 vs_addr_t idx = inst.operand;
                 VSObject *val = STACK_POP(stack);
-                if (idx >= this->nfreevars) {
-                    err("Internal error: invalid free var index: %llu, max: %llu", idx, this->nfreevars - 1);
+                if (idx >= nfreevars) {
+                    err("Internal error: invalid free var index: %llu, max: %llu", idx, nfreevars - 1);
                     terminate(TERM_ERROR);
                 }
 
-                VSObject *cell = TUPLE_GET(this->freevars, idx);
+                VSObject *cell = TUPLE_GET(freevars, idx);
                 VS_CELL_SET(cell, val);
                 DECREF(val);
                 break;
@@ -350,12 +395,12 @@ void VSInterpretor::exec(
             case OP_STORE_CELL: {
                 vs_addr_t idx = inst.operand;
                 VSObject *val = STACK_POP(stack);
-                if (idx >= this->ncellvars) {
-                    err("Internal error: invalid cell var index: %llu, max: %llu", idx, this->ncellvars - 1);
+                if (idx >= ncellvars) {
+                    err("Internal error: invalid cell var index: %llu, max: %llu", idx, ncellvars - 1);
                     terminate(TERM_ERROR);
                 }
 
-                TUPLE_SET(this->cellvars, idx, val);
+                TUPLE_SET(cellvars, idx, val);
                 DECREF(val);
                 break;
             }
@@ -363,8 +408,8 @@ void VSInterpretor::exec(
                 vs_addr_t idx = inst.operand;
                 VSObject *obj = STACK_POP(stack);
                 VSObject *attrvalue = STACK_POP(stack);
-                if (idx >= this->code->nnames) {
-                    err("Internal error: invalid name index: %llu, max: %llu", idx, this->code->nnames - 1);
+                if (idx >= code->nnames) {
+                    err("Internal error: invalid name index: %llu, max: %llu", idx, code->nnames - 1);
                     terminate(TERM_ERROR);
                 }
 
@@ -382,35 +427,35 @@ void VSInterpretor::exec(
             }
             case OP_LOAD_CONST: {
                 vs_addr_t idx = inst.operand;
-                if (idx >= this->code->nconsts) {
-                    err("Internal error: invalid const index: %llu, max: %llu", idx, this->code->nconsts - 1);
+                if (idx >= code->nconsts) {
+                    err("Internal error: invalid const index: %llu, max: %llu", idx, code->nconsts - 1);
                     terminate(TERM_ERROR);
                 }
 
-                VSObject *obj = LIST_GET(this->code->consts, idx);
+                VSObject *obj = LIST_GET(code->consts, idx);
                 STACK_PUSH_INCREF(stack, obj);
                 break;
             }
             case OP_LOAD_BUILTIN: {
                 vs_addr_t idx = inst.operand;
-                if (idx >= this->nbuiltins) {
-                    err("Internal error: invalid builtin index: %llu, max: %llu", idx, this->nbuiltins - 1);
+                if (idx >= nbuiltins) {
+                    err("Internal error: invalid builtin index: %llu, max: %llu", idx, nbuiltins - 1);
                     terminate(TERM_ERROR);
                 }
 
-                VSObject *obj = TUPLE_GET(this->builtins, idx);
+                VSObject *obj = TUPLE_GET(builtins, idx);
                 STACK_PUSH_INCREF(stack, obj);
                 break;
             }
             case OP_JMP: {
                 vs_addr_t target = inst.operand;
-                if (target >= this->code->ninsts) {
-                    err("Internal error: invalid jump target: %llu, max: %llu", target, this->code->ninsts - 1);
+                if (target >= code->ninsts) {
+                    err("Internal error: invalid jump target: %llu, max: %llu", target, code->ninsts - 1);
                     terminate(TERM_ERROR);
                 }
 
-                this->pc = target;
-                this->pc--;
+                pc = target;
+                pc--;
                 break;
             }
             case OP_JIF: {
@@ -422,8 +467,8 @@ void VSInterpretor::exec(
                 }
 
                 if (BOOL_TO_C_BOOL(obj)) {
-                    this->pc = target;
-                    this->pc--;
+                    pc = target;
+                    pc--;
                 }
                 DECREF(obj);
                 break;
@@ -433,8 +478,7 @@ void VSInterpretor::exec(
                 VSObject *freevars = STACK_POP(stack);
                 VSCodeObject *code = (VSCodeObject *)codeobj;
 
-                VSFunctionObject *func = new VSDynamicFunctionObject(
-                    code->name, code, AS_TUPLE(freevars), this->builtins, code->flags);
+                VSFunctionObject *func = new VSDynamicFunctionObject(code->name, code, AS_TUPLE(freevars), code->flags);
                 STACK_PUSH_INCREF(stack, func);
                 DECREF(freevars);
                 DECREF(code);
@@ -444,8 +488,15 @@ void VSInterpretor::exec(
                 VSObject *func = STACK_POP(stack);
                 VSObject *args = STACK_POP(stack);
 
-                if (func->type != T_FUNC) {
+                if (!func->hasattr(ID___call__)) {
                     err("\"%s\" object is not callable", TYPE_STR[func->type]);
+                    terminate(TERM_ERROR);
+                }
+
+                VSObject *__call__ = func->getattr(ID___call__);
+
+                if (__call__->type != T_FUNC) {
+                    err("attribute \"__call__\" of \"%s\" object is not function", TYPE_STR[func->type]);
                     terminate(TERM_ERROR);
                 }
 
@@ -454,8 +505,9 @@ void VSInterpretor::exec(
                     terminate(TERM_ERROR);
                 }
 
-                VSObject *res = ((VSFunctionObject *)func)->call((VSTupleObject *)args);
-                STACK_PUSH(stk, res);
+                VSObject *res = ((VSFunctionObject *)__call__)->call((VSTupleObject *)args);
+                STACK_PUSH(stack, res);
+                DECREF(__call__);
                 DECREF(func);
                 break;
             }
@@ -471,3 +523,9 @@ void VSInterpretor::exec(
         pc++;
     }
 }
+
+void VSInterpretor::eval(cpt_stack_t &stack, VSFrameObject *frame) const {
+    this->exec(stack, frame->pc, frame->code, frame->locals, frame->freevars, frame->cellvars, NULL);
+}
+
+const VSInterpretor INTERPRETOR = VSInterpretor();

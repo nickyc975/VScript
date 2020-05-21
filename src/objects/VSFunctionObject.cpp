@@ -6,10 +6,13 @@
 #include "objects/VSFrameObject.hpp"
 #include "objects/VSStringObject.hpp"
 
+#include "runtime/VSInterpretor.hpp"
+
 NEW_IDENTIFIER(__hash__);
 NEW_IDENTIFIER(__eq__);
 NEW_IDENTIFIER(__str__);
 NEW_IDENTIFIER(__bytes__);
+NEW_IDENTIFIER(__call__);
 
 /* Base function type definition */
 VSFunctionObject::VSFunctionObject() {
@@ -67,10 +70,18 @@ VSNativeFunctionObject::~VSNativeFunctionObject() {
 }
 
 bool VSNativeFunctionObject::hasattr(std::string &attrname) {
+    if (attrname == ID___call__) {
+        return true;
+    }
+
     return vs_native_func_methods.find(attrname) != vs_native_func_methods.end();
 }
 
 VSObject *VSNativeFunctionObject::getattr(std::string &attrname) {
+    if (attrname == ID___call__) {
+        INCREF_RET(this);
+    }
+
     auto iter = vs_native_func_methods.find(attrname);
     if (iter == vs_native_func_methods.end()) {
         ERR_NO_ATTR(this, attrname);
@@ -127,11 +138,10 @@ const str_func_map VSDynamicFunctionObject::vs_dynamic_func_methods = {
 };
 
 /* Dynamic function type definition */
-VSDynamicFunctionObject::VSDynamicFunctionObject(VSStringObject *name, VSCodeObject *code, VSTupleObject *freevars, VSTupleObject *builtins, int flags) {
+VSDynamicFunctionObject::VSDynamicFunctionObject(VSStringObject *name, VSCodeObject *code, VSTupleObject *freevars, int flags) {
     this->name = NEW_REF(VSStringObject *, name);
     this->code = NEW_REF(VSCodeObject *, code);
     this->freevars = NEW_REF(VSTupleObject *, freevars);
-    this->builtins = NEW_REF(VSTupleObject *, builtins);
 
     this->cellvars = new VSTupleObject(code->ncellvars);
     for (vs_addr_t i = 0; i < code->ncellvars; i++) {
@@ -147,14 +157,21 @@ VSDynamicFunctionObject::~VSDynamicFunctionObject() {
     DECREF_EX(this->code);
     DECREF_EX(this->cellvars);
     DECREF_EX(this->freevars);
-    DECREF_EX(this->builtins);
 }
 
 bool VSDynamicFunctionObject::hasattr(std::string &attrname) {
+    if (attrname == ID___call__) {
+        return true;
+    }
+
     return vs_dynamic_func_methods.find(attrname) != vs_dynamic_func_methods.end();
 }
 
 VSObject *VSDynamicFunctionObject::getattr(std::string &attrname) {
+    if (attrname == ID___call__) {
+        INCREF_RET(this);
+    }
+
     auto iter = vs_dynamic_func_methods.find(attrname);
     if (iter == vs_dynamic_func_methods.end()) {
         ERR_NO_ATTR(this, attrname);
@@ -186,11 +203,11 @@ VSObject *VSDynamicFunctionObject::call(VSTupleObject *args) {
 
     std::stack<VSObject *> stack = std::stack<VSObject *>();
     VSFrameObject *frame = new VSFrameObject(
-        this->code, args, this->cellvars, this->freevars, this->builtins, NULL);
+        this->code, args, this->cellvars, this->freevars, NULL);
     DECREF_EX(args);
 
     INCREF(frame);
-    frame->eval(stack);
+    INTERPRETOR.eval(stack, frame);
     DECREF(frame);
 
     if (stack.empty()) {

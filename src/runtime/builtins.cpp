@@ -165,4 +165,7 @@ VSTupleObject *builtins = vs_tuple_pack(
     AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("setattr"), vs_setattr)),
     AS_OBJECT(new VSNativeFunctionObject(NULL, C_STRING_TO_STRING("removeattr"), vs_removeattr)),
     AS_OBJECT(VS_STDIN),
-    AS_OBJECT(VS_STDOUT));
+    AS_OBJECT(VS_STDOUT)
+);
+
+vs_size_t nbuiltins = TUPLE_LEN(builtins);

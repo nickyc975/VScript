@@ -21,10 +21,10 @@ class VSNativeFunctionObject : public VSFunctionObject {
 private:
     static const str_func_map vs_native_func_methods;
 
+public:
     VSObject *self;
     vs_native_func func;
 
-public:
     VSNativeFunctionObject(VSObject *self, VSStringObject *name, vs_native_func func);
     ~VSNativeFunctionObject();
 
@@ -39,20 +39,14 @@ class VSDynamicFunctionObject : public VSFunctionObject {
 private:
     static const str_func_map vs_dynamic_func_methods;
 
+public:
     VSCodeObject *code;
     VSTupleObject *cellvars;
     VSTupleObject *freevars;
-    VSTupleObject *builtins;
 
     int flags;
 
-public:
-    VSDynamicFunctionObject(
-        VSStringObject *name,
-        VSCodeObject *code,
-        VSTupleObject *freevars,
-        VSTupleObject *builtins,
-        int flags);
+    VSDynamicFunctionObject(VSStringObject *name, VSCodeObject *code, VSTupleObject *freevars, int flags);
     ~VSDynamicFunctionObject();
 
     bool hasattr(std::string &attrname) override;
