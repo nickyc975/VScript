@@ -71,15 +71,15 @@ VSFrameObject::VSFrameObject(VSCodeObject *code, VSTupleObject *args, VSTupleObj
     }
     INCREF(this->locals);
 
+    this->cellvars = cellvars;
     if (cellvars != NULL) {
         this->ncellvars = TUPLE_LEN(cellvars);
-        this->cellvars = cellvars;
         INCREF(cellvars);
     }
 
+    this->freevars = freevars;
     if (freevars != NULL) {
         this->nfreevars = TUPLE_LEN(freevars);
-        this->freevars = freevars;
         INCREF(freevars);
     }
 

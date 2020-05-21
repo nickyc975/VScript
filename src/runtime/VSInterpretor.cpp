@@ -75,9 +75,11 @@ void VSInterpretor::exec(
     cpt_stack_t &stack, vs_addr_t &pc, VSCodeObject *code, VSTupleObject *locals,
     VSTupleObject *freevars, VSTupleObject *cellvars, VSTupleObject *globals) const {
 
-    vs_size_t nlocals = TUPLE_LEN(locals);
-    vs_size_t nfreevars = TUPLE_LEN(freevars);
-    vs_size_t ncellvars = TUPLE_LEN(cellvars);
+    vs_size_t nlocals = locals == NULL ? 0 : TUPLE_LEN(locals);
+    vs_size_t nfreevars = freevars == NULL ? 0 : TUPLE_LEN(freevars);
+    vs_size_t ncellvars = cellvars == NULL ? 0 : TUPLE_LEN(cellvars);
+    vs_size_t nglobals = globals == NULL ? 0 : TUPLE_LEN(globals);
+
     while (pc < code->ninsts) {
         VSInst inst = code->code[pc];
         switch (inst.opcode) {
