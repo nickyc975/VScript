@@ -1,4 +1,4 @@
-#include "runtime/VSInterpretor.hpp"
+#include "runtime/VSInterpreter.hpp"
 
 #include <cassert>
 
@@ -35,10 +35,10 @@ NEW_IDENTIFIER(__float__);
 NEW_IDENTIFIER(get);
 NEW_IDENTIFIER(set);
 
-VSInterpretor::VSInterpretor() {
+VSInterpreter::VSInterpreter() {
 }
 
-VSInterpretor::~VSInterpretor() {
+VSInterpreter::~VSInterpreter() {
 }
 
 inline VSObject *_stack_pop(cpt_stack_t &stack) {
@@ -71,7 +71,7 @@ inline void _stack_push(cpt_stack_t &stack, VSObject *value) {
         INCREF(__value);                \
     } while (0);
 
-void VSInterpretor::exec(
+void VSInterpreter::exec(
     cpt_stack_t &stack, vs_addr_t &pc, VSCodeObject *code, VSTupleObject *locals,
     VSTupleObject *freevars, VSTupleObject *cellvars, VSTupleObject *globals) const {
 
@@ -526,8 +526,8 @@ void VSInterpretor::exec(
     }
 }
 
-void VSInterpretor::eval(cpt_stack_t &stack, VSFrameObject *frame) const {
+void VSInterpreter::eval(cpt_stack_t &stack, VSFrameObject *frame) const {
     this->exec(stack, frame->pc, frame->code, frame->locals, frame->freevars, frame->cellvars, NULL);
 }
 
-const VSInterpretor INTERPRETOR = VSInterpretor();
+const VSInterpreter INTERPRETER = VSInterpreter();

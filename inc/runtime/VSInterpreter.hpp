@@ -1,5 +1,5 @@
-#ifndef VS_INTERPRETOR_H
-#define VS_INTERPRETOR_H
+#ifndef VS_INTERPRETER_H
+#define VS_INTERPRETER_H
 
 #include <stack>
 
@@ -9,10 +9,10 @@
 
 typedef std::stack<VSObject *> cpt_stack_t;
 
-class VSInterpretor {
+class VSInterpreter {
 public:
-    VSInterpretor();
-    ~VSInterpretor();
+    VSInterpreter();
+    ~VSInterpreter();
 
     void exec(
         cpt_stack_t &stack,
@@ -27,6 +27,6 @@ public:
     void eval(cpt_stack_t &stack, VSFrameObject *frame) const;
 };
 
-extern const VSInterpretor INTERPRETOR;
+extern const VSInterpreter INTERPRETER;
 
 #endif

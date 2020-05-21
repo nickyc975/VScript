@@ -9,7 +9,7 @@
 #include "objects/VSTupleObject.hpp"
 #include "printers.hpp"
 #include "runtime/builtins.hpp"
-#include "runtime/VSInterpretor.hpp"
+#include "runtime/VSInterpreter.hpp"
 
 int main(int argc, char **argv) {
     int show_lex = 0, show_parse = 0, show_gen = 0;
@@ -56,6 +56,6 @@ int main(int argc, char **argv) {
     }
     VSFrameObject *frame = new VSFrameObject(program, NULL, new VSTupleObject(program->ncellvars), NULL, NULL);
     auto stack = std::stack<VSObject *>();
-    INTERPRETOR.eval(stack, frame);
+    INTERPRETER.eval(stack, frame);
     return 0;
 }

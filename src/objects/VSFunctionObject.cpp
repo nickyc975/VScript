@@ -6,7 +6,7 @@
 #include "objects/VSFrameObject.hpp"
 #include "objects/VSStringObject.hpp"
 
-#include "runtime/VSInterpretor.hpp"
+#include "runtime/VSInterpreter.hpp"
 
 NEW_IDENTIFIER(__hash__);
 NEW_IDENTIFIER(__eq__);
@@ -207,7 +207,7 @@ VSObject *VSDynamicFunctionObject::call(VSTupleObject *args) {
     DECREF_EX(args);
 
     INCREF(frame);
-    INTERPRETOR.eval(stack, frame);
+    INTERPRETER.eval(stack, frame);
     DECREF(frame);
 
     if (stack.empty()) {

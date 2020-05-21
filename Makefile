@@ -8,7 +8,7 @@ SRCS=error.cpp VSCellObject.cpp VSBoolObject.cpp VSCharObject.cpp VSFloatObject.
 	 VSDictObject.cpp VSNoneObject.cpp VSObject.cpp VSStringObject.cpp VSFunctionObject.cpp \
 	 VSTupleObject.cpp VSListObject.cpp VSSetObject.cpp VSBaseObject.cpp VSCodeObject.cpp \
 	 VSFrameObject.cpp VSFileObject.cpp builtins.cpp Symtable.cpp VSTokenizer.cpp VSParser.cpp \
-	 VSCompiler.cpp VSInterpretor.cpp printers.cpp vs.cpp
+	 VSCompiler.cpp VSInterpreter.cpp printers.cpp vs.cpp
 
 OBJECTS=$(SRCS:.cpp=.o)
 
