@@ -52,10 +52,13 @@ VSObject *vs_open(VSObject *, VSObject *const *args, vs_size_t nargs) {
                 break;
             case 'w':
                 flags |= FILE_WRITABLE;
+                break;
             case 'x':
                 flags |= FILE_WRITABLE | FILE_CREATED;
+                break;
             case '+':
                 flags |= FILE_READABLE | FILE_WRITABLE;
+                break;
             default:
                 break;
         }
