@@ -26,15 +26,6 @@ vs: $(OBJECTS)
 objects:$(OBJECTS)
 
 test: vs
-	$(OUTPUT_DIR)/$(VS) -l -p -s test/hello.vs
-
-test-lex: vs
-	$(OUTPUT_DIR)/$(VS) -l test/hello.vs
-
-test-parse: vs
-	$(OUTPUT_DIR)/$(VS) -p test/hello.vs
-
-test-gencode: vs
 	$(OUTPUT_DIR)/$(VS) -s test/hello.vs
 
 clean:
