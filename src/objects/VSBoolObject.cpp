@@ -66,7 +66,7 @@ VSObject *vs_bool_lt(VSObject *self, VSObject *const *args, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VSObject *that = args[1];
+    VSObject *that = args[0];
     ENSURE_TYPE(self, T_BOOL, "bool.__lt__()");
     ENSURE_TYPE(that, T_BOOL, "bool.__lt__()");
 
@@ -80,7 +80,7 @@ VSObject *vs_bool_gt(VSObject *self, VSObject *const *args, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VSObject *that = args[1];
+    VSObject *that = args[0];
     ENSURE_TYPE(self, T_BOOL, "bool.__gt__()");
     ENSURE_TYPE(that, T_BOOL, "bool.__gt__()");
 
@@ -94,7 +94,7 @@ VSObject *vs_bool_le(VSObject *self, VSObject *const *args, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VSObject *that = args[1];
+    VSObject *that = args[0];
     ENSURE_TYPE(self, T_BOOL, "bool.__le__()");
     ENSURE_TYPE(that, T_BOOL, "bool.__le__()");
 
@@ -108,7 +108,7 @@ VSObject *vs_bool_ge(VSObject *self, VSObject *const *args, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VSObject *that = args[1];
+    VSObject *that = args[0];
     ENSURE_TYPE(self, T_BOOL, "bool.__ge__()");
     ENSURE_TYPE(that, T_BOOL, "bool.__ge__()");
 
@@ -122,7 +122,7 @@ VSObject *vs_bool_eq(VSObject *self, VSObject *const *args, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VSObject *that = args[1];
+    VSObject *that = args[0];
     ENSURE_TYPE(self, T_BOOL, "bool.__eq__()");
     ENSURE_TYPE(that, T_BOOL, "bool.__eq__()");
 
@@ -171,7 +171,7 @@ VSObject *vs_bool_and(VSObject *self, VSObject *const *args, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VSObject *that = args[1];
+    VSObject *that = args[0];
     ENSURE_TYPE(self, T_BOOL, "bool.__and__()");
     ENSURE_TYPE(that, T_BOOL, "bool.__and__()");
 
@@ -185,7 +185,7 @@ VSObject *vs_bool_or(VSObject *self, VSObject *const *args, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VSObject *that = args[1];
+    VSObject *that = args[0];
     ENSURE_TYPE(self, T_BOOL, "bool.__or__()");
     ENSURE_TYPE(that, T_BOOL, "bool.__or__()");
 
@@ -199,7 +199,7 @@ VSObject *vs_bool_xor(VSObject *self, VSObject *const *args, vs_size_t nargs) {
         terminate(TERM_ERROR);
     }
 
-    VSObject *that = args[1];
+    VSObject *that = args[0];
     ENSURE_TYPE(self, T_BOOL, "bool.__xor__()");
     ENSURE_TYPE(that, T_BOOL, "bool.__xor__()");
 
