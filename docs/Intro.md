@@ -141,35 +141,46 @@ VScript提供了一系列进行这种类型转换的函数，关于它们的详�
 VScript部分支持面向对象编程范式，你可以使用`object`函数创建一个没有任何属性和方法的空对象，然后使用`hasattr`、`getattr`、`setattr`和`removeattr`对对象进行修饰，即可获得想要的对象。例如：
 
 ```
-    // 定义一个构造Person对象的函数
-    // Person对象拥有两个属性：name和age，以及两个方法：getName和getAge，此外它还重写了父类的__str__方法
-    func Person(name, age) {
-        var person = object();
+    // 定义一个构造Animal对象的函数
+    //　Animal对象有一个属性name和一个方法walk
+    func Animal(name) {
+        var animal = object();
+        setattr(animal, "name", name);
 
-        func getName() {
-            return person.name;
+        func walk() {
+            print(animal.name, "walking!");
         }
+        setattr(animal, "walk", walk);
 
-        func getAge() {
-            return person.age;
-        }
-
-        func __str__() {
-            return person.name + " " + str(person.age);
-        }
-
-        setattr(person, "name", name);
-        setattr(person, "age", age);
-        setattr(person, "getName", getName);
-        setattr(person, "getAge", getAge);
-        setattr(person, "__str__", __str__);
-
-        return person;
+        return animal;
     }
 
-    // 构造一个Person对象并调用它的方法
-    var person = Person("Nicky", 22);
-    print(person);
+    // 定义一个构造Dog对象的函数
+    // Dog继承自Animal，并且重写了Animal的walk方法
+    func Dog(name) {
+        var dog = Animal(name);
+        func walk() {
+            print("Dog", dog.name, "walking!");
+        }
+        setattr(dog, "walk", walk);
+        return dog;
+    }
+
+    // 定义一个构造Cat对象的函数
+    // Cat继承自Animal，并且重写了Animal的walk方法
+    func Cat(name) {
+        var cat = Animal(name);
+        func walk() {
+            print("Cat", cat.name, "walking!");
+        }
+        setattr(cat, "walk", walk);
+        return cat;
+    }
+
+    var dog = Dog("Snoopy");
+    var cat = Cat("Hello Kitty");
+    dog.walk();
+    cat.walk();
 ```
 
 ### 输入输出
