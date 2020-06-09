@@ -1,32 +1,40 @@
-// Define a Person object constructor.
-// The constructor creates an object and binds Person attributes to it.
-func Person(name, age) {
-    var person = object();
+// 定义一个构造Animal对象的函数
+//　Animal对象有一个属性name和一个方法walk
+func Animal(name) {
+    var animal = object();
+    setattr(animal, "name", name);
 
-    func getName() {
-        return person.name;
+    func walk() {
+        print(animal.name, "walking!");
     }
+    setattr(animal, "walk", walk);
 
-    func getAge() {
-        return person.age;
-    }
-
-    func __str__() {
-        return person.name + " " + str(person.age);
-    }
-
-    setattr(person, "name", name);
-    setattr(person, "age", age);
-    setattr(person, "getName", getName);
-    setattr(person, "getAge", getAge);
-    setattr(person, "__str__", __str__);
-
-    return person;
+    return animal;
 }
 
-// Construct a Person object.
-var person = Person("Nicky", 22);
-print(person);
+// 定义一个构造Dog对象的函数
+// Dog继承自Animal，并且重写了Animal的walk方法
+func Dog(name) {
+    var dog = Animal(name);
+    func walk() {
+        print("Dog", dog.name, "walking!");
+    }
+    setattr(dog, "walk", walk);
+    return dog;
+}
 
-person = Person("Sherry", 20);
-print(person);
+// 定义一个构造Cat对象的函数
+// Cat继承自Animal，并且重写了Animal的walk方法
+func Cat(name) {
+    var cat = Animal(name);
+    func walk() {
+        print("Cat", cat.name, "walking!");
+    }
+    setattr(cat, "walk", walk);
+    return cat;
+}
+
+var dog = Dog("Snoopy");
+var cat = Cat("Hello Kitty");
+dog.walk();
+cat.walk();
